@@ -1,0 +1,11 @@
+node_modules/
+dist/
+cdk.out/
+.env*
+!.env.example
+.DS_Store
+output/
+test-results/
+playwright-report/
+*.zip
+deployment-outputs.json
