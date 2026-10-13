@@ -14,6 +14,7 @@
   background: #111311;
   font-synthesis: none;
   --cyan: #00feef;
+  --full-stop: #00feed;
   --ink: #111311;
   --paper: #f0f0e9;
   scroll-behavior: smooth;
@@ -75,6 +76,15 @@ h2 {
   font-weight: 400;
   letter-spacing: -0.065em;
   line-height: 0.92;
+}
+.full-stop {
+  color: var(--full-stop);
+}
+.piece-title em {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.065em;
 }
 section {
   scroll-margin-top: 30px;
@@ -435,12 +445,6 @@ section {
   margin: 23px 0 16px;
   letter-spacing: -0.075em;
 }
-.product-info h2 span {
-  font-family: Georgia, serif;
-  font-style: italic;
-  font-weight: 400;
-  letter-spacing: -0.065em;
-}
 .product-sub {
   font-size: 13px;
   letter-spacing: 0.01em;
@@ -483,7 +487,7 @@ section {
   font-size: 10px;
   padding: 23px 0 16px;
 }
-.size-line span:last-child {
+.size-line > span:last-child {
   color: #666d61;
 }
 .button {
@@ -554,7 +558,7 @@ details p {
   font-size: clamp(60px, 8.5vw, 128px);
   margin-top: 23px;
 }
-.artwork h2 span {
+.artwork h2 > span:not(.full-stop) {
   color: var(--cyan);
 }
 .small-copy {
@@ -735,6 +739,8 @@ details p {
   color: #c5c9bf;
 }
 .email-line {
+  --field-background: var(--ink);
+  --field-text: #f0f0e9;
   border-bottom: 1px solid #acb8a6;
   display: flex;
   padding-bottom: 10px;
@@ -752,6 +758,18 @@ details p {
 }
 .email-line input::placeholder {
   color: #aaafa6;
+}
+.email-line input:autofill {
+  box-shadow: 0 0 0 1000px var(--field-background) inset;
+  -webkit-text-fill-color: var(--field-text);
+  caret-color: var(--field-text);
+}
+.email-line input:-webkit-autofill,
+.email-line input:-webkit-autofill:hover,
+.email-line input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--field-background) inset;
+  -webkit-text-fill-color: var(--field-text);
+  caret-color: var(--field-text);
 }
 .email-line button {
   background: none;
@@ -1221,7 +1239,7 @@ footer {
   .product-info h2 br {
     display: none;
   }
-  .product-info h2 span {
+  .product-info h2 em {
     margin-left: 10px;
   }
   .product-info .price {
@@ -1475,7 +1493,7 @@ footer {
   .guest-content h2 br {
     display: block;
   }
-  .product-info h2 span {
+  .product-info h2 em {
     margin-left: 0;
   }
   .hero-word .wordmark {

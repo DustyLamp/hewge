@@ -33,7 +33,7 @@ export async function api(path: string, body?: unknown) {
   });
   const data = await r.json();
   if (!r.ok) {
-    if (r.status === 401) signOut();
+    if (r.status === 401 && !path.startsWith("/membership/")) signOut();
     throw Error(data.message || "Please try again.");
   }
   return data;
@@ -47,11 +47,14 @@ export async function getReleases() {
     return { releases: [preview], biddingEnabled: false };
   return api("/releases");
 }
-export const joinList = (
-  email: string,
-  website: string,
-  sizes: string[] = [],
-) => api("/waitlist", { email, website, sizes, consent: true });
+export const joinList = (email: string, website: string) =>
+  api("/waitlist", {
+    email,
+    website,
+    consent: true,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    locale: navigator.language,
+  });
 export const leaveList = (email: string) => api("/waitlist/remove", { email });
 export async function cognito(action: string, body: Record<string, unknown>) {
   const c = await getConfig();

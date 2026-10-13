@@ -33,9 +33,6 @@
   line-height: 1.04;
   margin: 22px 0 25px;
 }
-.article-title h1 > span {
-  color: #148277;
-}
 .article-deck {
   display: flex;
   justify-content: space-between;
@@ -43,10 +40,10 @@
   gap: 35px;
 }
 .article-deck p {
-  font-family: Georgia, serif;
-  font-size: 26px;
-  font-style: italic;
-  line-height: 1.25;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 20px;
+  color: #596053;
+  line-height: 1.5;
 }
 .article-deck > span {
   font-size: 12px;
@@ -180,8 +177,8 @@
   margin-bottom: 24px;
 }
 .story-section .story-lead {
-  font-family: Georgia, serif;
-  font-size: 24px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 20px;
   line-height: 1.5;
 }
 .story-section .image-note {
@@ -364,7 +361,11 @@
   align-items: flex-start;
   gap: 10px;
   line-height: 1.5;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+}
+.check-label > span {
+  flex: 1;
+  min-width: 0;
 }
 .check-label input {
   width: 17px;
@@ -974,6 +975,8 @@
   margin-bottom: 20px;
 }
 .subscribe-box .email-line {
+  --field-background: var(--cyan);
+  --field-text: var(--ink);
   border-color: #111;
 }
 .subscribe-box input {
@@ -996,6 +999,84 @@
 }
 .subscribe-box .email-line button {
   min-width: 45px;
+}
+.subscribe-box .form-note,
+.subscribe-box .form-error {
+  color: var(--ink);
+}
+.membership-result h3 {
+  font:
+    30px Archivo,
+    sans-serif;
+  margin-bottom: 16px;
+}
+.membership-result p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+.membership-result .text-link {
+  font-size: 12px;
+  color: inherit;
+}
+.membership-page {
+  max-width: none;
+  padding: 65px max(5%, calc((100% - 900px) / 2)) 100px;
+}
+.membership-page > h1 {
+  margin: 24px 0;
+}
+.membership-page > p {
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+.membership-form {
+  max-width: 680px;
+  gap: 26px;
+  margin-top: 36px;
+}
+.membership-form fieldset {
+  border: 0;
+  padding: 0;
+}
+.membership-form legend {
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.membership-email {
+  overflow-wrap: anywhere;
+}
+.membership-email > span {
+  border: 1px solid #1114;
+  padding: 4px 8px;
+  margin-left: 8px;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.membership-sms {
+  border-block: 1px solid #1113;
+  padding: 30px 0;
+  display: grid;
+  gap: 22px;
+}
+.membership-sms h2 {
+  font-size: 34px;
+}
+.membership-sms p {
+  font-size: 14px;
+}
+.membership-more summary {
+  cursor: pointer;
+  font-size: 14px;
+}
+.membership-more label {
+  margin-top: 22px;
+}
+.membership-confirm {
+  max-width: 600px;
+  display: grid;
+  gap: 25px;
+  line-height: 1.6;
 }
 .mystery-note {
   border: 1px solid #1113;

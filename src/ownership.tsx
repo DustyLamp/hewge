@@ -1,3 +1,4 @@
+import { FullStops } from "./typography";
 import { useEffect, useState, type FormEvent } from "react";
 import { api } from "./api";
 
@@ -41,9 +42,13 @@ export function TransferRequest({
   return (
     <details className="transfer-request">
       <summary>Pass on the original →</summary>
-      <p>You request. They accept. Hewge verifies.</p>
+      <p>
+        <FullStops>{"You request. They accept. Hewge verifies."}</FullStops>
+      </p>
       {piece.pendingTransferId ? (
-        <p>A transfer is in progress. Manage it below.</p>
+        <p>
+          <FullStops>{"A transfer is in progress. Manage it below."}</FullStops>
+        </p>
       ) : (
         <form className="stack-form" onSubmit={submit}>
           <label>
@@ -57,20 +62,26 @@ export function TransferRequest({
             />
           </label>
           <label className="check-row">
-            <input name="confirmed" type="checkbox" required />I own this
-            original and am entitled to transfer it.
+            <input name="confirmed" type="checkbox" required />
+            <FullStops>
+              {"I own this original and am entitled to transfer it."}
+            </FullStops>
           </label>
           <p className="fine-print">
-            The recipient must confirm possession of the garment and
-            certificate. Your registration stays in place until Hewge approves
-            the transfer. This does not process a resale payment.
+            <FullStops>
+              {
+                "The recipient must confirm possession of the garment and certificate. Your registration stays in place until Hewge approves the transfer. This does not process a resale payment."
+              }
+            </FullStops>
           </p>
           <button className="button button-dark" disabled={busy}>
-            {busy ? "Requesting…" : "Request transfer"}
+            <FullStops>{busy ? "Requesting…" : "Request transfer"}</FullStops>
           </button>
         </form>
       )}
-      <p role="status">{message}</p>
+      <p role="status">
+        <FullStops>{message}</FullStops>
+      </p>
     </details>
   );
 }
@@ -104,7 +115,9 @@ export function TransferList({
   if (!transfers.length) return null;
   return (
     <section className="transfer-list">
-      <h2>Ownership transfers.</h2>
+      <h2>
+        <FullStops>{"Ownership transfers."}</FullStops>
+      </h2>
       {transfers.map((t) => {
         const active = ["awaiting-recipient", "awaiting-review"].includes(
           t.status,
@@ -114,22 +127,31 @@ export function TransferList({
         return (
           <article className="transfer-card" key={t.id}>
             <span className="eyebrow">
-              {t.outgoing ? "Passing it on" : "Your next original"}
+              <FullStops>
+                {t.outgoing ? "Passing it on" : "Your next original"}
+              </FullStops>
             </span>
-            <h3>{t.name}</h3>
+            <h3>
+              <FullStops>{t.name}</FullStops>
+            </h3>
             <p>
-              {expired
-                ? "Acceptance window ended"
-                : t.status.replaceAll("-", " ")}
-              {t.recipient ? ` · ${t.recipient}` : ""}
+              <FullStops>
+                {expired
+                  ? "Acceptance window ended"
+                  : t.status.replaceAll("-", " ")}
+              </FullStops>
+              <FullStops>{t.recipient ? ` · ${t.recipient}` : ""}</FullStops>
             </p>
+
             {t.outgoing && t.status === "awaiting-recipient" && !expired && (
               <p>
                 Ask the recipient to sign in at{" "}
                 <a href="/account">hewge.design/account</a> using the email
-                above, by {date(t.deadlineAt)}.
+                above, by <FullStops>{date(t.deadlineAt)}</FullStops>
+                <FullStops>{"."}</FullStops>
               </p>
             )}
+
             {!t.outgoing && t.status === "awaiting-recipient" && !expired && (
               <form
                 className="stack-form"
@@ -168,7 +190,8 @@ export function TransferList({
                 <label className="check-row">
                   <input name="received" type="checkbox" required />I have
                   received this garment and its original certificate, and agree
-                  to the <a href="/terms">transfer terms</a>.
+                  to the <a href="/terms">transfer terms</a>
+                  <FullStops>{"."}</FullStops>
                 </label>
                 <button className="button button-dark" disabled={busy}>
                   Accept for Hewge review
@@ -176,7 +199,11 @@ export function TransferList({
               </form>
             )}
             {t.status === "awaiting-review" && (
-              <p>Accepted. Awaiting Hewge’s physical and provenance checks.</p>
+              <p>
+                <FullStops>
+                  {"Accepted. Awaiting Hewge’s physical and provenance checks."}
+                </FullStops>
+              </p>
             )}
             {t.status === "approved" && (
               <a href={`/registry/${t.auctionId}`}>
@@ -196,13 +223,17 @@ export function TransferList({
                     call("/transfer/cancel", { transferId: t.id });
                 }}
               >
-                {t.outgoing ? "Cancel transfer" : "Decline transfer"}
+                <FullStops>
+                  {t.outgoing ? "Cancel transfer" : "Decline transfer"}
+                </FullStops>
               </button>
             )}
           </article>
         );
       })}
-      <p role="status">{message}</p>
+      <p role="status">
+        <FullStops>{message}</FullStops>
+      </p>
     </section>
   );
 }
@@ -220,19 +251,29 @@ export function AdminTransfers({
     <section className="transfer-list">
       <h2>Ownership transfers</h2>
       <p>
-        Approval changes the registered owner. Inspect the garment, certificate
-        and entitlement evidence before approving. A matching printed number
-        alone is insufficient.
+        <FullStops>
+          {
+            "Approval changes the registered owner. Inspect the garment, certificate and entitlement evidence before approving. A matching printed number alone is insufficient."
+          }
+        </FullStops>
       </p>
-      {!transfers.length && <p>No ownership transfer requests yet.</p>}
+      {!transfers.length && (
+        <p>
+          <FullStops>{"No ownership transfer requests yet."}</FullStops>
+        </p>
+      )}
       {transfers.map((t) => (
         <article className="transfer-card" key={t.id}>
-          <h3>{t.name}</h3>
+          <h3>
+            <FullStops>{t.name}</FullStops>
+          </h3>
           <p>
-            {t.fromEmail} → {t.toEmail}
+            <FullStops>{t.fromEmail}</FullStops> →{" "}
+            <FullStops>{t.toEmail}</FullStops>
           </p>
           <p>
-            {t.status.replaceAll("-", " ")} · {date(t.requestedAt)}
+            <FullStops>{t.status.replaceAll("-", " ")}</FullStops> ·{" "}
+            <FullStops>{date(t.requestedAt)}</FullStops>
           </p>
           {t.status === "awaiting-review" && (
             <form
@@ -270,14 +311,20 @@ export function AdminTransfers({
                 />
               </label>
               <label className="check-row">
-                <input name="physicalChecked" type="checkbox" required />I
-                checked the physical original and artist-signed certificate
-                against Hewge’s records.
+                <input name="physicalChecked" type="checkbox" required />
+                <FullStops>
+                  {
+                    "I checked the physical original and artist-signed certificate against Hewge’s records."
+                  }
+                </FullStops>
               </label>
               <label className="check-row">
-                <input name="titleChecked" type="checkbox" required />I reviewed
-                the right to transfer, recipient acceptance and any dispute
-                flags.
+                <input name="titleChecked" type="checkbox" required />
+                <FullStops>
+                  {
+                    "I reviewed the right to transfer, recipient acceptance and any dispute flags."
+                  }
+                </FullStops>
               </label>
               <button className="button button-dark" disabled={busy}>
                 Approve ownership transfer
@@ -305,7 +352,9 @@ export function AdminTransfers({
           )}
           {t.status === "approved" && (
             <p>
-              Approved {date(t.approvedAt)}. Evidence: {t.evidence}
+              Approved <FullStops>{date(t.approvedAt)}</FullStops>
+              <FullStops>{". Evidence: "}</FullStops>
+              <FullStops>{t.evidence}</FullStops>
             </p>
           )}
         </article>
@@ -326,43 +375,62 @@ export function RegistryPage() {
   if (!record)
     return (
       <main className="page-shell">
-        <h1>The Hewge register.</h1>
-        <p role="status">{message}</p>
+        <h1>
+          <FullStops>{"The Hewge register."}</FullStops>
+        </h1>
+        <p role="status">
+          <FullStops>{message}</FullStops>
+        </p>
       </main>
     );
   const a = record.release;
   return (
     <main className="registry-page">
-      <span className="eyebrow">THE HEWGE REGISTER / No. {a.number}</span>
-      <h1>{a.name}.</h1>
+      <span className="eyebrow">
+        <FullStops>{"THE HEWGE REGISTER / No. "}</FullStops>
+        <FullStops>{a.number}</FullStops>
+      </span>
+      <h1>
+        <FullStops>{a.name}</FullStops>
+        <FullStops>{"."}</FullStops>
+      </h1>
       <img className="registry-image" src={a.image} alt={a.name} />
       <div className="registry-details">
         <span className="eyebrow">Registered original</span>
-        <h2>{a.certificateId}</h2>
+        <h2>
+          <FullStops>{a.certificateId}</FullStops>
+        </h2>
         <p>
-          {a.artistName || "Artist undisclosed"} ·{" "}
-          {a.material || "Material undisclosed"} · Size {a.size}
+          <FullStops>{a.artistName || "Artist undisclosed"}</FullStops> ·{" "}
+          <FullStops>{a.material || "Material undisclosed"}</FullStops> · Size{" "}
+          <FullStops>{a.size}</FullStops>
         </p>
         <p>
           Registered owner:{" "}
           <strong>
-            {a.publicOwner?.anonymous
-              ? "anonymous bidder"
-              : a.publicOwner?.name || "anonymous bidder"}
+            <FullStops>
+              {a.publicOwner?.anonymous
+                ? "anonymous bidder"
+                : a.publicOwner?.name || "anonymous bidder"}
+            </FullStops>
           </strong>
         </p>
         <p>
-          This page confirms a Hewge record. It cannot authenticate the physical
-          garment on its own. Match the original and its artist-signed
-          certificate with Hewge.
+          <FullStops>
+            {
+              "This page confirms a Hewge record. It cannot authenticate the physical garment on its own. Match the original and its artist-signed certificate with Hewge."
+            }
+          </FullStops>
         </p>
         <ol>
           {record.history.map((e: any, i: number) => (
             <li key={i}>
-              {date(e.at)} ·{" "}
-              {e.kind === "registered"
-                ? "First registration"
-                : "Ownership transfer approved by Hewge"}
+              <FullStops>{date(e.at)}</FullStops> ·{" "}
+              <FullStops>
+                {e.kind === "registered"
+                  ? "First registration"
+                  : "Ownership transfer approved by Hewge"}
+              </FullStops>
             </li>
           ))}
         </ol>

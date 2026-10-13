@@ -27,12 +27,20 @@ import {
 } from "../shared/auction";
 import { sizes, piece } from "../shared/catalog";
 import { ownershipRegistry } from "./ownership";
+import { membershipService } from "./membership";
 
 const db = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
   marshallOptions: { removeUndefinedValues: true },
 });
 const TableName = process.env.AUCTION_TABLE!;
 const registry = ownershipRegistry(db, TableName);
+const membership = membershipService(
+  db,
+  new SESv2Client({}),
+  TableName,
+  process.env.TABLE_NAME!,
+  process.env.SITE_URL!,
+);
 const verifier = process.env.USER_POOL_ID
   ? CognitoJwtVerifier.create({
       userPoolId: process.env.USER_POOL_ID,
@@ -237,11 +245,20 @@ async function announce(a: any) {
     cursor = r.LastEvaluatedKey;
   } while (cursor);
   const recipients = new Map<string, any>();
-  for (const g of guests)
-    if (g.expiresAt > Date.now() / 1000) recipients.set(g.email, g);
   for (const p of profiles) {
     if (p.releaseConsent) recipients.set(p.email, p);
-    else recipients.delete(p.email);
+  }
+  const profilesByEmail = new Map(profiles.map((p) => [p.email, p]));
+  for (const g of guests) {
+    if (g.emailVerified !== true || g.expiresAt <= Date.now() / 1000) continue;
+    const p = profilesByEmail.get(g.email);
+    const profileConsentAt =
+      typeof p?.consentAt === "string"
+        ? Date.parse(p.consentAt)
+        : p?.consentAt || 0;
+    if (p && profileConsentAt > g.consentAt) continue;
+    if (g.releaseConsent === true) recipients.set(g.email, { ...p, ...g });
+    else recipients.delete(g.email);
   }
   for (const [email, p] of recipients) {
     if (p.sizes?.length && !p.sizes.includes(a.size)) continue;
@@ -270,10 +287,16 @@ async function tick() {
     await settle(a);
     if (process.env.EMAIL_ENABLED === "true") await announce(a);
   }
+  const queued = await index("MAIL");
+  await membership.sendQueued(queued);
   if (process.env.EMAIL_ENABLED !== "true") return;
   const ses = new SESv2Client({});
-  for (const mail of (await index("MAIL")).filter(
-    (m) => m.status === "pending" && m.attempts < 5,
+  for (const mail of queued.filter(
+    (m) =>
+      m.kind !== "membership" &&
+      m.expiresAt > Date.now() / 1000 &&
+      m.status === "pending" &&
+      m.attempts < 5,
   )) {
     // Claim before delivery. Ambiguous sends stay 'sending' for owner review, never blindly duplicate a winner email.
     try {
@@ -299,6 +322,9 @@ async function tick() {
       const sent = await ses.send(
         new SendEmailCommand({
           FromEmailAddress: `HEWGE <hello@hewge.design>`,
+          ...(process.env.EMAIL_CONFIGURATION_SET
+            ? { ConfigurationSetName: process.env.EMAIL_CONFIGURATION_SET }
+            : {}),
           Destination: { ToAddresses: [mail.email] },
           Content: {
             Simple: {
@@ -698,40 +724,20 @@ export async function handler(event: any) {
         });
       throw e;
     }
-    if (path === "/waitlist" || path === "/waitlist/remove") {
-      if (body.website) return response(200, { ok: true });
-      const email = clean(body.email, 254).toLowerCase();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-        return response(400, { message: "Enter a valid email." });
-      const pk = `EMAIL#${hash(email)}`;
-      if (path === "/waitlist/remove") {
-        await db.send(
-          new DeleteCommand({
-            TableName: process.env.TABLE_NAME!,
-            Key: { pk },
-          }),
-        );
-        return response(200, { ok: true });
-      }
-      if (body.consent !== true)
-        return response(400, { message: "Please agree to release emails." });
-      const interests = Array.isArray(body.sizes)
-        ? body.sizes.filter((s: string) => sizes.includes(s as any))
-        : [];
-      await db.send(
-        new PutCommand({
-          TableName: process.env.TABLE_NAME!,
-          Item: {
-            pk,
-            email,
-            sizes: [...new Set(interests)],
-            consentVersion: "release-v2",
-            consentAt: new Date().toISOString(),
-            expiresAt: Math.floor(Date.now() / 1000) + 180 * 86400,
-          },
-        }),
+    if (
+      path === "/waitlist" ||
+      path === "/waitlist/remove" ||
+      path.startsWith("/membership/")
+    ) {
+      if (method !== "POST") return response(405, { message: "Use POST." });
+      const result = await membership.handle(
+        path,
+        body,
+        event.requestContext.http.sourceIp,
       );
-      return response(200, { ok: true });
+      return result
+        ? response(200, result)
+        : response(404, { message: "Not found." });
     }
     if (path === "/checkout")
       return response(409, {
@@ -749,6 +755,23 @@ export async function handler(event: any) {
       return response(200, await registry.handle(path, body, user));
     if (path === "/me" && method === "GET") {
       const profile = await get(`USER#${user.id}`, "PROFILE");
+      const member = (
+        await db.send(
+          new GetCommand({
+            TableName: process.env.TABLE_NAME!,
+            Key: { pk: `EMAIL#${hash(user.email.toLowerCase())}` },
+            ConsistentRead: true,
+          }),
+        )
+      ).Item;
+      const preferences =
+        member?.emailVerified && member.expiresAt > Date.now() / 1000
+          ? member
+          : {};
+      const profileConsentAt =
+        typeof profile?.consentAt === "string"
+          ? Date.parse(profile.consentAt)
+          : profile?.consentAt || 0;
       const auctions = (await index("AUCTIONS"))
         .filter(
           (a) =>
@@ -764,7 +787,15 @@ export async function handler(event: any) {
           fulfillment: a.fulfillment || {},
         }));
       return response(200, {
-        profile: profile || { email: user.email, sizes: [] },
+        profile: {
+          ...preferences,
+          ...profile,
+          email: user.email,
+          sizes: profile?.sizes || preferences.sizes || [],
+          ...(preferences.consentAt >= profileConsentAt
+            ? { releaseConsent: preferences.releaseConsent }
+            : {}),
+        },
         admin: user.admin,
         auctions,
         transfers: await registry.forUser(user),
@@ -818,7 +849,12 @@ export async function handler(event: any) {
             phone: clean(body.phone, 40),
             about: clean(body.about, 600),
             releaseConsent: body.releaseConsent === true,
-            consentAt: body.releaseConsent ? new Date().toISOString() : null,
+            consentAt:
+              old?.releaseConsent === (body.releaseConsent === true) &&
+              old?.consentAt
+                ? old.consentAt
+                : Date.now(),
+            emailVerified: true,
             createdAt: old?.createdAt || Date.now(),
             updatedAt: Date.now(),
           },
@@ -992,6 +1028,8 @@ export async function handler(event: any) {
         settings: settings || { cadence: "individual" },
         paymentsEnabled: process.env.CHECKOUT_ENABLED === "true",
         emailEnabled: process.env.EMAIL_ENABLED === "true",
+        verificationEmailEnabled: await membership.deliveryEnabled(),
+        smsEnabled: false,
       });
     }
     if (path === "/admin/settings") {

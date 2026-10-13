@@ -6,6 +6,7 @@ const mock = vi.hoisted(() => ({
   retrieve: vi.fn(),
   expire: vi.fn(),
   construct: vi.fn(),
+  mail: vi.fn(),
 }));
 vi.mock("@aws-sdk/lib-dynamodb", async () => {
   const actual = await vi.importActual<any>("@aws-sdk/lib-dynamodb");
@@ -17,6 +18,15 @@ vi.mock("@aws-sdk/lib-dynamodb", async () => {
 vi.mock("aws-jwt-verify", () => ({
   CognitoJwtVerifier: { create: () => ({ verify: mock.verify }) },
 }));
+vi.mock("@aws-sdk/client-sesv2", async () => {
+  const actual = await vi.importActual<any>("@aws-sdk/client-sesv2");
+  return {
+    ...actual,
+    SESv2Client: class {
+      send = mock.mail;
+    },
+  };
+});
 vi.mock("@aws-sdk/client-secrets-manager", () => ({
   SecretsManagerClient: class {
     send() {
@@ -88,12 +98,21 @@ beforeEach(() => {
   vi.stubEnv("STRIPE_SECRET_ARN", "test");
   current = { ...auction };
   profile = { sizes: ["M"], country: "CH" };
+  mock.mail.mockResolvedValue({
+    ProductionAccessEnabled: false,
+    SendingEnabled: true,
+  });
   mock.verify.mockResolvedValue({
     sub: "collector",
     email: "collector@example.invalid",
     email_verified: true,
   });
   mock.send.mockImplementation(async (cmd: any) => {
+    if (
+      cmd.constructor.name === "GetCommand" &&
+      cmd.input.TableName === "legacy"
+    )
+      return {};
     if (cmd.constructor.name === "GetCommand")
       return { Item: cmd.input.Key.pk.startsWith("USER#") ? profile : current };
     if (cmd.constructor.name === "QueryCommand")
@@ -130,7 +149,7 @@ describe("platform access and bidding", () => {
     expect(((await handler(event("/checkout"))) as any).statusCode).toBe(409);
     expect(((await handler(event("/bid"))) as any).statusCode).toBe(409);
   });
-  it("requires explicit subscriber consent and preserves size interest", async () => {
+  it("requires consent and leaves an email-only request unverified", async () => {
     expect(
       (
         (await handler(
@@ -152,7 +171,9 @@ describe("platform access and bidding", () => {
     const put = mock.send.mock.calls
       .map((c) => c[0])
       .find((c) => c.constructor.name === "PutCommand");
-    expect(put.input.Item.sizes).toEqual(["M"]);
+    expect(put.input.Item.sizes).toEqual([]);
+    expect(put.input.Item.emailVerified).toBe(false);
+    expect(put.input.Item.releaseConsent).toBe(false);
     expect(put.input.Item.email).toBe("hello@example.invalid");
   });
   it("prevents the seller bidding on their own piece", async () => {
@@ -448,5 +469,103 @@ describe("public release privacy", () => {
       ((await handler(event("/registry/toucan-001", {}, "GET"))) as any)
         .statusCode,
     ).toBe(404);
+  });
+});
+
+describe("release audience consent", () => {
+  it("excludes pending members and applies the latest verified opt-in or opt-out", async () => {
+    vi.stubEnv("EMAIL_ENABLED", "true");
+    const until = Math.floor(Date.now() / 1000) + 3600;
+    const profiles = [
+      { email: "left@example.invalid", releaseConsent: true, consentAt: 10 },
+      {
+        email: "rejoined@example.invalid",
+        releaseConsent: true,
+        consentAt: 30,
+      },
+      {
+        email: "account-optout@example.invalid",
+        releaseConsent: false,
+        consentAt: 30,
+      },
+    ];
+    const guests = [
+      {
+        email: "pending@example.invalid",
+        emailVerified: false,
+        releaseConsent: true,
+        consentAt: 20,
+        expiresAt: until,
+      },
+      {
+        email: "expired@example.invalid",
+        emailVerified: true,
+        releaseConsent: true,
+        consentAt: 20,
+        expiresAt: 1,
+      },
+      {
+        email: "left@example.invalid",
+        emailVerified: true,
+        releaseConsent: false,
+        consentAt: 20,
+        expiresAt: until,
+      },
+      {
+        email: "rejoined@example.invalid",
+        emailVerified: true,
+        releaseConsent: false,
+        consentAt: 20,
+        expiresAt: until,
+      },
+      {
+        email: "account-optout@example.invalid",
+        emailVerified: true,
+        releaseConsent: true,
+        consentAt: 20,
+        expiresAt: until,
+      },
+      {
+        email: "member@example.invalid",
+        emailVerified: true,
+        releaseConsent: true,
+        consentAt: 20,
+        expiresAt: until,
+        sizes: ["M"],
+      },
+      {
+        email: "wrong-size@example.invalid",
+        emailVerified: true,
+        releaseConsent: true,
+        consentAt: 20,
+        expiresAt: until,
+        sizes: ["XL"],
+      },
+    ];
+    mock.send.mockImplementation(async (cmd: any) => {
+      if (cmd.constructor.name === "ScanCommand") return { Items: guests };
+      if (cmd.constructor.name === "QueryCommand") {
+        const kind = Object.values(cmd.input.ExpressionAttributeValues)[0];
+        return {
+          Items:
+            kind === "AUCTIONS"
+              ? [current]
+              : kind === "COLLECTORS"
+                ? profiles
+                : [],
+        };
+      }
+      return {};
+    });
+    await handler({ source: "aws.events" });
+    const recipients = mock.send.mock.calls
+      .map(([c]) => c.input.Item)
+      .filter((i) => i?.sk === "OUTBOX")
+      .map((i) => i.email)
+      .sort();
+    expect(recipients).toEqual([
+      "member@example.invalid",
+      "rejoined@example.invalid",
+    ]);
   });
 });

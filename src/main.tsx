@@ -10,98 +10,16 @@ import {
   MoveUpRight,
   Pause,
   Play,
-  Check,
 } from "lucide-react";
 import { piece, type Catalog } from "../shared/catalog";
-import { getCatalog, joinList, leaveList } from "./api";
+import { getCatalog, leaveList } from "./api";
 import "./styles.css";
 import { Experience } from "./experience";
-import { sizes } from "../shared/catalog";
+import { MembershipSignup as Signup } from "./membership";
+import { PieceTitle, FullStops } from "./typography";
 
 function Wordmark({ className = "" }: { className?: string }) {
   return <span className={`wordmark ${className}`}>HEWGE</span>;
-}
-function Signup({ compact = false }: { compact?: boolean }) {
-  const [state, setState] = useState<"idle" | "pending" | "success" | "error">(
-    "idle",
-  );
-  const [message, setMessage] = useState("");
-  async function submit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    setState("pending");
-    try {
-      await joinList(
-        String(form.get("email")),
-        String(form.get("website")),
-        form.getAll("sizes").map(String),
-      );
-      setState("success");
-    } catch (error) {
-      setState("error");
-      setMessage(error instanceof Error ? error.message : "Please try again.");
-    }
-  }
-  return state === "success" ? (
-    <div className="signup-success" role="status">
-      <Check size={24} />
-      <div>
-        You’re on the list.<small>Release updates will arrive by email.</small>
-      </div>
-    </div>
-  ) : (
-    <form onSubmit={submit} className={`signup ${compact ? "compact" : ""}`}>
-      <label
-        className="sr-only"
-        htmlFor={compact ? "email-modal" : "email-footer"}
-      >
-        Your email address
-      </label>
-      <div className="email-line">
-        <input
-          id={compact ? "email-modal" : "email-footer"}
-          name="email"
-          type="email"
-          placeholder="Your email address"
-          autoComplete="email"
-          required
-          maxLength={254}
-        />
-        <button disabled={state === "pending"} aria-label="Get the next drop">
-          {state === "pending" ? (
-            <span className="spinner" />
-          ) : (
-            <ArrowRight size={26} />
-          )}
-        </button>
-      </div>
-      <fieldset className="signup-sizes">
-        <legend>Your sizes · optional</legend>
-        <div className="size-options">
-          {sizes.map((s) => (
-            <label key={s}>
-              <input type="checkbox" name="sizes" value={s} />
-              <span>{s}</span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
-      <label className="honeypot" aria-hidden="true">
-        Website
-        <input name="website" tabIndex={-1} autoComplete="off" />
-      </label>
-      <p className="form-note">
-        By joining, you agree to receive Hewge release emails.
-        <br />
-        Leave whenever you like. <a href="/privacy">Privacy</a>
-      </p>
-      {state === "error" && (
-        <p role="alert" className="form-error">
-          {message}
-        </p>
-      )}
-    </form>
-  );
 }
 function App() {
   const [catalog, setCatalog] = useState<Catalog>({
@@ -180,10 +98,12 @@ function App() {
   }
   async function remove(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setRemoveMessage("Removing…");
+    setRemoveMessage("Requesting confirmation…");
     try {
       await leaveList(String(new FormData(e.currentTarget).get("email")));
-      setRemoveMessage("Your email has been removed, if it was on the list.");
+      setRemoveMessage(
+        "Check your email to confirm removal. If delivery is not yet available, your request stays pending.",
+      );
     } catch (e) {
       setRemoveMessage(e instanceof Error ? e.message : "Please try again.");
     }
@@ -208,17 +128,20 @@ function App() {
           <a href="/archive">Archive</a>
         </nav>
         <button className="header-cta" onClick={() => setModal("signup")}>
-          Get the next drop <ArrowUpRight size={17} />
+          Join Hewge <ArrowUpRight size={17} />
         </button>
       </header>
       <main>
         {purchase && (
           <div className="purchase-banner" role="status">
-            {purchase === "success"
-              ? "Thank you. Your payment confirmation and receipt come from Stripe."
-              : "Checkout closed. Your piece may remain reserved briefly."}
+            <FullStops>
+              {purchase === "success"
+                ? "Thank you. Your payment confirmation and receipt come from Stripe."
+                : "Checkout closed. Your piece may remain reserved briefly."}
+            </FullStops>
           </div>
         )}
+
         <section
           className="hero"
           aria-label="Hewge. One-of-a-kind artist originals."
@@ -228,7 +151,9 @@ function App() {
           }
         >
           <div className="hero-topline">
-            <span>Artist originals.</span>
+            <span>
+              <FullStops>{"Artist originals."}</FullStops>
+            </span>
             <span className="live-dot">First edition coming soon</span>
           </div>
           <div className="hero-word" aria-hidden="true">
@@ -245,11 +170,13 @@ function App() {
             />
           </div>
           <div className="hero-left">
-            <span className="eyebrow">Piece No. 001</span>
+            <span className="eyebrow">
+              <FullStops>{"Piece No. 001"}</FullStops>
+            </span>
             <h1>
               After
               <br />
-              Hours.
+              <FullStops>{"Hours."}</FullStops>
             </h1>
             <a className="text-link" href="#edition">
               View the piece <ArrowUpRight size={19} />
@@ -262,14 +189,16 @@ function App() {
               <span>OF ONE</span>
             </div>
             <span className="vertical-label">
-              Signed. Singular. Unrepeatable.
+              <FullStops>{"Signed. Singular. Unrepeatable."}</FullStops>
             </span>
           </div>
           <div className="hero-bottom">
             <span>
-              Art you can wear.
+              <FullStops>{"Art you can wear."}</FullStops>
               <br />
-              <em>Edition of one.</em>
+              <em>
+                <FullStops>{"Edition of one."}</FullStops>
+              </em>
             </span>
             <a href="#edition" className="explore">
               Explore the first edition <ArrowDown size={19} />
@@ -346,7 +275,7 @@ function App() {
                     aria-pressed={view === value}
                     onClick={() => setView(value)}
                   >
-                    {label}
+                    <FullStops>{label}</FullStops>
                   </button>
                 ))}
               </div>
@@ -357,12 +286,10 @@ function App() {
             <div className="product-info reveal">
               <span className="eyebrow status">
                 <i />
-                {statusText}
+                <FullStops>{statusText}</FullStops>
               </span>
-              <h2>
-                After
-                <br />
-                <span>Hours.</span>
+              <h2 className="piece-title">
+                <PieceTitle name="After Hours" />
               </h2>
               <p className="product-sub">The Toucan Edition</p>
               <p className="price">
@@ -374,29 +301,40 @@ function App() {
                 <span>Never repeated</span>
               </div>
               <p className="product-description">
-                A very good night. A very bad morning.
+                <FullStops>
+                  {"A very good night. A very bad morning."}
+                </FullStops>
               </p>
               <div className="size-line">
                 <span>
-                  {catalog.size ? `Size ${catalog.size}` : "One unique piece"}
+                  <FullStops>
+                    {catalog.size ? `Size ${catalog.size}` : "One unique piece"}
+                  </FullStops>
                 </span>
                 <span>
-                  {catalog.size
-                    ? "Only one in this size."
-                    : "Size revealed at release."}
+                  <FullStops>
+                    {catalog.size
+                      ? "Only one in this size."
+                      : "Size revealed at release."}
+                  </FullStops>
                 </span>
               </div>
               <a className="button button-dark" href="/pieces/after-hours">
                 Explore the piece <ArrowUpRight size={22} />
               </a>
-              <p className="under-button">One original. Highest bid wins.</p>
+              <p className="under-button">
+                <FullStops>{"One original. Highest bid wins."}</FullStops>
+              </p>
               <details>
                 <summary>
                   The piece <Plus size={17} />
                 </summary>
                 <p>
-                  A men’s shirt, made as a single unique work and signed by its
-                  artist. No second run. No identical shirt in another size.
+                  <FullStops>
+                    {
+                      "A men’s shirt, made as a single unique work and signed by its artist. No second run. No identical shirt in another size."
+                    }
+                  </FullStops>
                 </p>
               </details>
               <details>
@@ -404,10 +342,11 @@ function App() {
                   The details <Plus size={17} />
                 </summary>
                 <p>
-                  A short-sleeved, open-collar silhouette. A whole night out
-                  unfolds across its illustrated panels. The images shown are
-                  the approved design mockup; final measurements and artist
-                  details will be published before release.
+                  <FullStops>
+                    {
+                      "A short-sleeved, open-collar silhouette. A whole night out unfolds across its illustrated panels. The images shown are the approved design mockup; final measurements and artist details will be published before release."
+                    }
+                  </FullStops>
                 </p>
               </details>
             </div>
@@ -420,20 +359,22 @@ function App() {
               <h2>
                 LOOK
                 <br />
-                <span>CLOSER.</span>
+                <span>
+                  <FullStops>{"CLOSER."}</FullStops>
+                </span>
               </h2>
             </div>
             <span className="small-copy">
               After Hours
               <br />
-              Three details.
+              <FullStops>{"Three details."}</FullStops>
             </span>
           </div>
           <div className="art-grid">
             {[
-              { src: "front-right", label: "01 — The invitation" },
-              { src: "front-left", label: "02 — After dark" },
-              { src: "back", label: "03 — The morning after" },
+              { src: "front-right", label: "The invitation" },
+              { src: "front-left", label: "After dark" },
+              { src: "back", label: "The morning after" },
             ].map((art, i) => (
               <button
                 className={`art-card art-card-${i} reveal`}
@@ -443,7 +384,7 @@ function App() {
                 <div className="art-image">
                   <img
                     src={`/images/${art.src}.webp`}
-                    alt={art.label.slice(5) + " — original toucan artwork"}
+                    alt={art.label + " — original toucan artwork"}
                     loading="lazy"
                   />
                   <span className="art-expand">
@@ -451,7 +392,7 @@ function App() {
                   </span>
                 </div>
                 <span className="art-caption">
-                  {art.label}
+                  <FullStops>{art.label}</FullStops>
                   <Plus size={16} />
                 </span>
               </button>
@@ -464,24 +405,26 @@ function App() {
             <span className="eyebrow">Always 1 / 1</span>
           </div>
           <h2 className="reveal">
-            NO COPIES.
+            <FullStops>{"NO COPIES."}</FullStops>
             <br />
-            NO ENCORES.
+            <FullStops>{"NO ENCORES."}</FullStops>
           </h2>
           <div className="manifesto-bottom">
             <span className="big-star" aria-hidden="true">
               ✳
             </span>
             <p>
-              An original shirt.
+              <FullStops>{"An original shirt."}</FullStops>
               <br />
-              Signed by its artist.
+              <FullStops>{"Signed by its artist."}</FullStops>
               <br />
-              Made once.
+              <FullStops>{"Made once."}</FullStops>
             </p>
             <span className="manifesto-signature">
               <Wordmark />
-              <small>Art, out in the world.</small>
+              <small>
+                <FullStops>{"Art, out in the world."}</FullStops>
+              </small>
             </span>
           </div>
         </section>
@@ -495,18 +438,22 @@ function App() {
             <span className="guest-sticker">
               You’re
               <br />
-              invited.
+              <FullStops>{"invited."}</FullStops>
               <ArrowUpRight size={25} />
             </span>
           </div>
           <div className="guest-content reveal">
-            <span className="eyebrow">Release emails</span>
+            <span className="eyebrow">Membership</span>
             <h2>
               NEXT
               <br />
-              DROP.
+              <FullStops>{"DROP."}</FullStops>
             </h2>
-            <p>One email when the next original drops. No account needed.</p>
+            <p>
+              <FullStops>
+                {"Verify your email for membership and release access."}
+              </FullStops>
+            </p>
             <Signup />
           </div>
         </section>
@@ -517,7 +464,7 @@ function App() {
             <Wordmark />
           </a>
           <a href="#first-access">
-            Get the next drop <ArrowUpRight size={17} />
+            Join Hewge <ArrowUpRight size={17} />
           </a>
         </div>
         <div className="footer-bottom">
@@ -544,7 +491,7 @@ function App() {
             ? "Artwork detail"
             : modal === "privacy"
               ? "Privacy and email preferences"
-              : "Join the Hewge guest list"
+              : "Join Hewge"
         }
         className={zoom ? "modal image-modal" : "modal"}
         onCancel={close}
@@ -568,24 +515,31 @@ function App() {
         ) : modal === "privacy" ? (
           <div className="privacy-content">
             <span className="eyebrow">Your details, kept simple</span>
-            <h2>Privacy.</h2>
+            <h2>
+              <FullStops>{"Privacy."}</FullStops>
+            </h2>
             <p>
-              Hewge, Switzerland, uses the email you submit only for Hewge
-              launch and new-piece announcements. Joining is optional. We don’t
-              sell your details or use advertising trackers.
+              <FullStops>
+                {
+                  "Hewge uses your email to verify membership and send release announcements after confirmation. Joining is optional. We don’t sell your details or use advertising trackers."
+                }
+              </FullStops>
             </p>
             <p>
-              Your email and consent date are stored with AWS in Stockholm,
-              Sweden. Unused signups expire after 180 days. The website and its
-              API process technical request information to operate the site and
-              prevent abuse.
+              <FullStops>
+                {
+                  "Membership details are stored with AWS in Stockholm, Sweden. Unconfirmed requests expire after 48 hours; verified membership records expire after 180 days. The website processes technical request information to operate the site and prevent abuse."
+                }
+              </FullStops>
             </p>
             <p>
-              You can remove your address below at any time. Once checkout
-              opens, Stripe will process payments under its own privacy policy;
-              card details never reach this website.
+              <FullStops>
+                {
+                  "Request a confirmation link below to leave release alerts. You can also change your preferences through your membership link. Read the full privacy notice for account data and deletion."
+                }
+              </FullStops>
             </p>
-            <h3>Leave the guest list</h3>
+            <h3>Leave release alerts</h3>
             <form onSubmit={remove} className="remove-form">
               <label htmlFor="remove-email">Email address</label>
               <input
@@ -596,20 +550,24 @@ function App() {
                 placeholder="you@example.com"
               />
               <button className="button button-dark">
-                Remove my email <Minus size={17} />
+                Leave release alerts <Minus size={17} />
               </button>
             </form>
-            <p role="status">{removeMessage}</p>
+            <p role="status">
+              <FullStops>{removeMessage}</FullStops>
+            </p>
           </div>
         ) : (
           <div className="signup-modal-content">
-            <span className="eyebrow">Release emails</span>
+            <span className="eyebrow">Membership</span>
             <h2>
               YOU’RE
               <br />
-              INVITED.
+              <FullStops>{"INVITED."}</FullStops>
             </h2>
-            <p>Hear when the next piece drops.</p>
+            <p>
+              <FullStops>{"Start with your email."}</FullStops>
+            </p>
             <Signup compact />
           </div>
         )}

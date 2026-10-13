@@ -1,14 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { ArrowUpRight, ArrowRight, Check, Share2 } from "lucide-react";
-import {
-  api,
-  cognito,
-  getToken,
-  getReleases,
-  joinList,
-  signIn,
-  signOut,
-} from "./api";
+import { api, cognito, getToken, getReleases, signIn, signOut } from "./api";
 import {
   minimumBid,
   preview,
@@ -24,6 +16,8 @@ import {
   RegistryPage,
 } from "./ownership";
 import "./experience.css";
+import { PieceTitle, FullStops } from "./typography";
+import { MembershipSignup, MembershipPage } from "./membership";
 
 const money = (n: number) =>
   `CHF ${new Intl.NumberFormat("de-CH", { maximumFractionDigits: 2 }).format(n / 100)}`;
@@ -50,65 +44,21 @@ export function SiteHeader() {
         <a href="/archive">Archive</a>
       </nav>
       <a className="header-cta" href="/#first-access">
-        Get the next drop <ArrowUpRight size={17} />
+        Join Hewge <ArrowUpRight size={17} />
       </a>
     </header>
   );
 }
 function Subscribe() {
-  const [message, setMessage] = useState("");
-  const [done, setDone] = useState(false);
-  const [busy, setBusy] = useState(false);
   return (
     <div className="subscribe-box">
-      <h3>Get the next drop.</h3>
+      <h3>
+        <FullStops>{"Join Hewge."}</FullStops>
+      </h3>
       <p>
-        Release emails.
-        <br />
-        No account needed.
+        <FullStops>{"Verify your email for release access."}</FullStops>
       </p>
-      {done ? (
-        <p role="status">You’re on the list. We’ll let you know.</p>
-      ) : (
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            setBusy(true);
-            try {
-              const f = new FormData(e.currentTarget);
-              await joinList(String(f.get("email")), String(f.get("website")));
-              setDone(true);
-            } catch (e) {
-              setMessage(errorText(e));
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          <div className="email-line">
-            <input
-              name="email"
-              type="email"
-              aria-label="Email for release invitations"
-              placeholder="Your email address"
-              required
-              maxLength={254}
-            />
-            <button aria-label="Subscribe to the next drop" disabled={busy}>
-              <ArrowRight size={24} />
-            </button>
-          </div>
-          <label className="honeypot" aria-hidden="true">
-            Website
-            <input name="website" tabIndex={-1} autoComplete="off" />
-          </label>
-          <small>
-            Subscribe to Hewge release emails. Leave anytime.{" "}
-            <a href="/privacy">Privacy</a>
-          </small>
-          <p role="status">{message}</p>
-        </form>
-      )}
+      <MembershipSignup />
     </div>
   );
 }
@@ -124,7 +74,9 @@ function Footer() {
         </a>
       </div>
       <div className="footer-bottom">
-        <span>Switzerland · One of one.</span>
+        <span>
+          <FullStops>{"Switzerland · One of one."}</FullStops>
+        </span>
         <a
           href="https://www.instagram.com/hewge.design/"
           target="_blank"
@@ -192,35 +144,47 @@ function Countdown({ release }: { release: Release }) {
     return (
       <div className="countdown">
         <span>Next release</span>
-        <strong>To be announced.</strong>
+        <strong>
+          <FullStops>{"To be announced."}</FullStops>
+        </strong>
       </div>
     );
   const seconds = Math.max(0, Math.floor((target - now - offset) / 1000));
   return (
     <div className="countdown">
       <span>
-        {release.status === "scheduled"
-          ? "Reveals in"
-          : seconds
-            ? "Bidding closes in"
-            : "Bidding closed"}
+        <FullStops>
+          {release.status === "scheduled"
+            ? "Reveals in"
+            : seconds
+              ? "Bidding closes in"
+              : "Bidding closed"}
+        </FullStops>
       </span>
       <strong>
-        {Math.floor(seconds / 86400)
-          .toString()
-          .padStart(2, "0")}
+        <FullStops>
+          {Math.floor(seconds / 86400)
+            .toString()
+            .padStart(2, "0")}
+        </FullStops>
         <i>d</i>{" "}
-        {Math.floor((seconds % 86400) / 3600)
-          .toString()
-          .padStart(2, "0")}
+        <FullStops>
+          {Math.floor((seconds % 86400) / 3600)
+            .toString()
+            .padStart(2, "0")}
+        </FullStops>
         <i>h</i>{" "}
-        {Math.floor((seconds % 3600) / 60)
-          .toString()
-          .padStart(2, "0")}
-        <i>m</i> {String(seconds % 60).padStart(2, "0")}
+        <FullStops>
+          {Math.floor((seconds % 3600) / 60)
+            .toString()
+            .padStart(2, "0")}
+        </FullStops>
+        <i>m</i> <FullStops>{String(seconds % 60).padStart(2, "0")}</FullStops>
         <i>s</i>
       </strong>
-      <small>{date(target)}</small>
+      <small>
+        <FullStops>{date(target)}</FullStops>
+      </small>
     </div>
   );
 }
@@ -249,7 +213,9 @@ export function Share({ release }: { release: Release }) {
       <button className="text-link" onClick={share}>
         Pass it on <Share2 size={16} />
       </button>
-      <small role="status">{message}</small>
+      <small role="status">
+        <FullStops>{message}</FullStops>
+      </small>
     </div>
   );
 }
@@ -297,41 +263,62 @@ function BidBox({
   return (
     <aside className="bid-box">
       <span className="eyebrow">
-        {release.status === "sold"
-          ? "Collected"
-          : release.status === "awaiting-payment"
-            ? "Winner selected"
-            : "A single original"}
+        <FullStops>
+          {release.status === "sold"
+            ? "Collected"
+            : release.status === "awaiting-payment"
+              ? "Winner selected"
+              : "A single original"}
+        </FullStops>
       </span>
       {!["sold", "awaiting-payment", "closed"].includes(release.status) && (
         <Countdown release={release} />
       )}
       <div className="bid-price">
-        <span>{release.highestBid ? "Highest bid" : "Opening bid"}</span>
-        <strong>{money(release.highestBid || release.openingBid)}</strong>
+        <span>
+          <FullStops>
+            {release.highestBid ? "Highest bid" : "Opening bid"}
+          </FullStops>
+        </span>
+        <strong>
+          <FullStops>
+            {money(release.highestBid || release.openingBid)}
+          </FullStops>
+        </strong>
       </div>
       <div className="bid-meta">
-        <span>{release.size ? `Size ${release.size}` : "Size at reveal"}</span>
         <span>
-          {release.bidCount} {release.bidCount === 1 ? "bid" : "bids"}
+          <FullStops>
+            {release.size ? `Size ${release.size}` : "Size at reveal"}
+          </FullStops>
+        </span>
+        <span>
+          {release.bidCount}{" "}
+          <FullStops>{release.bidCount === 1 ? "bid" : "bids"}</FullStops>
         </span>
         <span>1 / 1</span>
       </div>
       <p className="mystery-note">
-        {release.material || "Material undisclosed."}
-        {!release.artistName && " Artist undisclosed."}{" "}
-        {!release.identityRevealed &&
-          "You are bidding on the pictured garment; these details may be revealed after bidding."}
+        <FullStops>{release.material || "Material undisclosed."}</FullStops>
+        <FullStops>{!release.artistName && " Artist undisclosed."} </FullStops>
+        <FullStops>
+          {!release.identityRevealed &&
+            "You are bidding on the pictured garment; these details may be revealed after bidding."}
+        </FullStops>
       </p>
       {release.status === "sold" ? (
         <div className="owner-celebration">
           <span>Now belongs to</span>
           <strong>
-            {release.publicOwner?.anonymous
-              ? "anonymous bidder"
-              : release.publicOwner?.name || "anonymous bidder"}
+            <FullStops>
+              {release.publicOwner?.anonymous
+                ? "anonymous bidder"
+                : release.publicOwner?.name || "anonymous bidder"}
+            </FullStops>
           </strong>
-          <small>Edition of one.</small>
+          <small>
+            <FullStops>{"Edition of one."}</FullStops>
+          </small>
         </div>
       ) : enabled && release.status === "open" ? (
         getToken() ? (
@@ -364,31 +351,47 @@ function BidBox({
               />
             </label>
             <p className="fine-print">
-              Insured shipping: {money(release.shippingFee)}. Eligible
-              destinations and measurements below. Import charges may apply.
+              Insured shipping:{" "}
+              <FullStops>{money(release.shippingFee)}</FullStops>
+              <FullStops>
+                {
+                  ". Eligible destinations and measurements below. Import charges may apply."
+                }
+              </FullStops>
             </p>
             <label className="check-label">
-              <input type="checkbox" required /> I am 18 or over and accept the{" "}
-              <a href="/terms" target="_blank">
-                auction terms
-              </a>
-              . A winning bid commits me to pay.
+              <input type="checkbox" required />
+              <span>
+                {" "}
+                I am 18 or over and accept the{" "}
+                <a href="/terms" target="_blank">
+                  auction terms
+                </a>
+                <FullStops>{". A winning bid commits me to pay."}</FullStops>
+              </span>
             </label>
             {confirm && (
               <p className="confirm-bid">
-                Confirm {money(Math.round(Number(amount) * 100))} +{" "}
-                {money(release.shippingFee)} shipping. Payment due within{" "}
-                {release.paymentHours} hours if you win.{" "}
-                {!release.identityRevealed &&
-                  "Artist and material are undisclosed."}
+                Confirm{" "}
+                <FullStops>{money(Math.round(Number(amount) * 100))}</FullStops>{" "}
+                + <FullStops>{money(release.shippingFee)}</FullStops>
+                <FullStops>{" shipping. Payment due within"}</FullStops>{" "}
+                {release.paymentHours}
+                <FullStops>{" hours if you win."}</FullStops>{" "}
+                <FullStops>
+                  {!release.identityRevealed &&
+                    "Artist and material are undisclosed."}
+                </FullStops>
               </p>
             )}
             <button className="button button-dark" disabled={busy}>
-              {busy
-                ? "Submitting…"
-                : confirm
-                  ? "Confirm binding bid"
-                  : "Review bid"}
+              <FullStops>
+                {busy
+                  ? "Submitting…"
+                  : confirm
+                    ? "Confirm binding bid"
+                    : "Review bid"}
+              </FullStops>
               <ArrowRight size={18} />
             </button>
             {confirm && (
@@ -414,9 +417,11 @@ function BidBox({
         <Subscribe />
       )}
       <p role="status" className="form-message">
-        {message}
+        <FullStops>{message}</FullStops>
       </p>
-      <p className="fine-print">Bidding is free. Highest valid bid wins.</p>
+      <p className="fine-print">
+        <FullStops>{"Bidding is free. Highest valid bid wins."}</FullStops>
+      </p>
       <Share release={release} />
     </aside>
   );
@@ -429,11 +434,13 @@ function PiecePage() {
     return (
       <main className="page-shell">
         <h1>
-          {loading
-            ? "Loading the piece…"
-            : error
-              ? "The piece is temporarily unavailable."
-              : "Piece not found."}
+          <FullStops>
+            {loading
+              ? "Loading the piece…"
+              : error
+                ? "The piece is temporarily unavailable."
+                : "Piece not found."}
+          </FullStops>
         </h1>
         <a href="/archive">Explore the archive →</a>
       </main>
@@ -443,34 +450,46 @@ function PiecePage() {
       <div className="article-mast">
         <span>THE HEWGE JOURNAL</span>
         <span>
-          {release.opensAt ? weekLabel(release.opensAt) : "THE FIRST EDITION"}
+          <FullStops>
+            {release.opensAt ? weekLabel(release.opensAt) : "THE FIRST EDITION"}
+          </FullStops>
         </span>
-        <span>No. {release.number}</span>
+        <span>
+          <FullStops>{"No. "}</FullStops>
+          <FullStops>{release.number}</FullStops>
+        </span>
       </div>
       <section className="article-title">
         <span className="eyebrow">
-          {!release.designHidden && release.id === "toucan-001"
-            ? "A night out. An original."
-            : "Edition of one."}
+          <FullStops>
+            {!release.designHidden && release.id === "toucan-001"
+              ? "A night out. An original."
+              : "Edition of one."}
+          </FullStops>
         </span>
-        <h1>
-          {release.name}
-          <span>.</span>
+        <h1 className="piece-title">
+          <PieceTitle name={release.name} />
         </h1>
         <div className="article-deck">
           <p>
-            {!release.designHidden && release.id === "toucan-001"
-              ? "One very good night."
-              : "One original."}
+            <FullStops>
+              {!release.designHidden && release.id === "toucan-001"
+                ? "One very good night."
+                : "One original."}
+            </FullStops>
             <br />
-            {!release.designHidden && release.id === "toucan-001"
-              ? "One very bad morning."
-              : "Artist signed."}
+            <FullStops>
+              {!release.designHidden && release.id === "toucan-001"
+                ? "One very bad morning."
+                : "Artist signed."}
+            </FullStops>
           </p>
           <span>
-            {release.artistName
-              ? `A work by ${release.artistName}`
-              : "Artist to be announced."}
+            <FullStops>
+              {release.artistName
+                ? `A work by ${release.artistName}`
+                : "Artist to be announced."}
+            </FullStops>
           </span>
         </div>
       </section>
@@ -481,15 +500,20 @@ function PiecePage() {
             alt={`${release.name}, an original shirt`}
             fetchPriority="high"
           />
-          <span>THE ONLY ONE.</span>
+          <span>
+            <FullStops>{"THE ONLY ONE."}</FullStops>
+          </span>
         </div>
         <BidBox release={release} enabled={biddingEnabled} onBid={refresh} />
       </div>
+
       {error && (
         <p className="service-note" role="status">
-          Live updates unavailable. {error}
+          <FullStops>{"Live updates unavailable. "}</FullStops>
+          <FullStops>{error}</FullStops>
         </p>
       )}
+
       {release.story && (
         <section className="story-section">
           <div>
@@ -499,28 +523,39 @@ function PiecePage() {
                 <>
                   Some nights
                   <br />
-                  stay with you.
+                  <FullStops>{"stay with you."}</FullStops>
                 </>
               ) : (
-                <>About the piece.</>
+                <>
+                  <FullStops>{"About the piece."}</FullStops>
+                </>
               )}
             </h2>
           </div>
           <div>
-            <p className="story-lead">{release.story}</p>
+            <p className="story-lead">
+              <FullStops>{release.story}</FullStops>
+            </p>
             <p>
-              A single garment. Its own name. Its artist’s signature. No second
-              edition, in any size.
+              <FullStops>
+                {
+                  "A single garment. Its own name. Its artist’s signature. No second edition, in any size."
+                }
+              </FullStops>
             </p>
             {!release.designHidden && release.id === "toucan-001" && (
               <p className="image-note">
-                Shown here: the approved design mockup. Final garment
-                photography and measurements accompany the release.
+                <FullStops>
+                  {
+                    "Shown here: the approved design mockup. Final garment photography and measurements accompany the release."
+                  }
+                </FullStops>
               </p>
             )}
           </div>
         </section>
       )}
+
       {!release.designHidden && release.id === "toucan-001" && (
         <figure className="wide-art">
           <img
@@ -549,67 +584,93 @@ function PiecePage() {
           <span>
             BEHIND
             <br />
-            THE WORK.
+            <FullStops>{"THE WORK."}</FullStops>
           </span>
         </div>
         <div className="artist-copy">
           <span className="eyebrow">The artist</span>
-          <h2>{release.artistName || "To be announced."}</h2>
+          <h2>
+            <FullStops>{release.artistName || "To be announced."}</FullStops>
+          </h2>
           {release.artistName ? (
             <>
               <p className="artist-byline">
-                {[release.artistOrigin, release.artistPractice]
-                  .filter(Boolean)
-                  .join(" / ")}
+                <FullStops>
+                  {[release.artistOrigin, release.artistPractice]
+                    .filter(Boolean)
+                    .join(" / ")}
+                </FullStops>
               </p>
-              <p>{release.artistBiography}</p>
+              <p>
+                <FullStops>{release.artistBiography}</FullStops>
+              </p>
+
               {release.artistWorks && (
                 <>
                   <h3>Other works</h3>
-                  <p>{release.artistWorks}</p>
+                  <p>
+                    <FullStops>{release.artistWorks}</FullStops>
+                  </p>
                 </>
               )}
             </>
           ) : (
             <p>
-              {release.revealMode === "after-close"
-                ? "Artist and material announced after bidding closes."
-                : release.revealMode === "at-opening"
-                  ? "Artist and material announced when bidding opens."
-                  : "Artist and material details will appear here."}
+              <FullStops>
+                {release.revealMode === "after-close"
+                  ? "Artist and material announced after bidding closes."
+                  : release.revealMode === "at-opening"
+                    ? "Artist and material announced when bidding opens."
+                    : "Artist and material details will appear here."}
+              </FullStops>
             </p>
           )}
           <div className="garment-label">
             <span className="wordmark">HEWGE</span>
-            <strong>{release.name.toUpperCase()}</strong>
-            {release.artistName && <span>{release.artistName}</span>}
-            <small>ONE OF ONE / No. {release.number}</small>
+            <strong>
+              <FullStops>{release.name.toUpperCase()}</FullStops>
+            </strong>
+
+            {release.artistName && (
+              <span>
+                <FullStops>{release.artistName}</FullStops>
+              </span>
+            )}
+
+            <small>
+              <FullStops>{"ONE OF ONE / No. "}</FullStops>
+              <FullStops>{release.number}</FullStops>
+            </small>
           </div>
         </div>
       </section>
       <section className="ownership-story">
         <span className="eyebrow">With the piece</span>
-        <h2>Yours.</h2>
+        <h2>
+          <FullStops>{"Yours."}</FullStops>
+        </h2>
         <div className="ownership-grid">
           <p>
-            Artist-signed certificate.
+            <FullStops>{"Artist-signed certificate."}</FullStops>
             <br />
-            Numbered ownership card.
+            <FullStops>{"Numbered ownership card."}</FullStops>
             <br />
-            Holographic seal.
+            <FullStops>{"Holographic seal."}</FullStops>
             <br />
-            One original.
+            <FullStops>{"One original."}</FullStops>
           </p>
           <p>
-            Choose to be named in the archive.
+            <FullStops>{"Choose to be named in the archive."}</FullStops>
             <br />
-            Or stay an anonymous bidder.
+            <FullStops>{"Or stay an anonymous bidder."}</FullStops>
           </p>
         </div>
+
         {release.certificateId && (
           <p className="certificate-code">
             <a href={`/registry/${release.id}`}>
-              Registered original: {release.certificateId} →
+              Registered original:{" "}
+              <FullStops>{release.certificateId}</FullStops> →
             </a>
           </p>
         )}
@@ -620,10 +681,14 @@ function PiecePage() {
             The fit & the piece <span>+</span>
           </summary>
           <p>
-            {release.measurements ||
-              "The exact size and garment measurements will be published before bidding opens."}{" "}
-            {release.material || "Material announced at reveal."} One garment
-            only. Artist signed.
+            <FullStops>
+              {release.measurements ||
+                "The exact size and garment measurements will be published before bidding opens."}{" "}
+            </FullStops>
+            <FullStops>
+              {release.material || "Material announced at reveal."}
+            </FullStops>
+            <FullStops>{" One garment only. Artist signed."}</FullStops>
           </p>
         </details>
         <details>
@@ -631,14 +696,20 @@ function PiecePage() {
             Bidding & payment <span>+</span>
           </summary>
           <p>
-            Free to bid. Highest valid bid wins. Equal bids cannot displace an
-            earlier accepted bid. The countdown follows the published closing
-            time, with no hidden extensions. The winning bidder has{" "}
-            {release.paymentHours} hours to pay. If an offer expires unpaid,
-            Hewge may offer the shirt to the next eligible bidder at that
-            bidder’s own highest bid, after resolving the original offer.
-            Ownership is confirmed only after payment.{" "}
-            <a href="/terms">Read the full terms.</a>
+            <FullStops>
+              {
+                "Free to bid. Highest valid bid wins. Equal bids cannot displace an earlier accepted bid. The countdown follows the published closing time, with no hidden extensions. The winning bidder has"
+              }
+            </FullStops>{" "}
+            {release.paymentHours}
+            <FullStops>
+              {
+                " hours to pay. If an offer expires unpaid, Hewge may offer the shirt to the next eligible bidder at that bidder’s own highest bid, after resolving the original offer. Ownership is confirmed only after payment."
+              }
+            </FullStops>{" "}
+            <a href="/terms">
+              <FullStops>{"Read the full terms."}</FullStops>
+            </a>
           </p>
         </details>
         <details>
@@ -646,13 +717,19 @@ function PiecePage() {
             Insured, from Switzerland <span>+</span>
           </summary>
           <p>
-            Insured shipping. Allow up to two weeks after payment, subject to
-            the destination and customs. Destinations subject to restrictions or
-            unavailable insurance are excluded.{" "}
-            {release.countries?.length
-              ? `This release ships to: ${release.countries.join(", ")}. Shipping ${money(release.shippingFee)}.`
-              : "Eligible destinations and shipping cost will be confirmed before bidding."}{" "}
-            Any import charges will be explained in the release terms.
+            <FullStops>
+              {
+                "Insured shipping. Allow up to two weeks after payment, subject to the destination and customs. Destinations subject to restrictions or unavailable insurance are excluded."
+              }
+            </FullStops>{" "}
+            <FullStops>
+              {release.countries?.length
+                ? `This release ships to: ${release.countries.join(", ")}. Shipping ${money(release.shippingFee)}.`
+                : "Eligible destinations and shipping cost will be confirmed before bidding."}{" "}
+            </FullStops>
+            <FullStops>
+              {"Any import charges will be explained in the release terms."}
+            </FullStops>
           </p>
         </details>
       </section>
@@ -672,8 +749,12 @@ function LatestPage() {
   }, [loading, latest?.slug]);
   return (
     <main className="page-shell">
-      <h1>The next original.</h1>
-      <p role="status">{error || "Finding the latest release…"}</p>
+      <h1>
+        <FullStops>{"The next original."}</FullStops>
+      </h1>
+      <p role="status">
+        <FullStops>{error || "Finding the latest release…"}</FullStops>
+      </p>
       <a href="/archive">Explore the archive →</a>
     </main>
   );
@@ -693,28 +774,40 @@ function Archive() {
       <h1>
         The
         <br />
-        <em>Archive.</em>
+        <em>
+          <FullStops>{"Archive."}</FullStops>
+        </em>
       </h1>
-      <p>Past releases, by date.</p>
+      <p>
+        <FullStops>{"Past releases, by date."}</FullStops>
+      </p>
       {archived.length ? (
         archived.map((r) => (
           <a className="archive-row" href={`/pieces/${r.slug}`} key={r.id}>
             <span className="eyebrow">
-              {weekLabel(r.opensAt!)}
-              <small>{date(r.opensAt!)}</small>
+              <FullStops>{weekLabel(r.opensAt!)}</FullStops>
+              <small>
+                <FullStops>{date(r.opensAt!)}</FullStops>
+              </small>
             </span>
             <img src={r.image} alt={r.name} />
             <div>
-              <h2>{r.name}</h2>
-              <p>{r.artistName}</p>
+              <h2>
+                <FullStops>{r.name}</FullStops>
+              </h2>
+              <p>
+                <FullStops>{r.artistName}</FullStops>
+              </p>
               <small>
-                {r.status === "sold"
-                  ? r.publicOwner?.anonymous
-                    ? "anonymous bidder"
-                    : r.publicOwner?.name || "anonymous bidder"
-                  : r.status === "awaiting-payment"
-                    ? "Payment pending"
-                    : "Closed — not collected"}
+                <FullStops>
+                  {r.status === "sold"
+                    ? r.publicOwner?.anonymous
+                      ? "anonymous bidder"
+                      : r.publicOwner?.name || "anonymous bidder"
+                    : r.status === "awaiting-payment"
+                      ? "Payment pending"
+                      : "Closed — not collected"}
+                </FullStops>
               </small>
             </div>
             <ArrowUpRight />
@@ -722,12 +815,11 @@ function Archive() {
         ))
       ) : (
         <div className="archive-empty">
-          <span>00</span>
           <div>
             <h2>
               No releases
               <br />
-              yet.
+              <FullStops>{"yet."}</FullStops>
             </h2>
             <a href="/pieces/after-hours" className="text-link">
               Meet After Hours <ArrowUpRight size={18} />
@@ -735,8 +827,13 @@ function Archive() {
           </div>
         </div>
       )}
+
       {error && (
-        <p role="status">Archive updates are temporarily unavailable.</p>
+        <p role="status">
+          <FullStops>
+            {"Archive updates are temporarily unavailable."}
+          </FullStops>
+        </p>
       )}
     </main>
   );
@@ -799,9 +896,13 @@ function Auth({ onLogin }: { onLogin: () => void }) {
         <h1>
           Your
           <br />
-          <em>collection.</em>
+          <em>
+            <FullStops>{"collection."}</FullStops>
+          </em>
         </h1>
-        <p>Bid on releases and manage your pieces.</p>
+        <p>
+          <FullStops>{"Bid on releases and manage your pieces."}</FullStops>
+        </p>
         <img
           src="/images/night.webp"
           alt="A detail of the After Hours artwork"
@@ -810,13 +911,15 @@ function Auth({ onLogin }: { onLogin: () => void }) {
       <div className="auth-panel">
         <span className="eyebrow">HEWGE / COLLECTOR ACCESS</span>
         <h2>
-          {mode === "login"
-            ? "Welcome back."
-            : mode === "signup"
-              ? "Create an account."
-              : mode === "verify"
-                ? "Verify your email."
-                : "Reset your password."}
+          <FullStops>
+            {mode === "login"
+              ? "Welcome back."
+              : mode === "signup"
+                ? "Create an account."
+                : mode === "verify"
+                  ? "Verify your email."
+                  : "Reset your password."}
+          </FullStops>
         </h2>
         <form className="stack-form" onSubmit={submit}>
           <label>
@@ -854,34 +957,44 @@ function Auth({ onLogin }: { onLogin: () => void }) {
               />
               {mode !== "login" && (
                 <small>
-                  12+ characters, upper and lowercase letters, and a number.
+                  <FullStops>
+                    {
+                      "12+ characters, upper and lowercase letters, and a number."
+                    }
+                  </FullStops>
                 </small>
               )}
             </label>
           )}
           {mode === "signup" && (
             <p className="fine-print">
-              Your account is private. Release emails are optional.{" "}
-              <a href="/privacy">How we use your details.</a>
+              <FullStops>
+                {"Your account is private. Release emails are optional."}
+              </FullStops>{" "}
+              <a href="/privacy">
+                <FullStops>{"How we use your details."}</FullStops>
+              </a>
             </p>
           )}
           <button className="button button-dark" disabled={busy}>
-            {busy
-              ? "One moment…"
-              : mode === "login"
-                ? "Sign in"
-                : mode === "signup"
-                  ? "Create your account"
-                  : mode === "verify"
-                    ? "Verify email"
-                    : mode === "reset"
-                      ? "Send reset code"
-                      : "Save password"}
+            <FullStops>
+              {busy
+                ? "One moment…"
+                : mode === "login"
+                  ? "Sign in"
+                  : mode === "signup"
+                    ? "Create your account"
+                    : mode === "verify"
+                      ? "Verify email"
+                      : mode === "reset"
+                        ? "Send reset code"
+                        : "Save password"}
+            </FullStops>
             <ArrowRight size={18} />
           </button>
         </form>
         <p className="form-message" role="status">
-          {message}
+          <FullStops>{message}</FullStops>
         </p>
         <div className="auth-links">
           <button
@@ -890,9 +1003,11 @@ function Auth({ onLogin }: { onLogin: () => void }) {
               setMessage("");
             }}
           >
-            {mode === "login"
-              ? "New here? Create an account"
-              : "Back to sign in"}
+            <FullStops>
+              {mode === "login"
+                ? "New here? Create an account"
+                : "Back to sign in"}
+            </FullStops>
           </button>
           {mode === "login" && (
             <>
@@ -1000,10 +1115,15 @@ function Profile({ data, reload }: { data: any; reload: () => void }) {
   }
   return (
     <form className="stack-form profile-form" onSubmit={save}>
-      <h2>Your collector profile.</h2>
+      <h2>
+        <FullStops>{"Your collector profile."}</FullStops>
+      </h2>
       <p>
-        Your preferences help us choose the next piece. Your follower count does
-        not change who wins.
+        <FullStops>
+          {
+            "Your preferences help us choose the next piece. Your follower count does not change who wins."
+          }
+        </FullStops>
       </p>
       <label>
         Name or alias
@@ -1020,7 +1140,9 @@ function Profile({ data, reload }: { data: any; reload: () => void }) {
                 value={s}
                 defaultChecked={p.sizes?.includes(s)}
               />
-              <span>{s}</span>
+              <span>
+                <FullStops>{s}</FullStops>
+              </span>
             </label>
           ))}
         </div>
@@ -1034,7 +1156,11 @@ function Profile({ data, reload }: { data: any; reload: () => void }) {
             </option>
           ))}
         </select>
-        <small>Shipping eligibility is confirmed on each release.</small>
+        <small>
+          <FullStops>
+            {"Shipping eligibility is confirmed on each release."}
+          </FullStops>
+        </small>
       </label>
       <div className="two-fields">
         <label>
@@ -1055,13 +1181,19 @@ function Profile({ data, reload }: { data: any; reload: () => void }) {
             max="1000000000"
             defaultValue={p.followers ?? ""}
           />
-          <small>Self-reported, never a bidding advantage.</small>
+          <small>
+            <FullStops>{"Self-reported, never a bidding advantage."}</FullStops>
+          </small>
         </label>
       </div>
       <label>
         Phone · optional
         <input name="phone" type="tel" defaultValue={p.phone} maxLength={40} />
-        <small>Only for contacting you about a winning bid or delivery.</small>
+        <small>
+          <FullStops>
+            {"Only for contacting you about a winning bid or delivery."}
+          </FullStops>
+        </small>
       </label>
       <label>
         A little about your taste · optional
@@ -1078,12 +1210,18 @@ function Profile({ data, reload }: { data: any; reload: () => void }) {
           name="releaseConsent"
           defaultChecked={p.releaseConsent}
         />
-        Email me about new releases. I can switch this off anytime.
+        <span>
+          <FullStops>
+            {"Email me about new releases. I can switch this off anytime."}
+          </FullStops>
+        </span>
       </label>
       <button className="button button-dark">
         Save preferences <Check size={18} />
       </button>
-      <p role="status">{message}</p>
+      <p role="status">
+        <FullStops>{message}</FullStops>
+      </p>
     </form>
   );
 }
@@ -1122,24 +1260,39 @@ function WonPiece({ a, reload }: { a: any; reload: () => void }) {
   return (
     <div className="won-piece">
       <span className="eyebrow">
-        {a.status === "sold" ? "It’s yours." : "Winning bid"}
+        <FullStops>
+          {a.status === "sold" ? "It’s yours." : "Winning bid"}
+        </FullStops>
       </span>
-      <h2>{a.name}</h2>
+      <h2>
+        <FullStops>{a.name}</FullStops>
+      </h2>
       <img src={a.image} alt={a.name} />
       {a.canPay ? (
         <>
           <p>
-            {money(a.offerAmount)} + {money(a.shippingFee)} insured shipping.
+            <FullStops>{money(a.offerAmount)}</FullStops> +{" "}
+            <FullStops>{money(a.shippingFee)}</FullStops>
+            <FullStops>{" insured shipping."}</FullStops>
           </p>
-          <p>Payment due {date(a.paymentDueAt)}.</p>
+          <p>
+            Payment due <FullStops>{date(a.paymentDueAt)}</FullStops>
+            <FullStops>{"."}</FullStops>
+          </p>
           <button className="button button-dark" onClick={pay}>
             Complete your purchase <ArrowUpRight size={18} />
           </button>
         </>
       ) : a.status === "sold" ? (
         <>
-          <p>Congratulations. Your ownership is registered.</p>
-          <p className="certificate-code">{a.certificateId}</p>
+          <p>
+            <FullStops>
+              {"Congratulations. Your ownership is registered."}
+            </FullStops>
+          </p>
+          <p className="certificate-code">
+            <FullStops>{a.certificateId}</FullStops>
+          </p>
           <form className="stack-form" onSubmit={ownership}>
             <label>
               In the public archive
@@ -1163,19 +1316,27 @@ function WonPiece({ a, reload }: { a: any; reload: () => void }) {
               Save ownership choice
             </button>
           </form>
+
           {a.fulfillment?.tracking && (
-            <p>Insured shipment: {a.fulfillment.tracking}</p>
+            <p>
+              Insured shipment: <FullStops>{a.fulfillment.tracking}</FullStops>
+            </p>
           )}
+
           <a href={`/registry/${a.id}`} className="text-link">
             View the register →
           </a>
           <TransferRequest piece={a} reload={reload} />
         </>
       ) : (
-        <p>This payment offer has ended.</p>
+        <p>
+          <FullStops>{"This payment offer has ended."}</FullStops>
+        </p>
       )}
       <Share release={a} />
-      <p role="status">{message}</p>
+      <p role="status">
+        <FullStops>{message}</FullStops>
+      </p>
     </div>
   );
 }
@@ -1203,7 +1364,9 @@ function Account() {
           <h1>
             Your
             <br />
-            <em>collection.</em>
+            <em>
+              <FullStops>{"collection."}</FullStops>
+            </em>
           </h1>
         </div>
         <button
@@ -1217,12 +1380,17 @@ function Account() {
           Sign out
         </button>
       </div>
+
       {data?.admin && (
         <a className="studio-link" href="/dashboard">
           Open the Hewge studio dashboard <ArrowUpRight size={18} />
         </a>
       )}
-      <p role="status">{message}</p>
+
+      <p role="status">
+        <FullStops>{message}</FullStops>
+      </p>
+
       {data && (
         <div className="account-grid">
           <Profile data={data} reload={reload} />
@@ -1237,17 +1405,21 @@ function Account() {
                 <h2>
                   No pieces
                   <br />
-                  yet.
+                  <FullStops>{"yet."}</FullStops>
                 </h2>
                 <a href="/latest" className="text-link">
                   Meet the latest piece <ArrowUpRight size={16} />
                 </a>
                 <p>
-                  When you win a piece, your payment window and ownership
-                  details appear here.
+                  <FullStops>
+                    {
+                      "When you win a piece, your payment window and ownership details appear here."
+                    }
+                  </FullStops>
                 </p>
               </div>
             )}
+
             <TransferList transfers={data.transfers || []} reload={reload} />
           </div>
         </div>
@@ -1265,18 +1437,29 @@ function PrintableCertificate({ a, onClose }: { a: any; onClose: () => void }) {
       <article className="certificate">
         <span className="wordmark">HEWGE</span>
         <p>CERTIFICATE OF AUTHENTICITY</p>
-        <h1>{a.name}</h1>
+        <h1>
+          <FullStops>{a.name}</FullStops>
+        </h1>
         <p>An original garment by</p>
-        <h2>{a.artistName}</h2>
+        <h2>
+          <FullStops>{a.artistName}</FullStops>
+        </h2>
         <div className="certificate-edition">ONE OF ONE</div>
         <p>
-          Piece {a.number} · Size {a.size} · {a.material}
+          Piece <FullStops>{a.number}</FullStops> · Size{" "}
+          <FullStops>{a.size}</FullStops> · <FullStops>{a.material}</FullStops>
         </p>
-        <p>{a.certificateId}</p>
         <p>
-          This record identifies the single original garment.
+          <FullStops>{a.certificateId}</FullStops>
+        </p>
+        <p>
+          <FullStops>
+            {"This record identifies the single original garment."}
+          </FullStops>
           <br />
-          The artist’s handwritten signature authenticates the work.
+          <FullStops>
+            {"The artist’s handwritten signature authenticates the work."}
+          </FullStops>
         </p>
         <div className="signature-line">
           <span>Artist signature</span>
@@ -1285,22 +1468,32 @@ function PrintableCertificate({ a, onClose }: { a: any; onClose: () => void }) {
         <div className="hologram-space">
           Affix numbered holographic seal
           <br />
-          {a.fulfillment?.hologramId || "Record the seal ID in the studio"}
+          <FullStops>
+            {a.fulfillment?.hologramId || "Record the seal ID in the studio"}
+          </FullStops>
         </div>
         <small>
           Verify the registered piece at
           <br />
-          hewge.design/registry/{a.id}
+          hewge.design/registry/<FullStops>{a.id}</FullStops>
         </small>
       </article>
       <article className="congratulations-card">
         <span className="wordmark">HEWGE</span>
-        <h1>Yours.</h1>
+        <h1>
+          <FullStops>{"Yours."}</FullStops>
+        </h1>
         <p>
-          {a.name} by {a.artistName}.
+          <FullStops>{a.name}</FullStops> by{" "}
+          <FullStops>{a.artistName}</FullStops>
+          <FullStops>{"."}</FullStops>
         </p>
-        <p>Thank you.</p>
-        <small>{a.certificateId}</small>
+        <p>
+          <FullStops>{"Thank you."}</FullStops>
+        </p>
+        <small>
+          <FullStops>{a.certificateId}</FullStops>
+        </small>
       </article>
     </div>
   );
@@ -1342,9 +1535,17 @@ function Dashboard() {
   if (!data)
     return (
       <main className="page-shell">
-        <h1>Hewge studio.</h1>
-        <p role="status">{error || "Checking owner access…"}</p>
-        <p>This room is restricted to the account owner.</p>
+        <h1>
+          <FullStops>{"Hewge studio."}</FullStops>
+        </h1>
+        <p role="status">
+          <FullStops>{error || "Checking owner access…"}</FullStops>
+        </p>
+        <p>
+          <FullStops>
+            {"This room is restricted to the account owner."}
+          </FullStops>
+        </p>
         <a href="/account">Your collector profile →</a>
       </main>
     );
@@ -1352,16 +1553,34 @@ function Dashboard() {
   data.guestlist.forEach((g: any) =>
     unique.set(g.email, { ...g, guest: true }),
   );
-  data.collectors.forEach((c: any) => unique.set(c.email, c));
+  data.collectors.forEach((c: any) => {
+    const m = unique.get(c.email);
+    const merged = m?.updatedAt > c.updatedAt ? { ...c, ...m } : { ...m, ...c };
+    const accountConsentAt =
+      typeof c.consentAt === "string"
+        ? Date.parse(c.consentAt)
+        : c.consentAt || 0;
+    unique.set(c.email, {
+      ...merged,
+      guest: false,
+      emailVerified: true,
+      releaseConsent:
+        m?.emailVerified && m.consentAt >= accountConsentAt
+          ? m.releaseConsent
+          : c.releaseConsent,
+    });
+  });
   const collectors = [...unique.values()];
   const shown = collectors.filter((c) =>
-    `${c.email} ${c.displayName || ""} ${c.instagram || ""} ${(c.sizes || []).join(" ")} ${c.about || ""}`
+    `${c.email} ${c.displayName || ""} ${c.instagram || ""} ${(c.sizes || []).join(" ")} ${c.about || ""} ${c.country || ""} ${c.city || ""} ${c.readiness || ""}`
       .toLowerCase()
       .includes(filter.toLowerCase()),
   );
   const counts = sizes.map((size) => ({
     size,
-    count: collectors.filter((c) => c.sizes?.includes(size)).length,
+    count: collectors.filter(
+      (c) => c.emailVerified === true && c.sizes?.includes(size),
+    ).length,
   }));
   const top = Math.max(1, ...counts.map((x) => x.count));
   async function saveRelease(e: FormEvent<HTMLFormElement>) {
@@ -1399,7 +1618,9 @@ function Dashboard() {
       <div className="dashboard-heading">
         <div>
           <span className="eyebrow">PRIVATE / HEWGE STUDIO</span>
-          <h1>The next original.</h1>
+          <h1>
+            <FullStops>{"The next original."}</FullStops>
+          </h1>
         </div>
         <a href="/account" className="text-link">
           Your account <ArrowUpRight size={17} />
@@ -1411,41 +1632,79 @@ function Dashboard() {
           <span>Interested collectors</span>
         </div>
         <div>
-          <strong>{data.collectors.length}</strong>
-          <span>Verified accounts with profiles</span>
+          <strong>
+            {collectors.filter((c) => c.emailVerified === true).length}
+          </strong>
+          <span>Verified members</span>
         </div>
         <div>
           <strong>
-            {data.auctions.reduce(
-              (n: number, a: any) => n + (a.bidCount || 0),
-              0,
-            )}
+            <FullStops>
+              {data.auctions.reduce(
+                (n: number, a: any) => n + (a.bidCount || 0),
+                0,
+              )}
+            </FullStops>
           </strong>
           <span>Accepted bids</span>
         </div>
         <div>
-          <strong>{counts.find((x) => x.count === top)?.size || "—"}</strong>
+          <strong>
+            <FullStops>
+              {counts.find((x) => x.count === top)?.size || "—"}
+            </FullStops>
+          </strong>
           <span>Most requested size</span>
         </div>
       </div>
       <div className="studio-status">
         <span>
-          Payments: {data.paymentsEnabled ? "connected" : "not connected"}
+          Pending verification:{" "}
+          {collectors.filter((c) => !c.emailVerified).length}
+        </span>
+        <span>
+          Ready to bid:{" "}
+          {
+            collectors.filter((c) => c.emailVerified && c.readiness === "ready")
+              .length
+          }
+        </span>
+        <span>
+          Verification email:{" "}
+          <FullStops>
+            {data.verificationEmailEnabled
+              ? "enabled"
+              : "awaiting AWS approval"}
+          </FullStops>
+        </span>
+        <span>
+          SMS:{" "}
+          <FullStops>
+            {data.smsEnabled ? "enabled" : "preferences only"}
+          </FullStops>
+        </span>
+        <span>
+          Payments:{" "}
+          <FullStops>
+            {data.paymentsEnabled ? "connected" : "not connected"}
+          </FullStops>
         </span>
         <span>
           Release & winner email:{" "}
-          {data.emailEnabled ? "enabled" : "awaiting SES approval"}
+          <FullStops>
+            {data.emailEnabled ? "enabled" : "awaiting SES approval"}
+          </FullStops>
         </span>
       </div>
       <div className="studio-tabs">
         {["collectors", "releases", "transfers", "fulfilment"].map((t) => (
           <button key={t} aria-pressed={tab === t} onClick={() => setTab(t)}>
-            {t}
+            <FullStops>{t}</FullStops>
           </button>
         ))}
       </div>
       <p role="status" className="form-message">
-        {error}
+        <FullStops>{error}</FullStops>
       </p>
       {tab === "transfers" ? (
         <AdminTransfers
@@ -1457,17 +1716,23 @@ function Dashboard() {
         <>
           <section className="demand-panel">
             <div>
-              <h2>Make what they’ll wear.</h2>
+              <h2>
+                <FullStops>{"Make what they’ll wear."}</FullStops>
+              </h2>
               <p>
-                Unique people, by size interest. A collector can choose several
-                sizes. Guest-list addresses are unverified; registered profiles
-                take precedence. Instagram counts are self-reported.
+                <FullStops>
+                  {
+                    "Unique people, by size interest. A collector can choose several sizes. Size demand counts verified emails only. Pending addresses remain separate. Instagram counts are self-reported."
+                  }
+                </FullStops>
               </p>
             </div>
             <div className="demand-bars">
               {counts.map((x) => (
                 <div key={x.size}>
-                  <span>{x.size}</span>
+                  <span>
+                    <FullStops>{x.size}</FullStops>
+                  </span>
                   <i style={{ width: `${(x.count / top) * 80}%` }} />
                   <strong>{x.count}</strong>
                 </div>
@@ -1479,7 +1744,7 @@ function Dashboard() {
             <input
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              placeholder="Name, email, size, Instagram, interests"
+              placeholder="Name, email, size, location, readiness, Instagram"
             />
           </label>
           <div className="collector-table">
@@ -1488,6 +1753,7 @@ function Dashboard() {
                 <tr>
                   <th>Collector</th>
                   <th>Sizes</th>
+                  <th>Location / readiness</th>
                   <th>Instagram</th>
                   <th>About / contact</th>
                   <th>Release email</th>
@@ -1497,17 +1763,36 @@ function Dashboard() {
                 {shown.map((c) => (
                   <tr key={c.email}>
                     <td>
-                      <strong>{c.displayName || "Collector"}</strong>
-                      <span>{c.email}</span>
+                      <strong>
+                        <FullStops>{c.displayName || "Collector"}</FullStops>
+                      </strong>
+                      <span>
+                        <FullStops>{c.email}</FullStops>
+                      </span>
                       <small>
-                        {c.guest
-                          ? "Guest list · unverified email"
-                          : "Verified email"}
+                        <FullStops>
+                          {c.emailVerified
+                            ? "Verified email"
+                            : "Pending verification"}
+                        </FullStops>
                       </small>
                     </td>
                     <td>
-                      {c.sizes?.join(", ") || "—"}
-                      <small>{c.country || ""}</small>
+                      <FullStops>{c.sizes?.join(", ") || "—"}</FullStops>
+                      <small>
+                        <FullStops>{c.country || ""}</FullStops>
+                      </small>
+                    </td>
+                    <td>
+                      <FullStops>
+                        {[c.city, c.country].filter(Boolean).join(", ") || "—"}
+                      </FullStops>
+                      <small>
+                        <FullStops>{c.readiness || "Not specified"}</FullStops>
+                      </small>
+                      <small>
+                        <FullStops>{c.timezone || ""}</FullStops>
+                      </small>
                     </td>
                     <td>
                       {c.instagram ? (
@@ -1516,29 +1801,48 @@ function Dashboard() {
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          @{c.instagram} ↗
+                          @<FullStops>{c.instagram}</FullStops> ↗
                         </a>
                       ) : (
                         "—"
                       )}
+
                       <small>
-                        {c.followers == null
-                          ? ""
-                          : `${c.followers.toLocaleString()} · self-reported`}
+                        <FullStops>
+                          {c.followers == null
+                            ? ""
+                            : `${c.followers.toLocaleString()} · self-reported`}
+                        </FullStops>
                       </small>
                     </td>
                     <td>
-                      {c.about || "—"}
-                      <small>{c.phone}</small>
+                      <FullStops>{c.about || "—"}</FullStops>
+                      <small>
+                        <FullStops>{c.phone}</FullStops>
+                      </small>
+
+                      {c.smsConsent && (
+                        <small>SMS consent · pending activation</small>
+                      )}
                     </td>
-                    <td>{c.guest || c.releaseConsent ? "Opted in" : "Off"}</td>
+                    <td>
+                      <FullStops>
+                        {!c.emailVerified
+                          ? "Pending"
+                          : c.releaseConsent
+                            ? "Opted in"
+                            : "Off"}
+                      </FullStops>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
             {!shown.length && (
               <p className="empty-table">
-                No collectors yet. Real interest will appear here.
+                <FullStops>
+                  {"No collectors yet. Real interest will appear here."}
+                </FullStops>
               </p>
             )}
           </div>
@@ -1549,9 +1853,11 @@ function Dashboard() {
             <div>
               <h2>Release dates</h2>
               <p>
-                Set each opening and closing individually. The countdown appears
-                when the release is published. All times are Swiss, including
-                daylight saving.
+                <FullStops>
+                  {
+                    "Set each opening and closing individually. The countdown appears when the release is published. All times are Swiss, including daylight saving."
+                  }
+                </FullStops>
               </p>
             </div>
             <label>
@@ -1580,12 +1886,16 @@ function Dashboard() {
             >
               + New piece
             </button>
+
             {data.auctions.map((a: any) => (
               <button key={a.id} onClick={() => setDraft(a)}>
-                {a.number} / {a.name} / {a.status}
+                <FullStops>{a.number}</FullStops> /{" "}
+                <FullStops>{a.name}</FullStops> /{" "}
+                <FullStops>{a.status}</FullStops>
               </button>
             ))}
           </div>
+
           {draft.revision && !draft.identityRevealed && (
             <button
               className="text-link"
@@ -1599,12 +1909,15 @@ function Dashboard() {
               Reveal artist & material now
             </button>
           )}
+
           <form
             key={draft.id + ":" + draft.revision}
             className="stack-form release-form"
             onSubmit={saveRelease}
           >
-            <h2>{draft.name || "A new original."}</h2>
+            <h2>
+              <FullStops>{draft.name || "A new original."}</FullStops>
+            </h2>
             <div className="two-fields">
               {[
                 ["id", "Release ID"],
@@ -1618,7 +1931,7 @@ function Dashboard() {
                 ["material", "Exact material / composition"],
               ].map(([k, label]) => (
                 <label key={k}>
-                  {label}
+                  <FullStops>{label}</FullStops>
                   <input
                     name={k}
                     defaultValue={draft[k]}
@@ -1633,7 +1946,7 @@ function Dashboard() {
               ["artistWorks", "Other works in their collection"],
             ].map(([k, label]) => (
               <label key={k}>
-                {label}
+                <FullStops>{label}</FullStops>
                 <textarea name={k} rows={4} defaultValue={draft[k]} />
               </label>
             ))}
@@ -1685,7 +1998,7 @@ function Dashboard() {
                 ["shippingFee", "Insured shipping · CHF"],
               ].map(([k, label]) => (
                 <label key={k}>
-                  {label}
+                  <FullStops>{label}</FullStops>
                   <input
                     name={k}
                     type="number"
@@ -1724,8 +2037,11 @@ function Dashboard() {
                 placeholder="CH, DE, FR…"
               />
               <small>
-                Confirm insurance, carrier service, sanctions and consumer
-                requirements for each destination before scheduling.
+                <FullStops>
+                  {
+                    "Confirm insurance, carrier service, sanctions and consumer requirements for each destination before scheduling."
+                  }
+                </FullStops>
               </small>
             </label>
             <div className="two-fields">
@@ -1747,9 +2063,11 @@ function Dashboard() {
               </button>
             </div>
             <p className="fine-print">
-              Scheduling locks after opening. One auction at a time. Artist
-              details, measurements, payment setup, transactional email and
-              approved seller terms are required before bidding.
+              <FullStops>
+                {
+                  "Scheduling locks after opening. One auction at a time. Artist details, measurements, payment setup, transactional email and approved seller terms are required before bidding."
+                }
+              </FullStops>
             </p>
           </form>
         </>
@@ -1759,14 +2077,21 @@ function Dashboard() {
             .filter((a: any) => ["sold", "awaiting-payment"].includes(a.status))
             .map((a: any) => (
               <article key={a.id}>
-                <span className="eyebrow">{a.status}</span>
-                <h2>{a.name}</h2>
+                <span className="eyebrow">
+                  <FullStops>{a.status}</FullStops>
+                </span>
+                <h2>
+                  <FullStops>{a.name}</FullStops>
+                </h2>
                 <p>
-                  {a.winnerEmail} · {money(a.offerAmount)}
+                  <FullStops>{a.winnerEmail}</FullStops> ·{" "}
+                  <FullStops>{money(a.offerAmount)}</FullStops>
                 </p>
                 {a.status === "awaiting-payment" ? (
                   <>
-                    <p>Due {date(a.paymentDueAt)}</p>
+                    <p>
+                      Due <FullStops>{date(a.paymentDueAt)}</FullStops>
+                    </p>
                     <button
                       className="button button-dark"
                       disabled={busy || Date.now() < a.paymentDueAt}
@@ -1787,7 +2112,9 @@ function Dashboard() {
                   </>
                 ) : (
                   <>
-                    <p>{a.certificateId}</p>
+                    <p>
+                      <FullStops>{a.certificateId}</FullStops>
+                    </p>
                     <button className="text-link" onClick={() => setPrint(a)}>
                       Print certificate & congratulations card{" "}
                       <ArrowUpRight size={18} />
@@ -1827,7 +2154,9 @@ function Dashboard() {
                                 : a.fulfillment?.[k]
                             }
                           />
-                          {label}
+                          <span>
+                            <FullStops>{label}</FullStops>
+                          </span>
                         </label>
                       ))}
                       <label>
@@ -1852,26 +2181,41 @@ function Dashboard() {
                 )}
               </article>
             ))}
+
           {!data.auctions.some((a: any) =>
             ["sold", "awaiting-payment"].includes(a.status),
           ) && (
             <div className="archive-empty">
-              <h2>First, a winner.</h2>
+              <h2>
+                <FullStops>{"First, a winner."}</FullStops>
+              </h2>
               <p>
-                Paid originals will appear here with certificate, hologram and
-                insured dispatch controls.
+                <FullStops>
+                  {
+                    "Paid originals will appear here with certificate, hologram and insured dispatch controls."
+                  }
+                </FullStops>
               </p>
             </div>
           )}
           <h3>Transactional email queue</h3>
+
           {data.mail.map((m: any) => (
             <p key={m.id}>
-              {m.subject} · {m.email} · {m.status}
+              <FullStops>{m.subject}</FullStops> ·{" "}
+              <FullStops>{m.email}</FullStops> ·{" "}
+              <FullStops>{m.status}</FullStops>
             </p>
           ))}
-          {!data.mail.length && <p>No messages queued.</p>}
+
+          {!data.mail.length && (
+            <p>
+              <FullStops>{"No messages queued."}</FullStops>
+            </p>
+          )}
         </div>
       )}
+
       {print && (
         <PrintableCertificate a={print} onClose={() => setPrint(null)} />
       )}
@@ -1883,88 +2227,80 @@ function Terms() {
     <main className="legal-page">
       <span className="eyebrow">THE RELEASE RULES / DRAFT</span>
       <h1>
-        One piece.
+        <FullStops>{"One piece."}</FullStops>
         <br />
-        Clear terms.
+        <FullStops>{"Clear terms."}</FullStops>
       </h1>
       <p className="legal-notice">
-        Bidding is not open. These draft rules describe the intended experience.
-        Final seller details, destination rules and reviewed terms will be
-        published before a binding bid can be placed.
+        <FullStops>
+          {
+            "Bidding is not open. These draft rules describe the intended experience. Final seller details, destination rules and reviewed terms will be published before a binding bid can be placed."
+          }
+        </FullStops>
       </p>
       <h2>How a release works</h2>
       <p>
-        One original garment. One auction at a time. Each page identifies the
-        piece, exact size, measurements, opening bid, minimum increase, shipping
-        charge, eligible destinations and opening and closing times. Some
-        releases withhold the artist and material until a clearly stated reveal
-        stage, which may be after bidding closes. This is disclosed before the
-        bid is confirmed. Prices and bids are in Swiss francs. Joining and
-        bidding are free. There is no draw and no buyer’s premium.
+        <FullStops>
+          {
+            "One original garment. One auction at a time. Each page identifies the piece, exact size, measurements, opening bid, minimum increase, shipping charge, eligible destinations and opening and closing times. Some releases withhold the artist and material until a clearly stated reveal stage, which may be after bidding closes. This is disclosed before the bid is confirmed. Prices and bids are in Swiss francs. Joining and bidding are free. There is no draw and no buyer’s premium."
+          }
+        </FullStops>
       </p>
       <h2>Your bid</h2>
       <p>
-        You must be 18 or over, use a verified email, and select a size and
-        eligible destination. Review your amount before confirming. Bids are
-        offers to buy, not expressions of interest. The highest valid bid
-        received by the server before the deadline wins. An equal bid does not
-        replace an accepted bid. There are no hidden time extensions. Instagram
-        followers do not determine eligibility or the winner. Seller accounts
-        cannot bid.
+        <FullStops>
+          {
+            "You must be 18 or over, use a verified email, and select a size and eligible destination. Review your amount before confirming. Bids are offers to buy, not expressions of interest. The highest valid bid received by the server before the deadline wins. An equal bid does not replace an accepted bid. There are no hidden time extensions. Instagram followers do not determine eligibility or the winner. Seller accounts cannot bid."
+          }
+        </FullStops>
       </p>
       <h2>Winning & payment</h2>
       <p>
-        The release will state when a binding sale is formed and the payment
-        deadline. The proposed payment window is 48 hours after the winning
-        offer is issued; the actual window appears on each release. No money is
-        taken merely for bidding. Payment goes through Stripe. A payment
-        confirmation, not the browser return page, confirms ownership. The
-        garment does not ship before cleared payment.
+        <FullStops>
+          {
+            "The release will state when a binding sale is formed and the payment deadline. The proposed payment window is 48 hours after the winning offer is issued; the actual window appears on each release. No money is taken merely for bidding. Payment goes through Stripe. A payment confirmation, not the browser return page, confirms ownership. The garment does not ship before cleared payment."
+          }
+        </FullStops>
       </p>
       <h2>If a winner does not pay</h2>
       <p>
-        Hewge may cancel an unpaid offer after the published deadline and any
-        legally required default process. An operator checks payment status
-        before offering the garment to the next eligible bidder at that bidder’s
-        own highest bid. The original offer cannot remain payable while the next
-        offer is active. A replacement offer carries its own payment deadline.
-        No automatic penalties are imposed by this website.
+        <FullStops>
+          {
+            "Hewge may cancel an unpaid offer after the published deadline and any legally required default process. An operator checks payment status before offering the garment to the next eligible bidder at that bidder’s own highest bid. The original offer cannot remain payable while the next offer is active. A replacement offer carries its own payment deadline. No automatic penalties are imposed by this website."
+          }
+        </FullStops>
       </p>
       <h2>Delivery & consumer rights</h2>
       <p>
-        Insured delivery from Switzerland. Allow up to two weeks after payment,
-        with destination and customs exceptions stated on the release. Only
-        approved, serviceable destinations are offered. Shipping prices, taxes,
-        import responsibilities, returns and defect remedies must be set out in
-        the final terms before bidding. Mandatory consumer rights remain
-        applicable; an online auction label does not waive them.
+        <FullStops>
+          {
+            "Insured delivery from Switzerland. Allow up to two weeks after payment, with destination and customs exceptions stated on the release. Only approved, serviceable destinations are offered. Shipping prices, taxes, import responsibilities, returns and defect remedies must be set out in the final terms before bidding. Mandatory consumer rights remain applicable; an online auction label does not waive them."
+          }
+        </FullStops>
       </p>
       <h2>Ownership & authenticity</h2>
       <p>
-        The paid buyer may choose a public name or “anonymous bidder.” The
-        public archive never includes the buyer’s contact information. The
-        garment, certificate and numbered ownership card identify the same
-        original. The artist signs the certificate by hand. A hologram is a
-        physical matching seal, not a government certification or transfer of
-        copyright.
+        <FullStops>
+          {
+            "The paid buyer may choose a public name or “anonymous bidder.” The public archive never includes the buyer’s contact information. The garment, certificate and numbered ownership card identify the same original. The artist signs the certificate by hand. A hologram is a physical matching seal, not a government certification or transfer of copyright."
+          }
+        </FullStops>
       </p>
       <h2>Passing on the original</h2>
       <p>
-        Transfers require a request from the registered owner, acceptance by the
-        recipient using a verified email, confirmation of possession, and
-        Hewge’s review of the physical original, certificate and entitlement
-        evidence. Acceptance is due within seven days. Either participant may
-        cancel before approval. The register changes only on approval and
-        defaults to anonymous ownership. Registration records provenance; it
-        does not resolve disputed legal title, transfer copyright or process
-        resale payments.
+        <FullStops>
+          {
+            "Transfers require a request from the registered owner, acceptance by the recipient using a verified email, confirmation of possession, and Hewge’s review of the physical original, certificate and entitlement evidence. Acceptance is due within seven days. Either participant may cancel before approval. The register changes only on approval and defaults to anonymous ownership. Registration records provenance; it does not resolve disputed legal title, transfer copyright or process resale payments."
+          }
+        </FullStops>
       </p>
       <h2>Before the first auction</h2>
       <p>
-        The legal seller name, address, customer-service contact, applicable tax
-        treatment, final contract wording and approved destinations will be
-        published here. Live bidding remains disabled until those launch
-        requirements are completed.
+        <FullStops>
+          {
+            "The legal seller name, address, customer-service contact, applicable tax treatment, final contract wording and approved destinations will be published here. Live bidding remains disabled until those launch requirements are completed."
+          }
+        </FullStops>
       </p>
       <button className="text-link" onClick={() => window.print()}>
         Print these draft rules
@@ -1977,58 +2313,56 @@ function Privacy() {
   return (
     <main className="legal-page">
       <span className="eyebrow">YOUR DETAILS</span>
-      <h1>Private by default.</h1>
+      <h1>
+        <FullStops>{"Private by default."}</FullStops>
+      </h1>
       <p>
-        Hewge, Switzerland, collects the information you choose to give us to
-        manage release interest, accounts, bids, payments and ownership. The
-        legal seller’s full identity and contact details will be published
-        before auctions open.
+        <FullStops>
+          {
+            "Hewge, Switzerland, collects the information you choose to give us to manage release interest, accounts, bids, payments and ownership. The legal seller’s full identity and contact details will be published before auctions open."
+          }
+        </FullStops>
       </p>
       <h2>What we collect</h2>
       <p>
-        Guest list: email, chosen sizes and release-email consent. Collector
-        account: verified email, size preferences and country; a name, Instagram
-        handle, self-reported follower count, phone number and interests are
-        optional. We use size interest to plan future pieces. Social details
-        help us understand our audience; we do not scrape profiles or use
-        follower counts to decide auction winners.
+        <FullStops>
+          {
+            "Membership: email, verification and release-email consent. After verification you can add sizes, country, city, bidding interest and optional profile details. Your browser’s language and time zone help us understand release interest; they do not establish your location. We do not request GPS location. Collector account: verified email, size preferences and country; a name, Instagram handle, self-reported follower count, phone number and interests are optional. Membership SMS consent is separate from email consent and from providing a phone number for delivery. SMS alerts are not active yet; numbers must be verified before sending release texts. We use size interest to plan future pieces. Social details help us understand our audience; we do not scrape profiles or use follower counts to decide auction winners."
+          }
+        </FullStops>
       </p>
       <h2>Who can see it</h2>
       <p>
-        Contact details and collector profiles are accessible only to Hewge’s
-        authorised owner accounts. The public archive shows a paid buyer’s
-        chosen name only when they opt in; otherwise it says “anonymous bidder.”
-        Account, auction and consent data are stored with AWS in Stockholm,
-        Sweden. AWS also delivers the site globally. Stripe processes payments
-        and shipping details when payments open; Hewge does not receive card
-        numbers.
+        <FullStops>
+          {
+            "Contact details and collector profiles are accessible only to Hewge’s authorised owner accounts. The public archive shows a paid buyer’s chosen name only when they opt in; otherwise it says “anonymous bidder.” Account, auction and consent data are stored with AWS in Stockholm, Sweden. AWS also delivers the site globally. Stripe processes payments and shipping details when payments open; Hewge does not receive card numbers."
+          }
+        </FullStops>
       </p>
       <h2>Email & retention</h2>
       <p>
-        Ownership transfer requests include the recipient’s email, account
-        confirmations, certificate and seal checks, and private review evidence.
-        Participants can see their own requests; Hewge can review the complete
-        record. Public provenance shows registration and approved transfer dates
-        without contact details.
+        <FullStops>
+          {
+            "Ownership transfer requests include the recipient’s email, account confirmations, certificate and seal checks, and private review evidence. Participants can see their own requests; Hewge can review the complete record. Public provenance shows registration and approved transfer dates without contact details."
+          }
+        </FullStops>
       </p>
       <p>
-        Release emails are optional and separate from account, bid, payment and
-        delivery communications. Guest-list records expire after 180 days.
-        Account profiles remain while the account is active. Auction and sale
-        records may need to be kept for contractual, dispute and accounting
-        obligations; the final retention policy will accompany the seller’s
-        terms. Technical request data helps operate and protect the site. There
-        are no advertising trackers. A sign-in token stays in this tab’s session
-        storage until sign-out or expiry.
+        <FullStops>
+          {
+            "Release emails are optional and separate from account, bid, payment and delivery communications. Unconfirmed membership requests and email links expire after 48 hours. Verified membership records expire after 180 days. A verification link is single-use and opens a one-hour preferences session stored in this browser tab. Account profiles remain while the account is active. Auction and sale records may need to be kept for contractual, dispute and accounting obligations; the final retention policy will accompany the seller’s terms. Technical request data helps operate and protect the site. There are no advertising trackers. A sign-in token stays in this tab’s session storage until sign-out or expiry."
+          }
+        </FullStops>
       </p>
       <h2>Your choices</h2>
       <p>
-        Edit preferences and switch off release emails in your collector
-        account. You can remove a guest-list address below. For an account
-        without auction records, profile deletion is also available below when
-        signed in; account login deletion follows through the identity service.
-        Accounts with bid or sale records need a reviewed deletion request so
-        legally required records can be retained.
+        Edit preferences and switch off release emails in your collector account
+        or through a fresh link at <a href="/membership">membership</a>
+        <FullStops>
+          {
+            ". To leave release emails, request a confirmation link below. For an account without auction records, profile deletion is also available below when signed in; account login deletion follows through the identity service. Accounts with bid or sale records need a reviewed deletion request so legally required records can be retained."
+          }
+        </FullStops>
       </p>
       <form
         className="stack-form"
@@ -2038,18 +2372,21 @@ function Privacy() {
             await api("/waitlist/remove", {
               email: new FormData(e.currentTarget).get("email"),
             });
-            setMessage("Removed from the guest list, if present.");
+            setMessage(
+              "Check your email to confirm removal. If delivery is not yet available, your request stays pending.",
+            );
           } catch (e) {
             setMessage(errorText(e));
           }
         }}
       >
         <label>
-          Guest-list email
+          Email address
           <input type="email" name="email" required />
         </label>
-        <button className="button button-dark">Leave the guest list</button>
+        <button className="button button-dark">Leave release alerts</button>
       </form>
+
       {getToken() && (
         <button
           className="quiet-button"
@@ -2073,7 +2410,10 @@ function Privacy() {
           Delete my collector profile
         </button>
       )}
-      <p role="status">{message}</p>
+
+      <p role="status">
+        <FullStops>{message}</FullStops>
+      </p>
     </main>
   );
 }
@@ -2081,24 +2421,28 @@ export function Experience() {
   const route = location.pathname;
   useEffect(() => {
     document.title =
-      route === "/archive"
-        ? "The Archive — HEWGE"
-        : route === "/account"
-          ? "Collector Access — HEWGE"
-          : route === "/dashboard"
-            ? "Studio — HEWGE"
-            : route === "/terms"
-              ? "Auction Terms — HEWGE"
-              : route === "/privacy"
-                ? "Privacy — HEWGE"
-                : "After Hours — The Hewge Journal";
+      route === "/membership"
+        ? "Membership — HEWGE"
+        : route === "/archive"
+          ? "The Archive — HEWGE"
+          : route === "/account"
+            ? "Collector Access — HEWGE"
+            : route === "/dashboard"
+              ? "Studio — HEWGE"
+              : route === "/terms"
+                ? "Auction Terms — HEWGE"
+                : route === "/privacy"
+                  ? "Privacy — HEWGE"
+                  : "After Hours — The Hewge Journal";
     const canonical = document.querySelector('link[rel="canonical"]');
     canonical?.setAttribute("href", `https://hewge.design${route}`);
   }, [route]);
   return (
     <>
       <SiteHeader />
-      {route === "/latest" ? (
+      {route === "/membership" ? (
+        <MembershipPage />
+      ) : route === "/latest" ? (
         <LatestPage />
       ) : route.startsWith("/registry/") ? (
         <RegistryPage />
@@ -2116,7 +2460,9 @@ export function Experience() {
         <Privacy />
       ) : (
         <main className="page-shell">
-          <h1>Nothing here yet.</h1>
+          <h1>
+            <FullStops>{"Nothing here yet."}</FullStops>
+          </h1>
           <a href="/">Back to Hewge →</a>
         </main>
       )}

@@ -23,6 +23,7 @@ import * as targets from "aws-cdk-lib/aws-events-targets";
 import * as ses from "aws-cdk-lib/aws-ses";
 import * as route53 from "aws-cdk-lib/aws-route53";
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
+import * as iam from "aws-cdk-lib/aws-iam";
 
 class HewgeStack extends Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
@@ -108,6 +109,26 @@ class HewgeStack extends Stack {
       ),
     });
     const emailEnabled = this.node.tryGetContext("emailEnabled") === "true";
+    const emailConfig = new ses.ConfigurationSet(this, "EmailDelivery", {
+      configurationSetName: "hewge-delivery",
+      reputationMetrics: true,
+      suppressionReasons: ses.SuppressionReasons.BOUNCES_AND_COMPLAINTS,
+    });
+    emailConfig.addEventDestination("DeliveryMetrics", {
+      events: [
+        ses.EmailSendingEvent.BOUNCE,
+        ses.EmailSendingEvent.COMPLAINT,
+        ses.EmailSendingEvent.DELIVERY,
+        ses.EmailSendingEvent.REJECT,
+      ],
+      destination: ses.EventDestination.cloudWatchDimensions([
+        {
+          name: "stream",
+          defaultValue: "hewge",
+          source: ses.CloudWatchDimensionSource.MESSAGE_TAG,
+        },
+      ]),
+    });
     const secretArn = this.node.tryGetContext("stripeSecretArn") as
       string | undefined;
     const enabled = this.node.tryGetContext("checkoutEnabled") === "true";
@@ -139,6 +160,7 @@ class HewgeStack extends Stack {
         USER_POOL_ID: users.userPoolId,
         USER_POOL_CLIENT_ID: userClient.userPoolClientId,
         EMAIL_ENABLED: emailEnabled ? "true" : "false",
+        EMAIL_CONFIGURATION_SET: emailConfig.configurationSetName,
         TABLE_NAME: table.tableName,
         SITE_URL: `https://${domain}`,
         ALLOWED_ORIGINS: origins.join(","),
@@ -148,8 +170,26 @@ class HewgeStack extends Stack {
       },
     });
     table.grantReadWriteData(commerce);
+    commerce.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["ses:GetAccount"],
+        resources: ["*"],
+      }),
+    );
     auctionTable.grantReadWriteData(commerce);
     emailIdentity.grantSendEmail(commerce);
+    commerce.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["ses:SendEmail"],
+        resources: [
+          this.formatArn({
+            service: "ses",
+            resource: "configuration-set",
+            resourceName: emailConfig.configurationSetName,
+          }),
+        ],
+      }),
+    );
     new events.Rule(this, "AuctionClock", {
       schedule: events.Schedule.rate(Duration.minutes(1)),
       targets: [new targets.LambdaFunction(commerce, { retryAttempts: 2 })],
@@ -184,6 +224,10 @@ class HewgeStack extends Stack {
     for (const path of [
       "/waitlist",
       "/waitlist/remove",
+      "/membership/link",
+      "/membership/verify",
+      "/membership/session",
+      "/membership/profile",
       "/checkout",
       "/stripe/webhook",
       "/me/profile",

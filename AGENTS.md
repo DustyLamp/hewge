@@ -2,6 +2,8 @@
 
 Brand colour: `#00FEEF`. Keep customer-facing copy sparse and imagery prominent. Every saleable garment is one of one, including each size. Never introduce a quantity selector or generic size stock that implies duplicated pieces.
 
+Sentence full stops use solid `#00FEED`, with no muted tint. Reuse the front page’s bold/italic title treatment on story pages. Membership starts with email verification and progressively asks for preferences; no discounts or retail promotion language.
+
 Voice: understated and specific. Let the work, withheld details and real dates suggest what comes next. Never narrate the marketing strategy, announce suspense or hype, promise a story is worth waiting for, or tell the reader how to feel. Keep auction obligations and reveal timing explicit.
 
 Deploy only to AWS account `082229154968`, region `eu-north-1`, using the `hewge` profile. Keep AWS organisation controls intact. Never commit secrets, customer emails, generated build archives, or runtime data.
