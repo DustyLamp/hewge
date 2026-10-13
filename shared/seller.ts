@@ -1,7 +1,6 @@
 // Public business details confirmed by the owner on 13 October 2026.
 export const seller = {
   name: "Lewis",
-  form: "Einzelfirma",
   street: "Unterdorfstrasse 2",
   postalCode: "8165",
   locality: "Schöfflisdorf",
@@ -10,7 +9,7 @@ export const seller = {
 } as const;
 
 export const sellerContactText = [
-  `${seller.name} (${seller.form}) · HEWGE`,
+  `${seller.name} · HEWGE`,
   seller.street,
   `${seller.postalCode} ${seller.locality}`,
   seller.country,

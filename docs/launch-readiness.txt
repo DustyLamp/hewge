@@ -15,7 +15,7 @@ Implemented and safe to use now
 - Payment deadline, controlled next-bidder workflow, certificates and insured fulfilment checklist.
 
 Required before accepting a binding bid
-1. Seller identity confirmed by the owner on 13 October 2026: Lewis (Einzelfirma), Unterdorfstrasse 2, 8165 Schöfflisdorf, Switzerland. Public customer-service email: jez@hewge.design. These details are used in the terms/privacy disclosures and outbound email footer/reply-to. This confirms the contact details, not completion of legal review or SMS approval.
+1. Seller identity confirmed by the owner on 13 October 2026: Lewis (Einzelfirma), Unterdorfstrasse 2, 8165 Schöfflisdorf, Switzerland. Public customer-service email: jez@hewge.design. The seller name, address and email are used in the terms/privacy disclosures and outbound email footer/reply-to; the legal-form descriptor is kept out of customer-facing copy. This confirms the contact details, not completion of legal review or SMS approval.
 2. Actual artist, provenance/rights, material/composition, size, measurements and final garment images.
 3. Specific opening and closing dates. No fabricated countdowns. Once open, auction data cannot be rewritten.
 4. Insurable destinations, shipping charge, duties/taxes, delivery promises and product safety/label requirements for target markets. Country codes are an explicit allowlist, not an automated sanctions check.

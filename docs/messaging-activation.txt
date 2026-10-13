@@ -2,13 +2,14 @@ HEWGE — MESSAGING ACTIVATION
 13 October 2026
 
 Public business identity
-Lewis (Einzelfirma)
+Lewis
 Unterdorfstrasse 2
 8165 Schöfflisdorf
 Switzerland
 Customer service: jez@hewge.design
 
 The owner confirmed these details for public seller disclosures and messaging setup.
+The business is an Einzelfirma; this descriptor is retained for administration, not displayed in customer-facing contact details.
 The website and outbound email templates use shared/seller.ts as their contact source.
 
 Email
@@ -19,7 +20,7 @@ The AWS Support API is unavailable on the account's current support plan. Read t
 SES follow-up draft
 Please reconsider production access in eu-north-1 for Hewge's user-requested membership verification emails.
 
-The operator is Lewis (Einzelfirma), Unterdorfstrasse 2, 8165 Schöfflisdorf, Switzerland. Our public customer-service contact is jez@hewge.design. The confirmed operator details are now published at https://hewge.design/privacy and https://hewge.design/terms.
+The operator is Lewis (Einzelfirma), Unterdorfstrasse 2, 8165 Schöfflisdorf, Switzerland. Our public customer-service contact is jez@hewge.design. The seller name, address and contact email are published at https://hewge.design/privacy and https://hewge.design/terms.
 
 Hewge presents one-of-one artist garments. Future sales use free, timed highest-bid auctions. There are no paid entries, random draws or lottery tickets. Bidding, payments and release campaigns remain disabled pending completion of our launch requirements. The immediate email use case is confirming ownership of an address submitted by its visitor, and managing that person's preferences.
 
@@ -35,7 +36,7 @@ SMS
 The CDK stack prepares the HEWGE sender ID for Swiss destinations in eu-north-1. This is a dynamic sender identity, not a government registration or a worldwide sender approval. It does not lease a phone number or enable sending from the application. The existing account is in the SMS sandbox with its USD 1 monthly text-message spend limit unchanged. AWS spend limits should not be treated as a hard real-time budget guarantee.
 
 Before public SMS delivery:
-- Verify a willing test recipient through AWS's sandbox flow and test actual delivery. The owner has been asked which number should receive one verification SMS; no number or receipt is invented.
+- Verify a willing test recipient through AWS's sandbox flow and test actual delivery. One owner-authorised sandbox verification SMS was accepted by AWS on 13 October 2026; confirmation of the received code is still pending. No application SMS delivery is claimed.
 - Implement and test the application's phone-verification flow, code expiry/attempt limits, per-person and global send limits, consent withdrawal and delivery-event handling. Saving a phone number or SMS preference is not phone verification.
 - Provide an accessible unsubscribe link for one-way sender-ID messages; do not promise STOP replies where no reply channel exists.
 - Fully test the sandbox integration, then request SMS production access through AWS Support Center. Declare release announcements as promotional and verification codes as OTP, rather than disguising announcements as transactional messages.

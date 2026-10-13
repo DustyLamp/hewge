@@ -3,9 +3,7 @@ import { seller } from "../shared/seller";
 export function SellerDetails() {
   return (
     <address className="seller-details">
-      <strong>
-        {seller.name} · {seller.form}
-      </strong>
+      <strong>{seller.name}</strong>
       {seller.street}
       <br />
       {seller.postalCode} {seller.locality}

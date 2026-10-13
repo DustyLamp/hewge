@@ -2318,7 +2318,7 @@ function Privacy() {
     <main className="legal-page">
       <span className="eyebrow">YOUR DETAILS</span>
       <h1>
-        <FullStops>{"Private by default."}</FullStops>
+        <FullStops>{"Privacy."}</FullStops>
       </h1>
       <p>
         <FullStops>
