@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5177",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsx scripts/legal-snapshots.ts && tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "cdk": "cdk --app 'npx tsx infrastructure/app.ts'",

@@ -1695,3 +1695,17 @@
     padding: 10px;
   }
 }
+
+.card-check {
+  margin-block: 1.5rem;
+  padding-block: 1rem;
+  border-block: 1px solid #b9b9b0;
+}
+.withdrawal-receipt {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  line-height: 1.65;
+  padding: 1rem;
+  background: #e6e6df;
+}

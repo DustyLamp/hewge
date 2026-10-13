@@ -190,6 +190,9 @@ try {
     transferId,
     received: true,
     feeConsent: true,
+    termsVersion: "auction-2026-10-14",
+    earlyPerformanceRequested: true,
+    completionWithdrawalAcknowledged: true,
     certificateId: `CERT-${id}`,
     hologramId: `SEAL-${id}`,
   };

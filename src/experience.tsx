@@ -1,3 +1,12 @@
+import { WithdrawalPage, WithdrawalPanel } from "./withdrawal";
+import { CardCheck } from "./card-check";
+import {
+  CARD_MANDATE_VERSION,
+  TERMS_VERSION,
+  PRIVACY_VERSION,
+  termsSections,
+  privacySections,
+} from "../shared/legal";
 import { useEffect, useState, type FormEvent } from "react";
 import { ArrowUpRight, ArrowRight, Check, Share2 } from "lucide-react";
 import {
@@ -109,6 +118,7 @@ function Footer() {
         </a>
         <a href="/terms">Auction terms</a>
         <a href="/privacy">Privacy</a>
+        <a href="/withdraw">Withdraw from contract here</a>
         <a href="/dashboard">Studio</a>
       </div>
     </footer>
@@ -255,6 +265,7 @@ function BidBox({
   const [busy, setBusy] = useState(false);
   const [amount, setAmount] = useState("");
   const [confirm, setConfirm] = useState(false);
+  const [cardVerified, setCardVerified] = useState(false);
   async function bid(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!confirm) {
@@ -268,6 +279,7 @@ function BidBox({
         id: release.id,
         amount: Math.round(Number(amount) * 100),
         termsVersion: release.termsVersion,
+        mandateVersion: CARD_MANDATE_VERSION,
         accepted: true,
         adult: true,
       });
@@ -326,7 +338,7 @@ function BidBox({
         <FullStops>{!release.artistName && " Artist undisclosed."} </FullStops>
         <FullStops>
           {!release.identityRevealed &&
-            "You are bidding on the pictured garment; these details may be revealed after bidding."}
+            "Required details will be revealed before bidding opens."}
         </FullStops>
       </p>
       {release.status === "sold" ? (
@@ -345,88 +357,109 @@ function BidBox({
         </div>
       ) : enabled && release.status === "open" ? (
         getToken() ? (
-          <form className="stack-form" onSubmit={bid}>
-            <label>
-              Your bid · CHF
-              <input
-                type="number"
-                min={
-                  minimumBid(
-                    release.openingBid,
-                    release.highestBid,
-                    release.minimumIncrement,
-                  ) / 100
-                }
-                step="0.01"
-                value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  setConfirm(false);
-                }}
-                required
-                placeholder={String(
-                  minimumBid(
-                    release.openingBid,
-                    release.highestBid,
-                    release.minimumIncrement,
-                  ) / 100,
-                )}
-              />
-            </label>
-            <p className="fine-print">
-              Insured shipping:{" "}
-              <FullStops>{money(release.shippingFee)}</FullStops>
-              <FullStops>
-                {
-                  ". Eligible destinations and measurements below. Import charges may apply."
-                }
-              </FullStops>
-            </p>
-            <label className="check-label">
-              <input type="checkbox" required />
-              <span>
-                {" "}
-                I am 18 or over and accept the{" "}
-                <a href="/terms" target="_blank">
-                  auction terms
-                </a>
-                <FullStops>{". A winning bid commits me to pay."}</FullStops>
-              </span>
-            </label>
-            {confirm && (
-              <p className="confirm-bid">
-                Confirm{" "}
-                <FullStops>{money(Math.round(Number(amount) * 100))}</FullStops>{" "}
-                + <FullStops>{money(release.shippingFee)}</FullStops>
-                <FullStops>{" shipping. Payment due within"}</FullStops>{" "}
-                {release.paymentHours}
-                <FullStops>{" hours if you win."}</FullStops>{" "}
-                <FullStops>
-                  {!release.identityRevealed &&
-                    "Artist and material are undisclosed."}
-                </FullStops>
+          <>
+            <CardCheck release={release} onVerified={setCardVerified} />
+            <form className="stack-form" onSubmit={bid}>
+              <label>
+                Your bid · CHF
+                <input
+                  type="number"
+                  min={
+                    minimumBid(
+                      release.openingBid,
+                      release.highestBid,
+                      release.minimumIncrement,
+                    ) / 100
+                  }
+                  step="0.01"
+                  value={amount}
+                  onChange={(e) => {
+                    setAmount(e.target.value);
+                    setConfirm(false);
+                  }}
+                  required
+                  placeholder={String(
+                    minimumBid(
+                      release.openingBid,
+                      release.highestBid,
+                      release.minimumIncrement,
+                    ) / 100,
+                  )}
+                />
+              </label>
+              <p className="fine-print">
+                Insured shipping:{" "}
+                <FullStops>{money(release.shippingFee)}</FullStops>
+                <FullStops>{". " + release.taxDetails}</FullStops>
+                <FullStops>{" " + release.deliveryDetails}</FullStops>
               </p>
-            )}
-            <button className="button button-dark" disabled={busy}>
-              <FullStops>
-                {busy
-                  ? "Submitting…"
-                  : confirm
-                    ? "Confirm binding bid"
-                    : "Review bid"}
-              </FullStops>
-              <ArrowRight size={18} />
-            </button>
-            {confirm && (
+              <label className="check-label">
+                <input type="checkbox" required />
+                <span>
+                  {" "}
+                  I am 18 or over and accept the{" "}
+                  <a
+                    href={`/legal/${release.termsVersion}.txt`}
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    auction terms
+                  </a>
+                  <FullStops>
+                    {
+                      ". If I win, charge my verified card my winning bid plus the shown shipping immediately at closing."
+                    }
+                  </FullStops>
+                </span>
+              </label>
+              {confirm && (
+                <p className="confirm-bid">
+                  Confirm{" "}
+                  <FullStops>
+                    {money(Math.round(Number(amount) * 100))}
+                  </FullStops>{" "}
+                  + <FullStops>{money(release.shippingFee)}</FullStops>
+                  <FullStops>{" shipping. Total: "}</FullStops>
+                  <FullStops>
+                    {money(
+                      Math.round(Number(amount) * 100) + release.shippingFee,
+                    )}
+                  </FullStops>
+                  <FullStops>
+                    {
+                      ". Due immediately at closing if you win. Your verified card will be charged."
+                    }
+                  </FullStops>{" "}
+                  <FullStops>
+                    {!release.identityRevealed &&
+                      "Artist and material are undisclosed."}
+                  </FullStops>
+                </p>
+              )}
               <button
-                type="button"
-                className="quiet-button"
-                onClick={() => setConfirm(false)}
+                className="button button-dark"
+                disabled={busy || !cardVerified}
               >
-                Edit bid
+                <FullStops>
+                  {busy
+                    ? "Submitting…"
+                    : confirm
+                      ? "Place bid — pay if I win"
+                      : "Review bid"}
+                </FullStops>
+                <ArrowRight size={18} />
               </button>
-            )}
-          </form>
+              {confirm && (
+                <button
+                  type="button"
+                  className="quiet-button"
+                  onClick={() => setConfirm(false)}
+                >
+                  Edit bid
+                </button>
+              )}
+            </form>
+          </>
         ) : (
           <a className="button button-dark" href="/account">
             Sign in to bid <ArrowUpRight size={18} />
@@ -721,13 +754,7 @@ function PiecePage() {
           <p>
             <FullStops>
               {
-                "Free to bid. Highest valid bid wins. Equal bids cannot displace an earlier accepted bid. The countdown follows the published closing time, with no hidden extensions. The winning bidder has"
-              }
-            </FullStops>{" "}
-            {release.paymentHours}
-            <FullStops>
-              {
-                " hours to pay. If an offer expires unpaid, Hewge may offer the shirt to the next eligible bidder at that bidder’s own highest bid, after resolving the original offer. Ownership is confirmed only after payment."
+                "Free to bid. Verify your card first. Highest valid bid wins at the published closing time, with no hidden extensions. Payment is due immediately and we attempt your authorised card at closing. Complete any bank authentication promptly. A later offer to another bidder requires fresh acceptance after the original sale is resolved. Ownership is registered only after confirmed payment."
               }
             </FullStops>{" "}
             <a href="/terms">
@@ -741,9 +768,8 @@ function PiecePage() {
           </summary>
           <p>
             <FullStops>
-              {
-                "Insured shipping. Allow up to two weeks after payment, subject to the destination and customs. Destinations subject to restrictions or unavailable insurance are excluded."
-              }
+              {release.deliveryDetails ||
+                "Delivery and insured destinations will be confirmed before bidding opens."}
             </FullStops>{" "}
             <FullStops>
               {release.countries?.length
@@ -751,7 +777,8 @@ function PiecePage() {
                 : "Eligible destinations and shipping cost will be confirmed before bidding."}{" "}
             </FullStops>
             <FullStops>
-              {"Any import charges will be explained in the release terms."}
+              {release.taxDetails ||
+                "Tax and import arrangements will be confirmed before bidding opens."}
             </FullStops>
           </p>
         </details>
@@ -1265,7 +1292,11 @@ function WonPiece({ a, reload }: { a: any; reload: () => void }) {
   const [message, setMessage] = useState("");
   async function pay() {
     try {
-      const r = await api("/winner/checkout", { id: a.id });
+      const r = await api("/winner/checkout", {
+        id: a.id,
+        acceptOffer: a.offerRequiresAcceptance === true,
+        termsVersion: a.termsVersion,
+      });
       if (r.paid) {
         reload();
         return;
@@ -1315,8 +1346,25 @@ function WonPiece({ a, reload }: { a: any; reload: () => void }) {
             Payment due <FullStops>{date(a.paymentDueAt)}</FullStops>
             <FullStops>{"."}</FullStops>
           </p>
+          <p>
+            <FullStops>
+              {a.offerRequiresAcceptance
+                ? "This is a new, optional offer. By accepting below you agree to pay the shown total under the linked terms."
+                : "Your authorised card is attempted at closing. If payment needs your attention, use the button below. We reconcile the first attempt before allowing another payment."}
+            </FullStops>{" "}
+            <a
+              href={`/legal/${a.termsVersion}.txt`}
+              target="_blank"
+              rel="noopener"
+            >
+              Auction terms
+            </a>
+          </p>
           <button className="button button-dark" onClick={pay}>
-            Complete your purchase <ArrowUpRight size={18} />
+            {a.offerRequiresAcceptance
+              ? "Accept offer and pay by card"
+              : "Check payment / pay by card"}{" "}
+            <ArrowUpRight size={18} />
           </button>
         </>
       ) : a.status === "sold" ? (
@@ -1451,7 +1499,7 @@ function Account() {
                 <p>
                   <FullStops>
                     {
-                      "When you win a piece, your payment window and ownership details appear here."
+                      "When you win a piece, check your card payment and registered ownership here. Payment is due immediately at closing."
                     }
                   </FullStops>
                 </p>
@@ -1645,7 +1693,7 @@ function Dashboard() {
         productionCost: Math.round(Number(f.get("productionCost") || 0) * 100),
         artistCost: Math.round(Number(f.get("artistCost") || 0) * 100),
         otherCost: Math.round(Number(f.get("otherCost") || 0) * 100),
-        paymentHours: Number(f.get("paymentHours")),
+
         countries: String(f.get("countries"))
           .toUpperCase()
           .split(/[\s,]+/)
@@ -1758,6 +1806,7 @@ function Dashboard() {
           "media",
           "engagement",
           "transfers",
+          "withdrawals",
           "authenticity",
           "recovery",
           "audit",
@@ -1789,6 +1838,12 @@ function Dashboard() {
         />
       ) : tab === "security" ? (
         <SecurityPanel security={data.security || {}} />
+      ) : tab === "withdrawals" ? (
+        <WithdrawalPanel
+          items={data.withdrawals || []}
+          call={call}
+          busy={busy}
+        />
       ) : tab === "transfers" ? (
         <AdminTransfers
           transfers={data.transfers || []}
@@ -2107,16 +2162,28 @@ function Dashboard() {
                 </label>
               ))}
               <label>
-                Payment window · hours
-                <input
-                  name="paymentHours"
-                  type="number"
-                  min="24"
-                  max="168"
-                  required
-                  defaultValue={draft.paymentHours}
+                Tax and import details
+                <textarea
+                  name="taxDetails"
+                  defaultValue={draft.taxDetails || ""}
+                  placeholder="Included taxes, seller tax status, destination-specific import charges and who pays them"
                 />
               </label>
+              <label>
+                Dispatch and delivery details
+                <textarea
+                  name="deliveryDetails"
+                  defaultValue={draft.deliveryDetails || ""}
+                  placeholder="Dispatch time, delivery estimate, insured destinations and delays"
+                />
+              </label>
+              <p>
+                <FullStops>
+                  {
+                    "Payment is due immediately at closing. A 24-hour technical recovery period allows reconciliation and bank authentication; ending an unpaid sale still requires review and any legally required notice."
+                  }
+                </FullStops>
+              </p>
               <label>
                 Opens · Switzerland
                 <input
@@ -2270,7 +2337,10 @@ function Dashboard() {
                     </p>
                     <button
                       className="button button-dark"
-                      disabled={busy || Date.now() < a.paymentDueAt}
+                      disabled={
+                        busy ||
+                        Date.now() < (a.paymentRecoveryUntil || a.paymentDueAt)
+                      }
                       onClick={() => {
                         if (
                           window.confirm(
@@ -2280,6 +2350,10 @@ function Dashboard() {
                           call("/admin/next-bidder", {
                             id: a.id,
                             confirmed: true,
+                            reviewReference:
+                              window.prompt(
+                                "Private reference for notice, final opportunity to pay and lawful termination:",
+                              ) || "",
                           });
                       }}
                     >
@@ -2399,10 +2473,26 @@ function Dashboard() {
     </main>
   );
 }
+function LegalSections({ sections }: { sections: typeof termsSections }) {
+  return (
+    <>
+      {sections.map((section) => (
+        <section key={section.title}>
+          <h2>{section.title}</h2>
+          {section.paragraphs.map((p, i) => (
+            <p key={i}>
+              <FullStops>{p}</FullStops>
+            </p>
+          ))}
+        </section>
+      ))}
+    </>
+  );
+}
 function Terms() {
   return (
     <main className="legal-page">
-      <span className="eyebrow">THE RELEASE RULES / DRAFT</span>
+      <span className="eyebrow">THE RELEASE RULES · 14 OCTOBER 2026</span>
       <h1>
         <FullStops>{"One piece."}</FullStops>
         <br />
@@ -2411,79 +2501,21 @@ function Terms() {
       <p className="legal-notice">
         <FullStops>
           {
-            "Bidding is not open. These draft rules describe the intended experience. Final destination rules and reviewed terms will be published before a binding bid can be placed."
+            "No voluntary change-of-mind returns. Mandatory consumer rights remain. Verify a card before bidding; payment is due immediately if you win. Bidding remains closed pending launch review."
           }
         </FullStops>
       </p>
-      <h2>The seller</h2>
       <SellerDetails />
-      <h2>How a release works</h2>
       <p>
-        <FullStops>
-          {
-            "One original garment. One auction at a time. Each page identifies the piece, exact size, measurements, opening bid, minimum increase, shipping charge, eligible destinations and opening and closing times. Some releases withhold the artist and material until a clearly stated reveal stage, which may be after bidding closes. This is disclosed before the bid is confirmed. Prices and bids are in Swiss francs. Joining and bidding are free. There is no draw and no buyer’s premium."
-          }
-        </FullStops>
+        <a href={`/legal/${TERMS_VERSION}.txt`} download>
+          Save these terms
+        </a>{" "}
+        ·{" "}
+        <button className="text-link" onClick={() => window.print()}>
+          Print
+        </button>
       </p>
-      <h2>Your bid</h2>
-      <p>
-        <FullStops>
-          {
-            "You must be 18 or over, use a verified email, and select a size and eligible destination. Review your amount before confirming. Bids are offers to buy, not expressions of interest. The highest valid bid received by the server before the deadline wins. An equal bid does not replace an accepted bid. There are no hidden time extensions. Instagram followers do not determine eligibility or the winner. Seller accounts cannot bid."
-          }
-        </FullStops>
-      </p>
-      <h2>Winning & payment</h2>
-      <p>
-        <FullStops>
-          {
-            "The release will state when a binding sale is formed and the payment deadline. The proposed payment window is 48 hours after the winning offer is issued; the actual window appears on each release. No money is taken merely for bidding. Payment goes through Stripe. A payment confirmation, not the browser return page, confirms ownership. The garment does not ship before cleared payment."
-          }
-        </FullStops>
-      </p>
-      <h2>If a winner does not pay</h2>
-      <p>
-        <FullStops>
-          {
-            "Hewge may cancel an unpaid offer after the published deadline and any legally required default process. An operator checks payment status before offering the garment to the next eligible bidder at that bidder’s own highest bid. The original offer cannot remain payable while the next offer is active. A replacement offer carries its own payment deadline. No automatic penalties are imposed by this website."
-          }
-        </FullStops>
-      </p>
-      <h2>Delivery & consumer rights</h2>
-      <p>
-        <FullStops>
-          {
-            "Insured delivery from Switzerland. Allow up to two weeks after payment, with destination and customs exceptions stated on the release. Only approved, serviceable destinations are offered. Shipping prices, taxes, import responsibilities, returns and defect remedies must be set out in the final terms before bidding. Mandatory consumer rights remain applicable; an online auction label does not waive them."
-          }
-        </FullStops>
-      </p>
-      <h2>Ownership & authenticity</h2>
-      <p>
-        <FullStops>
-          {
-            "The paid buyer may choose a public name or “anonymous bidder.” The public archive never includes the buyer’s contact information. The garment, certificate and numbered ownership card identify the same original. The artist signs the certificate by hand. A hologram is a physical matching seal, not a government certification or transfer of copyright."
-          }
-        </FullStops>
-      </p>
-      <h2>Passing on the original</h2>
-      <p>
-        <FullStops>
-          {
-            "Transfers require a request from the registered owner, acceptance by the recipient using a verified email, confirmation of possession, and Hewge’s review of the physical original, certificate and entitlement evidence. Acceptance is due within seven days. Either participant may cancel before approval. The register changes only on approval and defaults to anonymous ownership. Registration records provenance; it does not resolve disputed legal title, transfer copyright or process resale payments."
-          }
-        </FullStops>
-      </p>
-      <h2>Before the first auction</h2>
-      <p>
-        <FullStops>
-          {
-            "Applicable tax treatment, final contract wording and approved destinations will be published here. Live bidding remains disabled until those launch requirements are completed."
-          }
-        </FullStops>
-      </p>
-      <button className="text-link" onClick={() => window.print()}>
-        Print these draft rules
-      </button>
+      <LegalSections sections={termsSections} />
     </main>
   );
 }
@@ -2498,57 +2530,26 @@ function Privacy() {
       <p>
         <FullStops>
           {
-            "Lewis operates Hewge and is responsible for the personal information you choose to share with us to manage release interest, accounts, bids, payments and ownership."
+            "Your purchase is linked privately to your verified account. Your public ownership can stay anonymous. Marketing is optional."
           }
         </FullStops>
       </p>
       <SellerDetails />
-      <h2>What we collect</h2>
       <p>
-        <FullStops>
-          {
-            "Membership: email, verification and release-email consent. After verification you can add sizes, country, city, bidding interest and optional profile details. Your browser’s language and time zone help us understand release interest; they do not establish your location. We do not request GPS location. Collector account: verified email, size preferences and country; a name, Instagram handle, self-reported follower count, phone number and interests are optional. Membership SMS consent is separate from email consent and from providing a phone number for delivery. SMS alerts are not active yet; numbers must be verified before sending release texts. We use size interest to plan future pieces. Social details help us understand our audience; we do not scrape profiles or use follower counts to decide auction winners."
-          }
-        </FullStops>
+        Updated 14 October 2026 ·{" "}
+        <a href={`/legal/${PRIVACY_VERSION}.txt`} download>
+          Save this notice
+        </a>
       </p>
-      <h2>Who can see it</h2>
+      <LegalSections sections={privacySections} />
       <p>
-        <FullStops>
-          {
-            "Contact details and collector profiles are accessible only to Hewge’s authorised owner accounts. The public archive shows a paid buyer’s chosen name only when they opt in; otherwise it says “anonymous bidder.” Account, auction and consent data are stored with AWS in Stockholm, Sweden. AWS also delivers the site globally. Stripe processes payments and shipping details when payments open; Hewge does not receive card numbers."
-          }
-        </FullStops>
-      </p>
-      <h2>Email & retention</h2>
-      <p>
-        <FullStops>
-          {
-            "Ownership transfer requests include the recipient’s email, account confirmations, certificate and seal checks, and private review evidence. Participants can see their own requests; Hewge can review the complete record. Public provenance shows registration and approved transfer dates without contact details."
-          }
-        </FullStops>
-      </p>
-      <p>
-        <FullStops>
-          {
-            "Release emails are optional and separate from account, bid, payment and delivery communications. Unconfirmed membership requests and email links expire after 48 hours. Verified membership records expire after 180 days. A verification link is single-use and opens a one-hour preferences session stored in this browser tab. Account profiles remain while the account is active. Auction and sale records may need to be kept for contractual, dispute and accounting obligations; the final retention policy will accompany the seller’s terms. Technical request data helps operate and protect the site. There are no advertising trackers. A sign-in token stays in this tab’s session storage until sign-out or expiry."
-          }
-        </FullStops>
-      </p>
-      <h2>Your choices</h2>
-      <p>
-        For privacy requests, including access, correction or deletion, email{" "}
+        For access, correction, deletion or a concern, contact{" "}
         <a href={`mailto:${seller.email}`}>{seller.email}</a>
+        <FullStops>{". "}</FullStops>Manage release preferences at{" "}
+        <a href="/membership">membership</a>
         <FullStops>{"."}</FullStops>
       </p>
-      <p>
-        Edit preferences and switch off release emails in your collector account
-        or through a fresh link at <a href="/membership">membership</a>
-        <FullStops>
-          {
-            ". To leave release emails, request a confirmation link below. For an account without auction records, profile deletion is also available below when signed in; account login deletion follows through the identity service. Accounts with bid or sale records need a reviewed deletion request so legally required records can be retained."
-          }
-        </FullStops>
-      </p>
+      <h2>Leave release emails</h2>
       <form
         className="stack-form"
         onSubmit={async (e) => {
@@ -2616,9 +2617,11 @@ export function Experience() {
               ? "Studio — HEWGE"
               : route === "/terms"
                 ? "Auction Terms — HEWGE"
-                : route === "/privacy"
-                  ? "Privacy — HEWGE"
-                  : "After Hours — The Hewge Journal";
+                : route === "/withdraw"
+                  ? "Withdraw from contract — HEWGE"
+                  : route === "/privacy"
+                    ? "Privacy — HEWGE"
+                    : "After Hours — The Hewge Journal";
     const canonical = document.querySelector('link[rel="canonical"]');
     canonical?.setAttribute("href", `https://hewge.design${route}`);
   }, [route]);
@@ -2641,6 +2644,8 @@ export function Experience() {
         <Account />
       ) : route === "/dashboard" ? (
         <Dashboard />
+      ) : route === "/withdraw" ? (
+        <WithdrawalPage />
       ) : route === "/terms" ? (
         <Terms />
       ) : route === "/privacy" ? (

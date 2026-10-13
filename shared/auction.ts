@@ -1,4 +1,5 @@
-export const TERMS_VERSION = "auction-draft-2026-10-13";
+import { TERMS_VERSION, PAYMENT_RECOVERY_HOURS } from "./legal";
+export { TERMS_VERSION } from "./legal";
 export type Release = {
   id: string;
   slug: string;
@@ -27,6 +28,8 @@ export type Release = {
   minimumIncrement: number;
   paymentHours: number;
   shippingFee: number;
+  taxDetails: string;
+  deliveryDetails: string;
   countries: string[];
   publicOwner: { name: string | null; anonymous: boolean } | null;
   certificateId?: string;
@@ -168,6 +171,8 @@ export function publicRelease(
     "minimumIncrement",
     "paymentHours",
     "shippingFee",
+    "taxDetails",
+    "deliveryDetails",
     "countries",
     "publicOwner",
     "certificateId",
@@ -236,8 +241,10 @@ export const preview: Release = {
   highestBid: null,
   bidCount: 0,
   minimumIncrement: 1000,
-  paymentHours: 48,
+  paymentHours: PAYMENT_RECOVERY_HOURS,
   shippingFee: 0,
+  taxDetails: "",
+  deliveryDetails: "",
   countries: [],
   publicOwner: null,
   serverNow: Date.now(),

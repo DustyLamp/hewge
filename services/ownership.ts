@@ -1,3 +1,4 @@
+import { TERMS_VERSION, PRIVACY_VERSION, termsText } from "../shared/legal";
 import { createHash, randomUUID } from "node:crypto";
 import {
   DynamoDBDocumentClient,
@@ -77,6 +78,7 @@ export function ownershipRegistry(
         requestedAt: t!.requestedAt,
         deadlineAt: t!.deadlineAt,
         approvedAt: t!.approvedAt,
+        serviceNotBefore: t!.serviceNotBefore,
         outgoing: t!.fromId === user.id,
         recipient: t!.fromId === user.id ? t!.toEmail : undefined,
         certificateId: t!.certificateId,
@@ -228,8 +230,14 @@ export function ownershipRegistry(
           "Confirm possession and check the certificate and garment seal.",
           400,
         );
+      if (body.termsVersion !== TERMS_VERSION)
+        fail("Accept the current transfer terms.", 400);
       if (body.feeConsent !== true)
         fail("Accept the 0.5% recipient transfer fee before continuing.", 400);
+      const early =
+        body.earlyPerformanceRequested === true &&
+        body.completionWithdrawalAcknowledged === true;
+      const serviceNotBefore = early ? now : now + 14 * 86400000;
       const anonymous = body.anonymous !== false;
       const name = anonymous ? null : text(body.name, 80);
       if (!anonymous && !name) fail("Choose a public name.", 400);
@@ -249,7 +257,7 @@ export function ownershipRegistry(
               TableName,
               Key: transferKey,
               UpdateExpression:
-                "SET #s=:review, recipientId=:u, acceptedAt=:now, feeConsentAt=:now, publicOwner=:p, possessionConfirmed=:yes ADD revision :one",
+                "SET #s=:review, recipientId=:u, acceptedAt=:now, feeConsentAt=:now, publicOwner=:p, possessionConfirmed=:yes, termsVersion=:terms, privacyVersion=:privacy, termsHash=:termsHash, serviceNotBefore=:notBefore, earlyPerformanceRequested=:early, completionWithdrawalAcknowledged=:early ADD revision :one",
               ConditionExpression:
                 "revision=:v AND #s=:pending AND deadlineAt>:now",
               ExpressionAttributeNames: { "#s": "status" },
@@ -262,6 +270,11 @@ export function ownershipRegistry(
                 ":one": 1,
                 ":v": t.revision,
                 ":pending": "awaiting-recipient",
+                ":terms": TERMS_VERSION,
+                ":privacy": PRIVACY_VERSION,
+                ":termsHash": digest(termsText),
+                ":notBefore": serviceNotBefore,
+                ":early": early,
               },
             },
           },
@@ -278,7 +291,14 @@ export function ownershipRegistry(
           entity: `piece:${a.id}`,
           actor: user.id,
           action: "transfer-accepted",
-          details: { transferId: t.id },
+          details: {
+            transferId: t.id,
+            termsVersion: TERMS_VERSION,
+            termsHash: digest(termsText),
+            earlyPerformanceRequested: early,
+            completionWithdrawalAcknowledged: early,
+            serviceNotBefore,
+          },
         },
       );
       return { ok: true };
@@ -343,6 +363,17 @@ export function ownershipRegistry(
       !t.recipientId
     )
       fail("The recipient must accept before approval.");
+    if (
+      t.termsVersion !== TERMS_VERSION ||
+      !Number.isFinite(t.serviceNotBefore)
+    )
+      fail(
+        "The recipient must accept the current service terms before review.",
+      );
+    if (t.serviceNotBefore > now)
+      fail(
+        "The registration service waits until the 14-day withdrawal period ends unless the recipient expressly requests early performance and acknowledges completion.",
+      );
     const evidence = text(body.evidence, 1000);
     if (
       body.physicalChecked !== true ||

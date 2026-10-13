@@ -483,6 +483,7 @@ function App() {
           <a href="/account">Collector access</a>
           <a href="/terms">Auction terms</a>
           <a href="/privacy">Privacy</a>
+          <a href="/withdraw">Withdraw from contract here</a>
         </div>
       </footer>
       <dialog

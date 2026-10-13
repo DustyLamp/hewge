@@ -1,4 +1,13 @@
+import { withdrawalService } from "./withdrawals";
 import { suppressionWrite, suppressionKey } from "./consent";
+import { auctionCards, cardKey } from "./auction-cards";
+import {
+  CARD_MANDATE_VERSION,
+  PRIVACY_VERSION,
+  PAYMENT_RECOVERY_HOURS,
+  termsText,
+  cardMandate,
+} from "../shared/legal";
 import { createHash, randomUUID } from "node:crypto";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
@@ -62,6 +71,14 @@ const media = mediaLibrary(
 );
 
 const fees = transferPayments(db, TableName, ledger.commit, stripe);
+const withdrawals = withdrawalService(db, TableName, ledger.commit);
+const cards = auctionCards(
+  db,
+  TableName,
+  ledger.commit,
+  stripe,
+  completeCardPayment,
+);
 const campaigns = campaignService(
   db,
   TableName,
@@ -233,8 +250,8 @@ function notice(a: any, email: string, kind: string) {
     email,
     kind === "paid" ? `Yours. ${a.name} — HEWGE` : `You won ${a.name}.`,
     kind === "paid"
-      ? `Congratulations. ${a.name} is yours. Your artist-signed certificate and ownership card will travel with your insured parcel. Manage your public ownership at ${process.env.SITE_URL}/account. We never publish your name without your choice.`
-      : `Your bid of CHF ${(a.offerAmount / 100).toFixed(2)} won ${a.name}. Pay by ${new Date(a.paymentDueAt).toISOString()} at ${process.env.SITE_URL}/account. Shipping: CHF ${(a.shippingFee / 100).toFixed(2)}. Your shirt is held until that deadline. No payment has been taken.`,
+      ? `Congratulations. ${a.name} is yours. Your artist-signed certificate and ownership card will travel with your insured parcel. Manage your public ownership at ${process.env.SITE_URL}/account. We never publish your name without your choice. Amount: CHF ${(a.offerAmount / 100).toFixed(2)} plus CHF ${(a.shippingFee / 100).toFixed(2)} shipping. Terms version: ${a.termsVersion}.\n\n${termsText}`
+      : `Your bid of CHF ${(a.offerAmount / 100).toFixed(2)} ${a.offerRequiresAcceptance ? "is invited to accept a new offer for" : "won"} ${a.name}. ${a.offerRequiresAcceptance ? "This is optional; accept and pay by card in your account if you wish to proceed. You have not been automatically charged." : "Payment is due immediately. We attempt your authorised card at closing. Check your account for the confirmed outcome and complete any required authentication promptly."} Shipping: CHF ${(a.shippingFee / 100).toFixed(2)}. ${process.env.SITE_URL}/account. Terms version: ${a.termsVersion}.\n\n${termsText}`,
   );
 }
 async function putMail(item: any) {
@@ -265,7 +282,8 @@ async function settle(a: any, now = Date.now()) {
     winnerEmail: a.highestBidderEmail || null,
     offerAmount: a.highestBid || null,
     offerId,
-    paymentDueAt: now + a.paymentHours * 3600000,
+    paymentDueAt: now,
+    paymentRecoveryUntil: now + PAYMENT_RECOVERY_HOURS * 3600000,
     revision: a.revision + 1,
   };
   try {
@@ -331,6 +349,13 @@ You asked to hear about Hewge releases. Unsubscribe at ${process.env.SITE_URL}/p
 async function tick() {
   for (const a of await index("AUCTIONS")) {
     await settle(a);
+    try {
+      await cards.charge(a.id);
+    } catch {
+      console.warn(
+        "Auction card attempt needs reconciliation; notification delivery continues.",
+      );
+    }
     if (process.env.EMAIL_ENABLED === "true") await announce(a);
   }
   await campaigns.queue();
@@ -427,14 +452,44 @@ async function completePayment(session: Stripe.Checkout.Session) {
     session.currency !== "chf" ||
     session.amount_total !== a.offerAmount + a.shippingFee ||
     session.metadata?.offerId !== a.offerId ||
-    session.client_reference_id !== a.winnerId
+    session.client_reference_id !== a.winnerId ||
+    (a.sessionId && a.sessionId !== session.id)
   )
     throw Error("Payment reconciliation required");
+  await registerPayment(a, { sessionId: session.id });
+}
+async function completeCardPayment(intent: Stripe.PaymentIntent) {
+  if (
+    intent.metadata?.purpose !== "auction-winner" ||
+    intent.status !== "succeeded"
+  )
+    return;
+  const a = await get(`AUCTION#${intent.metadata.auctionId}`, "HEAD");
+  if (!a) throw Error("Missing auction");
+  if (a.status === "sold" && a.cardPaymentIntentId === intent.id) return;
+  if (
+    a.status !== "awaiting-payment" ||
+    intent.currency !== "chf" ||
+    intent.amount_received !== a.offerAmount + a.shippingFee ||
+    intent.amount !== a.offerAmount + a.shippingFee ||
+    intent.metadata.offerId !== a.offerId ||
+    intent.metadata.bidderId !== a.winnerId ||
+    intent.metadata.attempt !== a.cardAttempt ||
+    (typeof intent.customer === "string"
+      ? intent.customer
+      : intent.customer?.id) !== a.cardCustomer ||
+    (a.cardPaymentIntentId && a.cardPaymentIntentId !== intent.id) ||
+    a.offerRequiresAcceptance
+  )
+    throw Error("Winning card payment reconciliation required");
+  await registerPayment(a, { cardPaymentIntentId: intent.id });
+}
+async function registerPayment(a: any, payment: Record<string, string>) {
   const paid = {
     ...a,
     status: "sold",
     soldAt: Date.now(),
-    sessionId: session.id,
+    ...payment,
     ownerId: a.winnerId,
     lastVerifiedValue: a.offerAmount,
     certificateRevision: 1,
@@ -478,7 +533,7 @@ async function checkout(a: any, user: any) {
   if (
     a.status !== "awaiting-payment" ||
     a.winnerId !== user.id ||
-    a.paymentDueAt - now < 31 * 60000
+    (a.paymentRecoveryUntil || a.paymentDueAt) - now < 31 * 60000
   )
     throw Object.assign(
       Error(
@@ -486,6 +541,43 @@ async function checkout(a: any, user: any) {
       ),
       { status: 409 },
     );
+  a = await cards.prepareCheckout(a);
+  if (a.status === "sold") return { paid: true };
+  if (a.offerRequiresAcceptance && !a.offerAcceptedAt) {
+    await ledger.commit(
+      [
+        {
+          Update: {
+            TableName,
+            Key: key(a.id),
+            UpdateExpression:
+              "SET offerAcceptedAt=:now, offerAcceptedTermsHash=:hash",
+            ConditionExpression:
+              "offerId=:offer AND winnerId=:user AND #s=:waiting AND attribute_not_exists(offerAcceptedAt)",
+            ExpressionAttributeNames: { "#s": "status" },
+            ExpressionAttributeValues: {
+              ":now": now,
+              ":hash": hash(termsText),
+              ":offer": a.offerId,
+              ":user": user.id,
+              ":waiting": "awaiting-payment",
+            },
+          },
+        },
+      ],
+      {
+        entity: `piece:${a.id}`,
+        actor: user.id,
+        action: "later-offer-accepted",
+        details: {
+          offerId: a.offerId,
+          termsVersion: a.termsVersion,
+          termsHash: hash(termsText),
+          amount: a.offerAmount + a.shippingFee,
+        },
+      },
+    );
+  }
   const { client } = await stripe();
   if (a.sessionId) {
     const session = await client.checkout.sessions.retrieve(a.sessionId);
@@ -505,13 +597,16 @@ async function checkout(a: any, user: any) {
         UpdateExpression:
           "SET checkoutAttempt=:attempt, checkoutStartedAt=:now, checkoutExpiresAt=:expiry ADD revision :one REMOVE sessionId",
         ConditionExpression:
-          "sessionId=:previous AND offerId=:offer AND #s=:waiting AND paymentDueAt>:minimum",
+          "sessionId=:previous AND offerId=:offer AND #s=:waiting AND paymentRecoveryUntil>:minimum",
         ExpressionAttributeNames: { "#s": "status" },
         ExpressionAttributeValues: {
           ":attempt": (a.checkoutAttempt || 1) + 1,
           ":now": now,
           ":expiry": Math.floor(
-            Math.min(a.paymentDueAt, now + 23 * 3600000) / 1000,
+            Math.min(
+              a.paymentRecoveryUntil || a.paymentDueAt,
+              now + 23 * 3600000,
+            ) / 1000,
           ),
           ":one": 1,
           ":previous": a.sessionId,
@@ -530,13 +625,16 @@ async function checkout(a: any, user: any) {
           UpdateExpression:
             "SET checkoutAttempt=:attempt, checkoutStartedAt=:now, checkoutExpiresAt=:expiry ADD revision :one",
           ConditionExpression:
-            "attribute_not_exists(checkoutStartedAt) AND offerId=:offer AND #s=:waiting AND paymentDueAt>:minimum",
+            "attribute_not_exists(checkoutStartedAt) AND offerId=:offer AND #s=:waiting AND paymentRecoveryUntil>:minimum",
           ExpressionAttributeNames: { "#s": "status" },
           ExpressionAttributeValues: {
             ":attempt": 1,
             ":now": now,
             ":expiry": Math.floor(
-              Math.min(a.paymentDueAt, now + 23 * 3600000) / 1000,
+              Math.min(
+                a.paymentRecoveryUntil || a.paymentDueAt,
+                now + 23 * 3600000,
+              ) / 1000,
             ),
             ":one": 1,
             ":offer": a.offerId,
@@ -556,10 +654,14 @@ async function checkout(a: any, user: any) {
   const session = await client.checkout.sessions.create(
     {
       mode: "payment",
-      allowed_payment_method_types: ["card", "twint"],
+      allowed_payment_method_types: ["card"],
       client_reference_id: user.id,
       customer_email: user.email,
-      metadata: { auctionId: a.id, offerId: a.offerId },
+      metadata: {
+        auctionId: a.id,
+        offerId: a.offerId,
+        termsVersion: a.termsVersion,
+      },
       line_items: [
         {
           price_data: {
@@ -567,7 +669,7 @@ async function checkout(a: any, user: any) {
             unit_amount: a.offerAmount,
             product_data: {
               name: `HEWGE — ${a.name}`,
-              description: `One of one. Size ${a.size}. ${publicRelease(a).material || "Material under wraps"}.`,
+              description: `One of one. Size ${a.size}. ${publicRelease(a).material || "See release details"}.`,
             },
           },
           quantity: 1,
@@ -590,7 +692,7 @@ async function checkout(a: any, user: any) {
       consent_collection: { terms_of_service: "required" },
       custom_text: {
         terms_of_service_acceptance: {
-          message: `I agree to the [auction terms](${process.env.SITE_URL}/terms).`,
+          message: `I agree to the [auction terms](${process.env.SITE_URL}/legal/${a.termsVersion}.txt).`,
         },
       },
     },
@@ -612,11 +714,18 @@ async function checkout(a: any, user: any) {
   );
   return { url: session.url };
 }
-async function nextBidder(a: any, actor: string) {
-  if (a.status !== "awaiting-payment" || Date.now() < a.paymentDueAt)
-    throw Object.assign(Error("The payment window is still open."), {
+async function nextBidder(a: any, actor: string, reviewReference: string) {
+  if (
+    a.status !== "awaiting-payment" ||
+    Date.now() < (a.paymentRecoveryUntil || a.paymentDueAt)
+  )
+    throw Object.assign(Error("The payment recovery period is still open."), {
       status: 409,
     });
+  if (a.cardChargeStartedAt || a.termsVersion === TERMS_VERSION) {
+    a = await cards.prepareCheckout(a);
+    if (a.status === "sold") return { paid: true };
+  }
   if (a.checkoutStartedAt && !a.sessionId)
     throw Object.assign(
       Error(
@@ -652,7 +761,17 @@ async function nextBidder(a: any, actor: string) {
     winnerEmail: bid?.email || null,
     offerAmount: bid?.amount || null,
     offerId,
-    paymentDueAt: Date.now() + a.paymentHours * 3600000,
+    paymentDueAt: Date.now(),
+    paymentRecoveryUntil: Date.now() + PAYMENT_RECOVERY_HOURS * 3600000,
+    offerRequiresAcceptance: true,
+    offerAcceptedAt: undefined,
+    offerAcceptedTermsHash: undefined,
+    cardChargeStartedAt: undefined,
+    cardAttempt: undefined,
+    cardCustomer: undefined,
+    cardMethod: undefined,
+    cardShipping: undefined,
+    cardPaymentIntentId: undefined,
     sessionId: null,
     checkoutStartedAt: undefined,
     checkoutExpiresAt: undefined,
@@ -680,13 +799,19 @@ async function nextBidder(a: any, actor: string) {
             sk: `AUDIT#${Date.now()}`,
             action: "unpaid-offer-released",
             previousWinner: a.winnerId,
+            reviewReference,
             offerId: a.offerId,
             createdAt: Date.now(),
           },
         },
       },
     ],
-    { entity: `piece:${a.id}`, actor, action: "unpaid-offer-released" },
+    {
+      entity: `piece:${a.id}`,
+      actor,
+      action: "unpaid-offer-released",
+      details: { reviewHash: hash(reviewReference) },
+    },
   );
   return { ok: true };
 }
@@ -724,7 +849,14 @@ export async function handler(event: any) {
           "ownership-transfer-fee"
         )
           await fees.paid(e.data.object as Stripe.Checkout.Session);
+        else if (
+          (e.data.object as Stripe.Checkout.Session).metadata?.purpose ===
+          "auction-card"
+        )
+          await cards.finish(e.data.object as Stripe.Checkout.Session);
         else await completePayment(e.data.object as Stripe.Checkout.Session);
+      if (e.type === "payment_intent.succeeded")
+        await completeCardPayment(e.data.object as Stripe.PaymentIntent);
       if (
         ["refund.updated", "refund.created"].includes(e.type) &&
         (e.data.object as Stripe.Refund).metadata?.purpose ===
@@ -854,11 +986,15 @@ export async function handler(event: any) {
     if (path.startsWith("/security/"))
       return response(200, await security.handle(path, body));
     if (path === "/verify/nfc") return response(200, await nfc.verify(body));
+    if (path === "/withdrawal")
+      return response(200, await withdrawals.submit(body));
     if (path === "/checkout")
       return response(409, {
         message: "This piece is available only to its winning bidder.",
       });
     const user = await auth(event, path.startsWith("/admin"));
+    if (path === "/admin/withdrawal")
+      return response(200, await withdrawals.review(body, user));
     if (path === "/admin/tag")
       return response(200, await nfc.activate(body, user));
     if (path.startsWith("/admin/media/"))
@@ -927,6 +1063,8 @@ export async function handler(event: any) {
         .map((a) => ({
           ...publicRelease(a),
           paymentDueAt: a.paymentDueAt,
+          paymentRecoveryUntil: a.paymentRecoveryUntil,
+          offerRequiresAcceptance: a.offerRequiresAcceptance === true,
           offerAmount: a.offerAmount,
           canPay: a.status === "awaiting-payment",
           pendingTransferId: a.pendingTransferId,
@@ -1043,6 +1181,10 @@ export async function handler(event: any) {
       );
       return response(200, { ok: true });
     }
+    if (path === "/bid/card/status")
+      return response(200, await cards.status(clean(body.id, 80), user));
+    if (path === "/bid/card/setup")
+      return response(200, await cards.start(clean(body.id, 80), body, user));
     if (path === "/bid") {
       if (process.env.CHECKOUT_ENABLED !== "true")
         return response(409, {
@@ -1067,12 +1209,15 @@ export async function handler(event: any) {
         });
       if (
         body.termsVersion !== a.termsVersion ||
+        a.termsVersion !== TERMS_VERSION ||
+        body.mandateVersion !== CARD_MANDATE_VERSION ||
         body.accepted !== true ||
         body.adult !== true
       )
         return response(400, {
           message: "Confirm you are 18 or over and accept the auction terms.",
         });
+      const card = await cards.requireCard(a, user, profile);
       const now = Date.now();
       const bidId = randomUUID();
       await ledger.commit(
@@ -1109,6 +1254,11 @@ export async function handler(event: any) {
                 amount,
                 createdAt: now,
                 termsVersion: a.termsVersion,
+                termsHash: hash(termsText),
+                privacyVersion: PRIVACY_VERSION,
+                mandateVersion: CARD_MANDATE_VERSION,
+                mandateHash: hash(cardMandate),
+                cardAttempt: card.attempt,
                 accepted: true,
                 country: profile.country,
                 size: a.size,
@@ -1121,18 +1271,49 @@ export async function handler(event: any) {
               Item: { pk: `USER#${user.id}`, sk: "ACTIVITY", lastBidAt: now },
             },
           },
+          {
+            Update: {
+              TableName,
+              Key: cardKey(a.id, user.id),
+              UpdateExpression: "SET hasBid=:yes",
+              ConditionExpression:
+                "#s=:verified AND attempt=:attempt AND termsVersion=:terms AND mandateVersion=:mandate",
+              ExpressionAttributeNames: { "#s": "status" },
+              ExpressionAttributeValues: {
+                ":yes": true,
+                ":verified": "verified",
+                ":attempt": card.attempt,
+                ":terms": a.termsVersion,
+                ":mandate": CARD_MANDATE_VERSION,
+              },
+            },
+          },
         ],
         {
           entity: `piece:${a.id}`,
           actor: user.id,
           action: "bid-accepted",
-          details: { bidId, amount },
+          details: {
+            bidId,
+            amount,
+            termsVersion: a.termsVersion,
+            termsHash: hash(termsText),
+            mandateVersion: CARD_MANDATE_VERSION,
+            mandateHash: hash(cardMandate),
+          },
         },
       );
       return response(200, { ok: true, amount });
     }
     if (path === "/winner/checkout") {
       const a = await get(`AUCTION#${clean(body.id, 80)}`, "HEAD");
+      if (
+        a?.offerRequiresAcceptance &&
+        (body.acceptOffer !== true || body.termsVersion !== a.termsVersion)
+      )
+        return response(400, {
+          message: "Accept the new offer and its terms before paying.",
+        });
       return response(200, await checkout(a || {}, user));
     }
     if (path === "/owner") {
@@ -1180,6 +1361,7 @@ export async function handler(event: any) {
         mediaItems,
         recoveryCases,
         campaignItems,
+        withdrawalItems,
       ] = await Promise.all([
         index("COLLECTORS"),
         index("AUCTIONS"),
@@ -1189,6 +1371,7 @@ export async function handler(event: any) {
         index("MEDIA"),
         index("RECOVERIES"),
         index("CAMPAIGNS"),
+        index("WITHDRAWALS"),
       ]);
       let cursor;
       const guestlist: any[] = [];
@@ -1211,6 +1394,7 @@ export async function handler(event: any) {
         media: mediaItems,
         recoveries: recoveryCases,
         campaigns: campaignItems,
+        withdrawals: withdrawalItems,
         security: {
           mfaRequired: true,
           auditRetention:
@@ -1282,20 +1466,17 @@ export async function handler(event: any) {
       const publish = body.publish === true;
       const openingBid = Number(body.openingBid),
         minimumIncrement = Number(body.minimumIncrement),
-        paymentHours = Number(body.paymentHours),
+        paymentHours = PAYMENT_RECOVERY_HOURS,
         shippingFee = Number(body.shippingFee);
       if (
         ![openingBid, minimumIncrement, shippingFee].every(
           (n) => Number.isSafeInteger(n) && n >= 0,
         ) ||
         openingBid < 100 ||
-        minimumIncrement < 100 ||
-        !Number.isInteger(paymentHours) ||
-        paymentHours < 24 ||
-        paymentHours > 168
+        minimumIncrement < 100
       )
         throw Object.assign(
-          Error("Check prices and payment window (24–168 hours)."),
+          Error("Check the bid, increment and shipping amounts."),
           { status: 400 },
         );
       const item: any = {
@@ -1331,6 +1512,8 @@ export async function handler(event: any) {
         minimumIncrement,
         paymentHours,
         shippingFee,
+        taxDetails: clean(body.taxDetails, 1500),
+        deliveryDetails: clean(body.deliveryDetails, 1500),
         countries: Array.isArray(body.countries)
           ? [
               ...new Set(
@@ -1392,11 +1575,15 @@ export async function handler(event: any) {
           !item.artistName ||
           !item.artistBiography ||
           !item.measurements ||
-          !item.countries.length
+          !item.taxDetails ||
+          !item.deliveryDetails ||
+          !item.countries.length ||
+          (!["now", "at-opening"].includes(item.revealMode) &&
+            !item.identityRevealed)
         )
           throw Object.assign(
             Error(
-              "Add the material, artist, biography, measurements, size and eligible countries.",
+              "Add the material, artist, biography, measurements, size, eligible countries, tax and delivery details; required details must be revealed by opening.",
             ),
             { status: 400 },
           );
@@ -1530,15 +1717,21 @@ export async function handler(event: any) {
       return response(200, { ok: true });
     }
     if (path === "/admin/next-bidder") {
-      if (body.confirmed !== true)
+      if (
+        body.confirmed !== true ||
+        clean(body.reviewReference, 500).length < 12
+      )
         throw Object.assign(
           Error(
-            "Confirm the original offer has been cancelled under your terms.",
+            "Confirm lawful termination after required notice and provide the private review reference (at least 12 characters).",
           ),
           { status: 400 },
         );
       const a = await get(`AUCTION#${clean(body.id, 80)}`, "HEAD");
-      return response(200, await nextBidder(a || {}, user.id));
+      return response(
+        200,
+        await nextBidder(a || {}, user.id, clean(body.reviewReference, 500)),
+      );
     }
     if (path === "/admin/fulfillment") {
       const a = await get(`AUCTION#${clean(body.id, 80)}`, "HEAD");

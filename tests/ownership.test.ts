@@ -1,3 +1,4 @@
+import { TERMS_VERSION } from "../shared/legal";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ownershipRegistry } from "../services/ownership";
 const send = vi.fn();
@@ -14,6 +15,7 @@ const accept = {
   transferId: "transfer",
   received: true,
   feeConsent: true,
+  termsVersion: TERMS_VERSION,
   certificateId: "CERT-1",
   hologramId: "SEAL-1",
 };
@@ -53,6 +55,8 @@ beforeEach(() => {
     toEmail: recipient.email,
     status: "awaiting-recipient",
     revision: 1,
+    termsVersion: TERMS_VERSION,
+    serviceNotBefore: 1,
     deadlineAt: Date.now() + 60000,
   };
   send.mockImplementation(async (c) => {
@@ -145,6 +149,34 @@ describe("validated ownership transfers", () => {
     });
     expect(tx[1].Update.ExpressionAttributeValues[":u"]).toBe(recipient.id);
     expect(tx[1].Update.ConditionExpression).toContain("revision=:v");
+  });
+  it("waits 14 days for registration unless both early-performance choices are explicit", async () => {
+    const before = Date.now();
+    await registry.handle("/transfer/accept", accept, recipient);
+    expect(
+      transactions()[0][1].Update.ExpressionAttributeValues[":notBefore"],
+    ).toBeGreaterThanOrEqual(before + 14 * 86400000);
+    expect(
+      transactions()[0][1].Update.ExpressionAttributeValues[":early"],
+    ).toBe(false);
+    await registry.handle(
+      "/transfer/accept",
+      {
+        ...accept,
+        earlyPerformanceRequested: true,
+        completionWithdrawalAcknowledged: true,
+      },
+      recipient,
+    );
+    expect(
+      transactions()[1][1].Update.ExpressionAttributeValues[":early"],
+    ).toBe(true);
+    transfer.status = "awaiting-review";
+    transfer.recipientId = recipient.id;
+    transfer.serviceNotBefore = Date.now() + 86400000;
+    await expect(
+      registry.handle("/admin/transfer", approval, admin),
+    ).rejects.toThrow("14-day withdrawal period");
   });
   it("prevents approving before acceptance and requires actual review evidence", async () => {
     await expect(

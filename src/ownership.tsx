@@ -1,3 +1,4 @@
+import { TERMS_VERSION } from "../shared/legal";
 import { FullStops } from "./typography";
 import { useEffect, useState, type FormEvent } from "react";
 import { api } from "./api";
@@ -193,6 +194,13 @@ export function TransferList({
                     hologramId: f.get("hologramId"),
                     received: f.has("received"),
                     feeConsent: f.has("feeConsent"),
+                    termsVersion: TERMS_VERSION,
+                    earlyPerformanceRequested: f.has(
+                      "earlyPerformanceRequested",
+                    ),
+                    completionWithdrawalAcknowledged: f.has(
+                      "completionWithdrawalAcknowledged",
+                    ),
                     anonymous: f.get("visibility") === "anonymous",
                     name: f.get("name"),
                   });
@@ -232,6 +240,32 @@ export function TransferList({
                     resale funds and payment-provider charges.
                   </FullStops>
                 </label>
+                <p className="fine-print">
+                  <FullStops>
+                    {
+                      "We wait 14 days before performing the registration service unless you choose both options below. You can withdraw during that period. Early performance does not remove rights relating to defective services."
+                    }
+                  </FullStops>
+                </p>
+                <label className="check-row">
+                  <input type="checkbox" name="earlyPerformanceRequested" />
+                  <FullStops>
+                    {
+                      "I expressly request that Hewge starts the registration service before the 14-day withdrawal period ends."
+                    }
+                  </FullStops>
+                </label>
+                <label className="check-row">
+                  <input
+                    type="checkbox"
+                    name="completionWithdrawalAcknowledged"
+                  />
+                  <FullStops>
+                    {
+                      "I acknowledge that, where applicable, my service withdrawal right ends once the registration service has been fully performed."
+                    }
+                  </FullStops>
+                </label>
                 <button className="button button-dark" disabled={busy}>
                   Accept for Hewge review
                 </button>
@@ -240,7 +274,9 @@ export function TransferList({
             {t.status === "awaiting-review" && (
               <p>
                 <FullStops>
-                  {"Accepted. Awaiting Hewge’s physical and provenance checks."}
+                  {t.serviceNotBefore > Date.now()
+                    ? `Accepted. Review can start after ${date(t.serviceNotBefore)}.`
+                    : "Accepted. Awaiting Hewge’s physical and provenance checks."}
                 </FullStops>
               </p>
             )}

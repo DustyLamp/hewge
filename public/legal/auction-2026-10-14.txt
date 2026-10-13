@@ -1,0 +1,70 @@
+HEWGE — auction-2026-10-14
+Lewis · HEWGE
+Unterdorfstrasse 2
+8165 Schöfflisdorf
+Switzerland
+jez@hewge.design
+
+The seller and these terms
+Lewis operates HEWGE from the address below. These terms govern bids and purchases directly from Hewge, and the separate registration service for later transfers. Contact us at jez@hewge.design for order, return, authenticity or privacy questions. Keep the version linked to your bid; later changes do not alter an existing bid or sale.
+
+Bidding is currently disabled. The rules below describe the auction service being prepared. A release can open only after its required product, destination, tax, delivery and payment details are complete. Only destinations expressly enabled for that release are accepted.
+
+The original and its description
+Each lot is one identified garment in one stated size. There is no interchangeable size stock. Before bidding, check the photographs, condition, composition, measurements, artist and provenance disclosures, total price information and delivery terms on the release page. A one-of-one garment is not automatically a made-to-order or personalised product.
+
+Required product information must be available before a binding bid. A planned reveal cannot override that requirement. Images may differ slightly between screens, but this does not excuse a material discrepancy or misdescription. Buying the garment does not transfer the artist’s copyright or reproduction rights.
+
+Eligibility and the card check
+You must be at least 18, legally able to contract, signed in with a verified email, and able to receive the lot at an eligible delivery address. Provide accurate information, check the measurements, and use a card you are authorised to use. The seller cannot bid. Shill bidding, collusion, account sharing to evade restrictions and interference with the auction are prohibited.
+
+Before your first bid on a release, complete Stripe’s card setup and any bank authentication. No bidding fee is charged. Your bank may show a temporary verification authorisation. The check does not reserve your bid amount, guarantee available funds, verify legal title or guarantee that a later payment will succeed. Hewge receives payment references and limited card details, not the full card number or security code.
+
+I authorise Hewge to save my card with Stripe and charge it once if I win this release, for my winning bid plus the shipping charge shown before my bid. Payment is due immediately at closing. I will complete any bank authentication promptly. This authorisation is for this release only; it is not a subscription. I am authorised to use this card. The billing address I enter at Stripe is also my delivery address.
+
+Submitting a binding bid
+Bids are in CHF. The release shows the minimum bid, increment, shipping charge and eligible destinations. There is no buyer’s premium. Any tax Hewge must collect must be included or clearly itemised before bidding. Import charges payable to another party must be described for the destination before bidding; no undisclosed Hewge charge is added afterwards.
+
+Enter your amount, read the terms and card authorisation, then review the total. The final button explicitly places a bid with an obligation to pay if you win. A bid is accepted only when our server records it and confirms acceptance. A browser countdown, button click or interrupted request alone is not acceptance. If confirmation is uncertain, check with Hewge before submitting again.
+
+An accepted bid is binding until it is outbid or the auction is validly cancelled, subject to mandatory legal rights. The highest valid bid recorded before the published closing instant wins; an equal or late bid cannot displace it. Server time determines acceptance. There are no hidden closing extensions, random selections or advantages for social-media following.
+
+Closing, payment and failed payments
+At the published closing time, the highest valid accepted bid forms the sale at that bid plus the disclosed shipping charge, subject to mandatory law. Payment is due immediately. Hewge initiates one card charge when the server settles the auction, normally within a minute of closing; outages or processor delays may delay the attempt. You authorise only your winning amount and disclosed shipping for that release.
+
+If the bank declines payment or requires further authentication, return to your collector account and complete card payment promptly. A failed check or charge does not by itself cancel a binding purchase. The account may show a technical recovery deadline; this is not credit or a right to postpone payment. We do not repeatedly debit your card or charge a penalty automatically. Contact us promptly if a bid or payment appears unauthorised.
+
+Before ending an unpaid sale, Hewge will reconcile any pending payment and give any notice and reasonable final opportunity required by law. Only after lawful termination and confirmation that no payment can still settle may the garment be offered again. A later offer to a previous bidder is optional, at that bidder’s own highest bid, and requires fresh express acceptance; losing bids are not automatically charged. We will not collect the full sale price from two buyers for the same garment. Any claim for non-payment is limited to legally recoverable, evidenced loss, with applicable mitigation and consumer protections.
+
+Delivery and ownership
+The address entered during the card check is your delivery address. Ensure it is correct before bidding. Contact Hewge to request a correction; we must verify it and cannot redirect a parcel to an ineligible destination or add an undisclosed charge without agreement. The release states the shipping charge, dispatch and delivery estimates and any import arrangements. Delivery is insured and tracked. If a promised date cannot be met, we will contact you; statutory delay and cancellation remedies remain available.
+
+The collector account is linked privately to the purchase and subsequent registration. Registration is made only after confirmed payment. Dispatch follows the authenticity and fulfilment checks. As between Hewge and a consumer, transit risk remains with Hewge until physical delivery, except where applicable law expressly provides otherwise. Mandatory property rules and third-party rights take priority over the register.
+
+Returns and defects
+We do not offer voluntary change-of-mind returns or size exchanges. For Swiss purchases without a mandatory withdrawal right, an accepted sale is final on that basis. This does not exclude rights for defects, misdescription, non-delivery, fraud or any other remedy that cannot lawfully be excluded.
+
+Where mandatory distance-selling withdrawal rights apply, including eligible EU/EEA or UK consumer purchases, those rights prevail. An online-only auction is not treated here as an in-person public auction exemption. One-of-one status alone is not an exception. No checkbox waives mandatory rights.
+
+Where a 14-day withdrawal right applies, use the “Withdraw from contract here” function at https://hewge.design/withdraw, email jez@hewge.design or notify the seller’s postal address with a clear statement within 14 days after you or your nominated recipient receives the garment. You may notify us before delivery. Include the order or piece reference and your contact details. The online function provides a timestamped receipt and queues email confirmation without undue delay. The optional withdrawal form below is available but not required. Send the garment back within 14 days of notification. Unless applicable law requires otherwise, you bear the direct return postage cost for a change-of-mind withdrawal; we bear reasonable return costs for a substantiated defect or our error.
+
+For a valid withdrawal, we refund the price and the least expensive standard outbound delivery charge within 14 days of notice, using the original payment method without a refund fee. Where lawful, we may wait until we receive the garment or evidence it was sent back, whichever occurs first. Please return its certificate, card and accessories and use suitable protective packaging. Inspecting the garment as you would in a shop is permitted. Only legally permitted diminished value from handling beyond necessary inspection may be deducted; a missing package or broken seal does not automatically remove withdrawal rights.
+
+Report defects or damage promptly with the piece reference and, if reasonably available, photographs. Do not send sensitive identity documents by ordinary email. We will investigate and provide the remedies required by the applicable law. A one-of-one piece may not have an identical replacement; that does not remove any right to repair, price reduction or refund. No short contractual reporting deadline overrides mandatory rights.
+
+Authenticity, the register and later transfers
+An artist-signed certificate, garment details, physical security features and reviewed provenance support verification together. A printed code, NFC scan, certificate or account entry alone is not conclusive proof of authenticity or legal title. Public ownership is anonymous by default; you may choose a public name and later hide it.
+
+A registered transfer requires the current registered owner’s request, the named recipient’s verified acceptance and Hewge’s review of the garment, possession and entitlement evidence. The recipient pays 0.5% of the declared resale price, rounded to the nearest CHF cent; gifts use the last verified sale value. Any separate provider charge must be disclosed before agreement. Hewge may require evidence of value and will not silently raise the percentage to meet a processor minimum.
+
+The transfer fee is for reviewed registration, not a purchase of the garment or a guarantee of legal title. Payment does not guarantee approval. A paid transfer that cannot be approved is referred for a fee refund; no automatic forfeiture applies. Statutory rights for the registration service remain available. Where a service withdrawal right applies, Hewge waits until that period ends unless a separately valid request for early performance and the legally required acknowledgements have been obtained.
+
+Hewge does not currently hold resale proceeds or provide escrow. Any third-party resale, escrow or payment service requires separately disclosed terms. A disputed, stolen or compromised piece may have verification and transfer suspended while evidence is reviewed. A damaged tag or lost certificate does not itself extinguish ownership: contact Hewge for reviewed recovery, revocation of old identifiers and replacement documentation. Corrections and lawful reversals append history; they do not silently rewrite it.
+
+Errors, disputes and governing law
+Contact Hewge promptly about an incorrect bid, material listing error, suspected fraud or service failure. We may pause an affected auction, investigate invalid bids or cancel where objectively justified and legally permitted, with notice and appropriate refunds. We do not reserve an unrestricted right to rewrite an accepted price, choose a different winner or exclude liability for our own unlawful conduct.
+
+Swiss law applies, without depriving a consumer of mandatory protections or courts available under the law that otherwise applies, including protections of their habitual residence where required. These terms do not exclude liability that cannot lawfully be excluded, including for fraud, intentional misconduct, gross negligence or personal injury. If a provision is unenforceable, applicable law governs that issue and the remaining terms continue where legally possible.
+
+Optional withdrawal form
+To: Lewis · HEWGE, Unterdorfstrasse 2, 8165 Schöfflisdorf, Switzerland, jez@hewge.design. I give notice that I withdraw from my contract for the following garment or registration service: ____. Ordered on / received on: ____. Order or piece reference: ____. Consumer name and address: ____. Date: ____. Signature only if sent on paper. Delete whichever does not apply.

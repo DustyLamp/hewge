@@ -280,10 +280,12 @@ class HewgeStack extends Stack {
       enabled &&
       (!secretArn ||
         !termsUrl?.startsWith("https://") ||
-        this.node.tryGetContext("sellerTermsApproved") !== "true")
+        this.node.tryGetContext("sellerTermsApproved") !== "true" ||
+        this.node.tryGetContext("provenancePrivacyApproved") !== "true" ||
+        this.node.tryGetContext("auctionCardTestsApproved") !== "true")
     )
       throw Error(
-        "checkoutEnabled requires stripeSecretArn, a published HTTPS termsUrl, and completed launch steps in README.",
+        "checkoutEnabled requires stripeSecretArn, published HTTPS termsUrl, sellerTermsApproved, provenancePrivacyApproved, auctionCardTestsApproved and completed launch steps in README.",
       );
     const commerce = new NodejsFunction(this, "Commerce", {
       functionName: "hewge-commerce",
@@ -449,6 +451,10 @@ class HewgeStack extends Stack {
       "/me/profile",
       "/me/delete",
       "/bid",
+      "/withdrawal",
+      "/admin/withdrawal",
+      "/bid/card/setup",
+      "/bid/card/status",
       "/winner/checkout",
       "/owner",
       "/transfer/request",

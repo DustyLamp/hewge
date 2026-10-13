@@ -1,5 +1,5 @@
 HEWGE — AUCTION LAUNCH READINESS
-13 October 2026
+14 October 2026
 
 Implemented and safe to use now
 - Public preview and dedicated journal page with shared typography. Piece/edition IDs remain; decorative section numbers are removed.
@@ -10,9 +10,11 @@ Implemented and safe to use now
 - Highest valid bid wins. No paid entry, draw, random winner or follower weighting.
 - Server-side bid validation and atomic head + bid + terms recording.
 - Artist and material visibility controlled on the server, not merely hidden in HTML.
-- Recipient-accepted, owner-reviewed transfers and a public provenance register. Physical NFC authentication is a documented next step, not implemented.
+- Recipient-accepted, owner-reviewed transfers and a public provenance register. The NFC verifier is implemented but remains disabled pending real-tag commissioning.
 - Paid ownership defaults to anonymous. Buyer may choose a public name.
-- Payment deadline, controlled next-bidder workflow, certificates and insured fulfilment checklist.
+- Card setup before bidding, immediate authorised winning charge, controlled failed-payment recovery, fresh optional next-bidder offers, certificates and insured fulfilment checklist.
+- Versioned terms/privacy, protected acceptance evidence and a public withdrawal function with timestamped receipts and private review queue.
+- See docs/legal-and-card-launch.txt for current legal, privacy, card and withdrawal activation requirements.
 
 Required before accepting a binding bid
 1. Seller identity confirmed by the owner on 13 October 2026: Lewis (Einzelfirma), Unterdorfstrasse 2, 8165 Schöfflisdorf, Switzerland. Public customer-service email: jez@hewge.design. The seller name, address and email are used in the terms/privacy disclosures and outbound email footer/reply-to; the legal-form descriptor is kept out of customer-facing copy. This confirms the contact details, not completion of legal review or SMS approval.
@@ -27,7 +29,7 @@ Required before accepting a binding bid
 Payments
 A first place result is a payment offer, not a paid ownership claim. A signed Stripe paid event is required. Amount, currency, offer ID and winner identity must match. No shipment before payment. If a session creation fails ambiguously, the offer stays locked until Stripe reconciliation. Do not blindly remove checkoutStartedAt or assign a new winner. All amount fields are integer CHF centimes.
 
-A 48-hour payment window and CHF 10 minimum bid increase are proposed editable defaults, not user-confirmed commercial terms. The first opening bid is CHF 339. Shipping fee defaults to zero in a draft only and must be deliberately set before scheduling.
+Payment is due immediately and the verified winner card is attempted at closing. The separate 24-hour technical recovery period is not credit or permission to defer payment. The default minimum bid increase is CHF 10. The first opening bid is CHF 339. Shipping fee defaults to zero in a draft only and must be deliberately set before scheduling.
 
 Email and privacy operations
 Review failed or ambiguous outbox sends in the studio before retrying. Avoid automatic resend after an ambiguous SES result. Release notifications exclude unverified/expired members and respect size preferences. The latest verified membership/account consent wins, including opt-outs. Transactional winner/receipt notices are independent of marketing consent. Unconfirmed membership requests/links expire in 48 hours, preference sessions in one hour and verified membership records in 180 days; auction/account retention must be finalised with the seller's policy. Owner can use the AWS console for account deletion requests while retaining required transaction evidence. Review SES bounce/complaint metrics and suppression lists; never turn on SMS sending until a provider, sender registration and phone-number verification are implemented.

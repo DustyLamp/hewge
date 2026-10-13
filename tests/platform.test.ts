@@ -1,3 +1,8 @@
+import {
+  TERMS_VERSION,
+  CARD_MANDATE_VERSION,
+  termsText,
+} from "../shared/legal";
 import { digest } from "../services/audit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const mock = vi.hoisted(() => ({
@@ -8,6 +13,9 @@ const mock = vi.hoisted(() => ({
   expire: vi.fn(),
   construct: vi.fn(),
   mail: vi.fn(),
+  intentRetrieve: vi.fn(),
+  intentCancel: vi.fn(),
+  intentCreate: vi.fn(),
   archive: vi.fn(),
 }));
 vi.mock("@aws-sdk/lib-dynamodb", async () => {
@@ -61,6 +69,11 @@ vi.mock("stripe", () => ({
       },
     };
     webhooks = { constructEvent: mock.construct };
+    paymentIntents = {
+      retrieve: mock.intentRetrieve,
+      cancel: mock.intentCancel,
+      create: mock.intentCreate,
+    };
   },
 }));
 vi.stubEnv("USER_POOL_ID", "eu-north-1_test");
@@ -101,7 +114,7 @@ const auction = {
   minimumIncrement: 1000,
   size: "M",
   countries: ["CH"],
-  termsVersion: "test-terms",
+  termsVersion: TERMS_VERSION,
   revision: 1,
   paymentHours: 48,
   shippingFee: 1500,
@@ -144,6 +157,21 @@ beforeEach(() => {
       cmd.input.TableName === "legacy"
     )
       return {};
+    if (
+      cmd.constructor.name === "GetCommand" &&
+      cmd.input.Key.pk.startsWith("CARD#")
+    )
+      return {
+        Item: {
+          status: "verified",
+          termsVersion: TERMS_VERSION,
+          mandateVersion: CARD_MANDATE_VERSION,
+          attempt: "card-1",
+          hasBid: true,
+          cardExpiresAt: now + 365 * 86400000,
+          shipping: { address: { country: "CH" } },
+        },
+      };
     if (cmd.constructor.name === "GetCommand")
       return { Item: cmd.input.Key.pk.startsWith("USER#") ? profile : current };
     if (cmd.constructor.name === "QueryCommand")
@@ -221,7 +249,8 @@ describe("platform access and bidding", () => {
     const body = {
       id: auction.id,
       amount: 33900,
-      termsVersion: "test-terms",
+      termsVersion: TERMS_VERSION,
+      mandateVersion: CARD_MANDATE_VERSION,
       accepted: true,
       adult: true,
     };
@@ -242,7 +271,8 @@ describe("platform access and bidding", () => {
       event("/bid", {
         id: auction.id,
         amount: 33900,
-        termsVersion: "test-terms",
+        termsVersion: TERMS_VERSION,
+        mandateVersion: CARD_MANDATE_VERSION,
         accepted: true,
         adult: true,
       }),
@@ -252,13 +282,14 @@ describe("platform access and bidding", () => {
       .map((c) => c[0])
       .find((c) => c.constructor.name === "TransactWriteCommand")
       .input.TransactItems;
-    expect(tx).toHaveLength(6); // business mutation + transactional audit head, event and outbox
+    expect(tx).toHaveLength(7); // business mutation + transactional audit head, event and outbox
     expect(tx[0].Update.ConditionExpression).toContain("revision=:v");
     expect(tx[0].Update.ConditionExpression).toContain("closesAt>:now");
     expect(tx[1].Put.Item).toMatchObject({
       amount: 33900,
       bidderId: "collector",
-      termsVersion: "test-terms",
+      termsVersion: TERMS_VERSION,
+      mandateVersion: CARD_MANDATE_VERSION,
       accepted: true,
     });
   });
@@ -276,7 +307,8 @@ describe("platform access and bidding", () => {
           event("/bid", {
             id: auction.id,
             amount: 33900,
-            termsVersion: "test-terms",
+            termsVersion: TERMS_VERSION,
+            mandateVersion: CARD_MANDATE_VERSION,
             accepted: true,
             adult: true,
           }),
@@ -334,6 +366,7 @@ describe("money, deadlines and ownership", () => {
     expect(
       params.shipping_options[0].shipping_rate_data.fixed_amount.amount,
     ).toBe(1500);
+    expect(params.allowed_payment_method_types).toEqual(["card"]);
     expect(params.expires_at).toBe(current.checkoutExpiresAt);
     expect(options.idempotencyKey).toBe("auction-toucan-001-offer-1-1");
   });
@@ -344,6 +377,59 @@ describe("money, deadlines and ownership", () => {
         .statusCode,
     ).toBe(409);
     expect(mock.create).not.toHaveBeenCalled();
+  });
+  it("requires fresh acceptance of a later optional offer", async () => {
+    current.offerRequiresAcceptance = true;
+    expect(
+      ((await handler(event("/winner/checkout", { id: auction.id }))) as any)
+        .statusCode,
+    ).toBe(400);
+    expect(mock.create).not.toHaveBeenCalled();
+  });
+  it("binds an automatic paid intent to the exact customer, winner, offer and attempt", async () => {
+    current.cardAttempt = "automatic-1";
+    current.cardCustomer = "cus_collector";
+    const intent = {
+      id: "pi_paid",
+      status: "succeeded",
+      currency: "chf",
+      amount: 46500,
+      amount_received: 46500,
+      customer: "cus_other",
+      metadata: {
+        purpose: "auction-winner",
+        auctionId: auction.id,
+        offerId: "offer-1",
+        bidderId: "collector",
+        attempt: "automatic-1",
+      },
+    };
+    mock.construct.mockReturnValue({
+      type: "payment_intent.succeeded",
+      data: { object: intent },
+    });
+    expect(((await handler(event("/stripe/webhook"))) as any).statusCode).toBe(
+      503,
+    );
+    expect(
+      mock.send.mock.calls.some(
+        ([c]) => c.constructor.name === "TransactWriteCommand",
+      ),
+    ).toBe(false);
+    intent.customer = "cus_collector";
+    expect(((await handler(event("/stripe/webhook"))) as any).statusCode).toBe(
+      200,
+    );
+    const tx = mock.send.mock.calls.find(
+      ([c]) => c.constructor.name === "TransactWriteCommand",
+    )![0].input.TransactItems;
+    expect(tx[0].Put.Item).toMatchObject({
+      status: "sold",
+      ownerId: "collector",
+      cardPaymentIntentId: "pi_paid",
+      publicOwner: { anonymous: true, name: null },
+    });
+    expect(tx[0].Put.ConditionExpression).toContain("revision=:v");
   });
   it("rejects unsigned webhooks and ignores unpaid completion", async () => {
     mock.construct.mockImplementationOnce(() => {
@@ -428,7 +514,11 @@ describe("money, deadlines and ownership", () => {
     expect(
       (
         (await handler(
-          event("/admin/next-bidder", { id: auction.id, confirmed: true }),
+          event("/admin/next-bidder", {
+            id: auction.id,
+            confirmed: true,
+            reviewReference: "Notice and lawful termination QA reference",
+          }),
         )) as any
       ).statusCode,
     ).toBe(409);
