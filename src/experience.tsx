@@ -2473,9 +2473,46 @@ function Dashboard() {
     </main>
   );
 }
-function LegalSections({ sections }: { sections: typeof termsSections }) {
+function LegalSummary({
+  items,
+  detailId,
+  linkLabel,
+}: {
+  items: { lead: string; detail: string }[];
+  detailId: string;
+  linkLabel: string;
+}) {
   return (
-    <>
+    <section className="legal-summary" aria-labelledby="legal-summary-title">
+      <span className="eyebrow">AT A GLANCE</span>
+      <h2 id="legal-summary-title">The short version</h2>
+      <ul>
+        {items.map(({ lead, detail }) => (
+          <li key={lead}>
+            <strong>
+              <FullStops>{lead}</FullStops>
+            </strong>{" "}
+            <FullStops>{detail}</FullStops>
+          </li>
+        ))}
+      </ul>
+      <p>
+        <FullStops>{"This is a summary. "}</FullStops>
+        <a href={`#${detailId}`}>{linkLabel}</a>
+        <FullStops>{"."}</FullStops>
+      </p>
+    </section>
+  );
+}
+function LegalSections({
+  sections,
+  id,
+}: {
+  sections: typeof termsSections;
+  id: string;
+}) {
+  return (
+    <div id={id}>
       {sections.map((section) => (
         <section key={section.title}>
           <h2>{section.title}</h2>
@@ -2486,7 +2523,7 @@ function LegalSections({ sections }: { sections: typeof termsSections }) {
           ))}
         </section>
       ))}
-    </>
+    </div>
   );
 }
 function Terms() {
@@ -2498,10 +2535,46 @@ function Terms() {
         <br />
         <FullStops>{"Clear terms."}</FullStops>
       </h1>
+      <LegalSummary
+        detailId="full-terms"
+        linkLabel="Read the full terms below"
+        items={[
+          {
+            lead: "One garment. One size.",
+            detail:
+              "Check the measurements and delivery details before bidding.",
+          },
+          {
+            lead: "Check your card first.",
+            detail:
+              "Bidding is free. The card check does not set aside the money.",
+          },
+          {
+            lead: "Your bid is binding. Win = pay immediately.",
+            detail:
+              "The highest valid bid wins. We try your saved card for your winning bid plus the shown shipping. If payment fails or needs bank approval, you must finish paying promptly.",
+          },
+          {
+            lead: "No voluntary returns or size swaps.",
+            detail:
+              "Any legal right to cancel or return still applies. You keep your legal protections if the item is faulty, wrongly described or never arrives.",
+          },
+          {
+            lead: "Transfers need both people’s agreement and our review.",
+            detail:
+              "The recipient pays 0.5% of the resale price. For a gift, we use the last verified sale value. We do not hold resale money in escrow.",
+          },
+          {
+            lead: "A damaged tag does not erase ownership.",
+            detail:
+              "Contact us to check the evidence and arrange a replacement. A tag or certificate alone is not proof of ownership.",
+          },
+        ]}
+      />
       <p className="legal-notice">
         <FullStops>
           {
-            "No voluntary change-of-mind returns. Mandatory consumer rights remain. Verify a card before bidding; payment is due immediately if you win. Bidding remains closed pending launch review."
+            "Bidding is not open yet. These rules describe how it will work. Your mandatory legal rights always apply."
           }
         </FullStops>
       </p>
@@ -2515,7 +2588,7 @@ function Terms() {
           Print
         </button>
       </p>
-      <LegalSections sections={termsSections} />
+      <LegalSections sections={termsSections} id="full-terms" />
     </main>
   );
 }
@@ -2527,13 +2600,41 @@ function Privacy() {
       <h1>
         <FullStops>{"Privacy."}</FullStops>
       </h1>
-      <p>
-        <FullStops>
+      <LegalSummary
+        detailId="full-privacy"
+        linkLabel="Read the full privacy notice below"
+        items={[
           {
-            "Your purchase is linked privately to your verified account. Your public ownership can stay anonymous. Marketing is optional."
-          }
-        </FullStops>
-      </p>
+            lead: "Your purchase is linked to you.",
+            detail:
+              "We privately link your verified account to your purchase and registered ownership.",
+          },
+          {
+            lead: "Your public name is your choice.",
+            detail:
+              "It stays hidden unless you choose to show it. Your contact and delivery details stay private.",
+          },
+          {
+            lead: "Stripe handles your card.",
+            detail: "We do not receive your full card number or security code.",
+          },
+          {
+            lead: "Marketing is optional.",
+            detail:
+              "Buying does not sign you up. We do not sell your personal data.",
+          },
+          {
+            lead: "Ownership history is built to last.",
+            detail:
+              "Locked audit entries cannot be edited or routinely deleted. Corrections are added. Contact details and review documents are stored separately.",
+          },
+          {
+            lead: "You can ask to see, correct or delete your data.",
+            detail:
+              "Some purchase and ownership records may need to stay. We explain any limits; a permanent history is not permission to keep all your personal details forever.",
+          },
+        ]}
+      />
       <SellerDetails />
       <p>
         Updated 14 October 2026 ·{" "}
@@ -2541,7 +2642,7 @@ function Privacy() {
           Save this notice
         </a>
       </p>
-      <LegalSections sections={privacySections} />
+      <LegalSections sections={privacySections} id="full-privacy" />
       <p>
         For access, correction, deletion or a concern, contact{" "}
         <a href={`mailto:${seller.email}`}>{seller.email}</a>

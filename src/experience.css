@@ -675,6 +675,36 @@
   padding: 18px 24px;
   background: #dfe4d7;
 }
+.legal-summary {
+  max-width: 740px;
+  margin: 30px 0;
+  padding: clamp(20px, 4vw, 32px);
+  border-top: 4px solid var(--cyan);
+  background: #e5e8df;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.legal-summary h2 {
+  margin: 10px 0 22px;
+}
+.legal-summary ul {
+  padding-left: 20px;
+  margin: 0;
+}
+.legal-summary li {
+  padding-left: 4px;
+  margin-bottom: 16px;
+}
+.legal-summary > p {
+  margin: 22px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid #1113;
+  font-size: 13px;
+}
+#full-terms,
+#full-privacy {
+  scroll-margin-top: 100px;
+}
 .seller-details {
   max-width: 740px;
   padding: 22px 0;
