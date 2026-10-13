@@ -46,7 +46,7 @@ function Signup({ compact = false }: { compact?: boolean }) {
     <div className="signup-success" role="status">
       <Check size={24} />
       <div>
-        You’re on the list.<small>We’ll let you know when it’s time.</small>
+        You’re on the list.<small>Release updates will arrive by email.</small>
       </div>
     </div>
   ) : (
@@ -228,7 +228,7 @@ function App() {
           }
         >
           <div className="hero-topline">
-            <span>Wearable art. Unrepeatable.</span>
+            <span>Artist originals.</span>
             <span className="live-dot">First edition coming soon</span>
           </div>
           <div className="hero-word" aria-hidden="true">
@@ -247,12 +247,12 @@ function App() {
           <div className="hero-left">
             <span className="eyebrow">Piece No. 001</span>
             <h1>
-              Life’s too short
+              After
               <br />
-              to blend in.
+              Hours.
             </h1>
             <a className="text-link" href="#edition">
-              Meet your one of one <ArrowUpRight size={19} />
+              View the piece <ArrowUpRight size={19} />
             </a>
           </div>
           <div className="hero-right">
@@ -269,7 +269,7 @@ function App() {
             <span>
               Art you can wear.
               <br />
-              <em>Nobody else can.</em>
+              <em>Edition of one.</em>
             </span>
             <a href="#edition" className="explore">
               Explore the first edition <ArrowDown size={19} />
@@ -375,8 +375,6 @@ function App() {
               </div>
               <p className="product-description">
                 A very good night. A very bad morning.
-                <br />
-                An entire world, in one piece.
               </p>
               <div className="size-line">
                 <span>
@@ -389,7 +387,7 @@ function App() {
                 </span>
               </div>
               <a className="button button-dark" href="/pieces/after-hours">
-                Read the story. Meet the piece. <ArrowUpRight size={22} />
+                Explore the piece <ArrowUpRight size={22} />
               </a>
               <p className="under-button">One original. Highest bid wins.</p>
               <details>
@@ -418,7 +416,7 @@ function App() {
         <section className="artwork" id="artwork">
           <div className="artwork-heading reveal">
             <div>
-              <span className="eyebrow">There’s a whole world in here</span>
+              <span className="eyebrow">The artwork</span>
               <h2>
                 LOOK
                 <br />
@@ -426,8 +424,9 @@ function App() {
               </h2>
             </div>
             <span className="small-copy">
-              Every panel.
-              <br />A different story.
+              After Hours
+              <br />
+              Three details.
             </span>
           </div>
           <div className="art-grid">
@@ -474,13 +473,11 @@ function App() {
               ✳
             </span>
             <p>
-              One artist. Or a meeting of minds.
+              An original shirt.
               <br />
-              One original shirt. Signed.
+              Signed by its artist.
               <br />
-              One person in the world wearing it.
-              <br />
-              <strong>You.</strong>
+              Made once.
             </p>
             <span className="manifesto-signature">
               <Wordmark />
@@ -503,11 +500,11 @@ function App() {
             </span>
           </div>
           <div className="guest-content reveal">
-            <span className="eyebrow">Good things don’t come twice</span>
+            <span className="eyebrow">Release emails</span>
             <h2>
-              BE
+              NEXT
               <br />
-              FIRST.
+              DROP.
             </h2>
             <p>One email when the next original drops. No account needed.</p>
             <Signup />
@@ -532,7 +529,7 @@ function App() {
           >
             Instagram ↗
           </a>
-          <span>Switzerland · Out of the ordinary.</span>
+          <span>Switzerland</span>
           <a href="/latest">The latest</a>
           <a href="/archive">Archive</a>
           <a href="/account">Collector access</a>
@@ -606,13 +603,13 @@ function App() {
           </div>
         ) : (
           <div className="signup-modal-content">
-            <span className="eyebrow">One of one. First in line.</span>
+            <span className="eyebrow">Release emails</span>
             <h2>
               YOU’RE
               <br />
               INVITED.
             </h2>
-            <p>Be there when the first piece drops.</p>
+            <p>Hear when the next piece drops.</p>
             <Signup compact />
           </div>
         )}

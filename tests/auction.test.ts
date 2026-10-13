@@ -110,7 +110,8 @@ describe("public privacy and mystery reveals", () => {
   });
   it("withholds the garment and story in teaser mode", () => {
     const out = publicRelease({ ...a, designRevealMode: "at-opening" }, 999);
-    expect(out.name).toBe("Under wraps");
+    expect(out.name).toBe("No. 001");
+    expect(out.story).toBe("");
     expect(out.image).not.toBe(a.image);
     expect(
       publicRelease({ ...a, designRevealMode: "at-opening" }, 1000).name,

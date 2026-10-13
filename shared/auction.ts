@@ -204,10 +204,9 @@ export function publicRelease(
     (!item.opensAt || now < item.opensAt)
   ) {
     output.designHidden = true;
-    output.name = "Under wraps";
+    output.name = `No. ${item.number}`;
     output.image = "/images/foliage.webp";
-    output.story =
-      "The next original is taking shape. One piece. A story waiting to be told.";
+    output.story = "";
   }
   return output;
 }

@@ -63,7 +63,7 @@ function Subscribe() {
     <div className="subscribe-box">
       <h3>Get the next drop.</h3>
       <p>
-        One original. Your invitation.
+        Release emails.
         <br />
         No account needed.
       </p>
@@ -193,7 +193,6 @@ function Countdown({ release }: { release: Release }) {
       <div className="countdown">
         <span>Next release</span>
         <strong>To be announced.</strong>
-        <small>One shirt. One moment.</small>
       </div>
     );
   const seconds = Math.max(0, Math.floor((target - now - offset) / 1000));
@@ -319,7 +318,7 @@ function BidBox({
         <span>1 / 1</span>
       </div>
       <p className="mystery-note">
-        {release.material || "Material under wraps."}
+        {release.material || "Material undisclosed."}
         {!release.artistName && " Artist undisclosed."}{" "}
         {!release.identityRevealed &&
           "You are bidding on the pictured garment; these details may be revealed after bidding."}
@@ -332,7 +331,7 @@ function BidBox({
               ? "anonymous bidder"
               : release.publicOwner?.name || "anonymous bidder"}
           </strong>
-          <small>One of one. Forever part of the story.</small>
+          <small>Edition of one.</small>
         </div>
       ) : enabled && release.status === "open" ? (
         getToken() ? (
@@ -417,11 +416,7 @@ function BidBox({
       <p role="status" className="form-message">
         {message}
       </p>
-      <p className="fine-print">
-        Bidding is free. Highest valid bid wins.
-        <br />
-        Followers never decide the winner.
-      </p>
+      <p className="fine-print">Bidding is free. Highest valid bid wins.</p>
       <Share release={release} />
     </aside>
   );
@@ -435,9 +430,9 @@ function PiecePage() {
       <main className="page-shell">
         <h1>
           {loading
-            ? "Unfolding the story…"
+            ? "Loading the piece…"
             : error
-              ? "The story will be back."
+              ? "The piece is temporarily unavailable."
               : "Piece not found."}
         </h1>
         <a href="/archive">Explore the archive →</a>
@@ -456,7 +451,7 @@ function PiecePage() {
         <span className="eyebrow">
           {!release.designHidden && release.id === "toucan-001"
             ? "A night out. An original."
-            : "An original. On its own terms."}
+            : "Edition of one."}
         </span>
         <h1>
           {release.name}
@@ -470,12 +465,12 @@ function PiecePage() {
             <br />
             {!release.designHidden && release.id === "toucan-001"
               ? "One very bad morning."
-              : "One unfolding story."}
+              : "Artist signed."}
           </p>
           <span>
             {release.artistName
               ? `A work by ${release.artistName}`
-              : "Artist & material: under wraps."}
+              : "Artist to be announced."}
           </span>
         </div>
       </section>
@@ -495,39 +490,37 @@ function PiecePage() {
           Live updates unavailable. {error}
         </p>
       )}
-      <section className="story-section">
-        <div>
-          <span className="eyebrow">The story behind the piece</span>
-          <h2>
-            {!release.designHidden && release.id === "toucan-001" ? (
-              <>
-                Some nights
-                <br />
-                stay with you.
-              </>
-            ) : (
-              <>
-                A story
-                <br />
-                worth waiting for.
-              </>
-            )}
-          </h2>
-        </div>
-        <div>
-          <p className="story-lead">{release.story}</p>
-          <p>
-            A single garment. Its own name. Its artist’s signature. No second
-            edition, in any size.
-          </p>
-          {!release.designHidden && release.id === "toucan-001" && (
-            <p className="image-note">
-              Shown here: the approved design mockup. Final garment photography
-              and measurements accompany the release.
+      {release.story && (
+        <section className="story-section">
+          <div>
+            <span className="eyebrow">The work</span>
+            <h2>
+              {!release.designHidden && release.id === "toucan-001" ? (
+                <>
+                  Some nights
+                  <br />
+                  stay with you.
+                </>
+              ) : (
+                <>About the piece.</>
+              )}
+            </h2>
+          </div>
+          <div>
+            <p className="story-lead">{release.story}</p>
+            <p>
+              A single garment. Its own name. Its artist’s signature. No second
+              edition, in any size.
             </p>
-          )}
-        </div>
-      </section>
+            {!release.designHidden && release.id === "toucan-001" && (
+              <p className="image-note">
+                Shown here: the approved design mockup. Final garment
+                photography and measurements accompany the release.
+              </p>
+            )}
+          </div>
+        </section>
+      )}
       {!release.designHidden && release.id === "toucan-001" && (
         <figure className="wide-art">
           <img
@@ -548,7 +541,7 @@ function PiecePage() {
             }
             alt={
               release.designHidden
-                ? "The next original, under wraps"
+                ? `Preview of piece No. ${release.number}`
                 : `A detail from ${release.name}`
             }
             loading="lazy"
@@ -561,7 +554,7 @@ function PiecePage() {
         </div>
         <div className="artist-copy">
           <span className="eyebrow">The artist</span>
-          <h2>{release.artistName || "A little mystery."}</h2>
+          <h2>{release.artistName || "To be announced."}</h2>
           {release.artistName ? (
             <>
               <p className="artist-byline">
@@ -580,30 +573,23 @@ function PiecePage() {
           ) : (
             <p>
               {release.revealMode === "after-close"
-                ? "The artist and material will be revealed after bidding closes."
+                ? "Artist and material announced after bidding closes."
                 : release.revealMode === "at-opening"
-                  ? "The artist and material will be revealed when bidding opens."
-                  : "The artist and material will be revealed here. A little suspense is part of the story."}
+                  ? "Artist and material announced when bidding opens."
+                  : "Artist and material details will appear here."}
             </p>
           )}
           <div className="garment-label">
             <span className="wordmark">HEWGE</span>
             <strong>{release.name.toUpperCase()}</strong>
-            <span>{release.artistName || "Artist announced at reveal"}</span>
+            {release.artistName && <span>{release.artistName}</span>}
             <small>ONE OF ONE / No. {release.number}</small>
           </div>
-          <p className="fine-print">
-            The piece’s name and artist belong on its label.
-          </p>
         </div>
       </section>
       <section className="ownership-story">
-        <span className="eyebrow">The next chapter is yours</span>
-        <h2>
-          Wear it.
-          <br />
-          Own its story.
-        </h2>
+        <span className="eyebrow">With the piece</span>
+        <h2>Yours.</h2>
         <div className="ownership-grid">
           <p>
             Artist-signed certificate.
@@ -618,8 +604,6 @@ function PiecePage() {
             Choose to be named in the archive.
             <br />
             Or stay an anonymous bidder.
-            <br />
-            Either way, it’s yours.
           </p>
         </div>
         {release.certificateId && (
@@ -707,11 +691,11 @@ function Archive() {
         <span>THE PERMANENT RECORD</span>
       </div>
       <h1>
-        Gone.
+        The
         <br />
-        <em>Never forgotten.</em>
+        <em>Archive.</em>
       </h1>
-      <p>Every original. Every chapter.</p>
+      <p>Past releases, by date.</p>
       {archived.length ? (
         archived.map((r) => (
           <a className="archive-row" href={`/pieces/${r.slug}`} key={r.id}>
@@ -741,9 +725,9 @@ function Archive() {
           <span>00</span>
           <div>
             <h2>
-              The first chapter
+              No releases
               <br />
-              is still ahead.
+              yet.
             </h2>
             <a href="/pieces/after-hours" className="text-link">
               Meet After Hours <ArrowUpRight size={18} />
@@ -813,17 +797,11 @@ function Auth({ onLogin }: { onLogin: () => void }) {
       <div>
         <span className="eyebrow">The collector’s circle</span>
         <h1>
-          Your size.
+          Your
           <br />
-          Your taste.
-          <br />
-          <em>Your next original.</em>
+          <em>collection.</em>
         </h1>
-        <p>
-          Tell us the sizes you wear.
-          <br />
-          Help shape what comes next.
-        </p>
+        <p>Bid on releases and manage your pieces.</p>
         <img
           src="/images/night.webp"
           alt="A detail of the After Hours artwork"
@@ -835,10 +813,10 @@ function Auth({ onLogin }: { onLogin: () => void }) {
           {mode === "login"
             ? "Welcome back."
             : mode === "signup"
-              ? "Come on in."
+              ? "Create an account."
               : mode === "verify"
-                ? "Make it official."
-                : "A fresh start."}
+                ? "Verify your email."
+                : "Reset your password."}
         </h2>
         <form className="stack-form" onSubmit={submit}>
           <label>
@@ -1144,9 +1122,7 @@ function WonPiece({ a, reload }: { a: any; reload: () => void }) {
   return (
     <div className="won-piece">
       <span className="eyebrow">
-        {a.status === "sold"
-          ? "The only one. And it’s yours."
-          : "You won the spotlight."}
+        {a.status === "sold" ? "It’s yours." : "Winning bid"}
       </span>
       <h2>{a.name}</h2>
       <img src={a.image} alt={a.name} />
@@ -1162,7 +1138,7 @@ function WonPiece({ a, reload }: { a: any; reload: () => void }) {
         </>
       ) : a.status === "sold" ? (
         <>
-          <p>Congratulations. Your place in the archive is confirmed.</p>
+          <p>Congratulations. Your ownership is registered.</p>
           <p className="certificate-code">{a.certificateId}</p>
           <form className="stack-form" onSubmit={ownership}>
             <label>
@@ -1223,11 +1199,11 @@ function Account() {
     <main className="account-page">
       <div className="account-heading">
         <div>
-          <span className="eyebrow">Your collector’s room</span>
+          <span className="eyebrow">Collector account</span>
           <h1>
-            Good taste.
+            Your
             <br />
-            <em>Great company.</em>
+            <em>collection.</em>
           </h1>
         </div>
         <button
@@ -1259,9 +1235,9 @@ function Account() {
               <div className="empty-collection">
                 <span>1 / 1</span>
                 <h2>
-                  Your story
+                  No pieces
                   <br />
-                  starts here.
+                  yet.
                 </h2>
                 <a href="/latest" className="text-link">
                   Meet the latest piece <ArrowUpRight size={16} />
@@ -1319,19 +1295,11 @@ function PrintableCertificate({ a, onClose }: { a: any; onClose: () => void }) {
       </article>
       <article className="congratulations-card">
         <span className="wordmark">HEWGE</span>
-        <h1>
-          Yours.
-          <br />
-          Only yours.
-        </h1>
+        <h1>Yours.</h1>
         <p>
           {a.name} by {a.artistName}.
         </p>
-        <p>
-          One original. A new chapter.
-          <br />
-          Thank you for taking art out into the world.
-        </p>
+        <p>Thank you.</p>
         <small>{a.certificateId}</small>
       </article>
     </div>
@@ -1579,12 +1547,11 @@ function Dashboard() {
         <>
           <section className="schedule-panel">
             <div>
-              <h2>Your rhythm.</h2>
+              <h2>Release dates</h2>
               <p>
-                No standing schedule. Build the anticipation, then set an
-                individual reveal and closing time. The countdown begins when
-                you announce the drop. All times are Swiss, including daylight
-                saving.
+                Set each opening and closing individually. The countdown appears
+                when the release is published. All times are Swiss, including
+                daylight saving.
               </p>
             </div>
             <label>
@@ -1927,13 +1894,13 @@ function Terms() {
       </p>
       <h2>How a release works</h2>
       <p>
-        One original garment. One auction in the spotlight. Each page identifies
-        the piece, exact size, measurements, opening bid, minimum increase,
-        shipping charge, eligible destinations and opening and closing times.
-        Some releases withhold the artist and material until a clearly stated
-        reveal stage, which may be after bidding closes. This is disclosed
-        before the bid is confirmed. Prices and bids are in Swiss francs.
-        Joining and bidding are free. There is no draw and no buyer’s premium.
+        One original garment. One auction at a time. Each page identifies the
+        piece, exact size, measurements, opening bid, minimum increase, shipping
+        charge, eligible destinations and opening and closing times. Some
+        releases withhold the artist and material until a clearly stated reveal
+        stage, which may be after bidding closes. This is disclosed before the
+        bid is confirmed. Prices and bids are in Swiss francs. Joining and
+        bidding are free. There is no draw and no buyer’s premium.
       </p>
       <h2>Your bid</h2>
       <p>

@@ -218,7 +218,7 @@ export function AdminTransfers({
 }) {
   return (
     <section className="transfer-list">
-      <h2>The next chapter.</h2>
+      <h2>Ownership transfers</h2>
       <p>
         Approval changes the registered owner. Inspect the garment, certificate
         and entitlement evidence before approving. A matching printed number
@@ -340,8 +340,8 @@ export function RegistryPage() {
         <span className="eyebrow">Registered original</span>
         <h2>{a.certificateId}</h2>
         <p>
-          {a.artistName || "Artist under wraps"} ·{" "}
-          {a.material || "Material under wraps"} · Size {a.size}
+          {a.artistName || "Artist undisclosed"} ·{" "}
+          {a.material || "Material undisclosed"} · Size {a.size}
         </p>
         <p>
           Registered owner:{" "}
@@ -367,7 +367,7 @@ export function RegistryPage() {
           ))}
         </ol>
         <a className="text-link" href={`/pieces/${a.slug}`}>
-          Read its story →
+          View the piece →
         </a>
         <br />
         <a className="text-link" href="/account">

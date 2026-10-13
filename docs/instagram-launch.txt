@@ -14,19 +14,19 @@ Note: A campaign line, not a permanent brand tagline.
 
 POST 02 — THE CLUE
 Visual: A tight artwork detail, without a full garment or artist reveal.
-On-image: THERE’S A STORY IN HERE.
+On-image: 001.
 Caption: Look closer.
 
 POST 03 — THE INVITATION
 Visual: A numbered edition marker, with a small artwork detail.
 On-image: GET THE NEXT DROP.
-Caption: No calendar. No second run. Link in bio.
+Caption: Release emails. Link in bio.
 
 FIRST ANNOUNCEMENT
 Publish only after a real reveal time is set.
-Story 1: A detail. “Something’s coming.”
+Story 1: An artwork detail. The piece number only.
 Story 2: The actual countdown sticker. Link to the dedicated piece page.
-Story 3: “Artist under wraps. Material under wraps.” Only if true for this release.
+Story 3: A second detail or a material close-up, only if approved for public view. No explanatory caption.
 Reveal: Full garment. Its name. Its size. Opening bid. Closing time. Link to the journal page.
 Close: Announce the winning bid as awaiting payment. Do not claim a paid owner yet.
 Paid: “Yours.” Share the owner only with their recorded opt-in; otherwise “anonymous bidder.”
@@ -36,3 +36,8 @@ Start with real behind-the-scenes material, process, clues and collector questio
 No bought engagement, fake bidders, staged independent leaks or undisclosed brand accounts.
 A Reddit community can follow once there is enough real conversation to sustain it.
 No Instagram or Reddit posts have been published by this implementation.
+
+VOICE
+Let the images, omissions and actual dates carry the interest.
+Never explain the suspense, promise a story is worth waiting for, or tell people how to feel.
+Keep copy brief and specific. State auction conditions and reveal timing plainly.
