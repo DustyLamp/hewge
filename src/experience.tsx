@@ -18,6 +18,8 @@ import {
 import "./experience.css";
 import { PieceTitle, FullStops } from "./typography";
 import { MembershipSignup, MembershipPage } from "./membership";
+import { SellerDetails } from "./seller";
+import { seller } from "../shared/seller";
 
 const money = (n: number) =>
   `CHF ${new Intl.NumberFormat("de-CH", { maximumFractionDigits: 2 }).format(n / 100)}`;
@@ -2234,10 +2236,12 @@ function Terms() {
       <p className="legal-notice">
         <FullStops>
           {
-            "Bidding is not open. These draft rules describe the intended experience. Final seller details, destination rules and reviewed terms will be published before a binding bid can be placed."
+            "Bidding is not open. These draft rules describe the intended experience. Final destination rules and reviewed terms will be published before a binding bid can be placed."
           }
         </FullStops>
       </p>
+      <h2>The seller</h2>
+      <SellerDetails />
       <h2>How a release works</h2>
       <p>
         <FullStops>
@@ -2298,7 +2302,7 @@ function Terms() {
       <p>
         <FullStops>
           {
-            "The legal seller name, address, customer-service contact, applicable tax treatment, final contract wording and approved destinations will be published here. Live bidding remains disabled until those launch requirements are completed."
+            "Applicable tax treatment, final contract wording and approved destinations will be published here. Live bidding remains disabled until those launch requirements are completed."
           }
         </FullStops>
       </p>
@@ -2319,10 +2323,11 @@ function Privacy() {
       <p>
         <FullStops>
           {
-            "Hewge, Switzerland, collects the information you choose to give us to manage release interest, accounts, bids, payments and ownership. The legal seller’s full identity and contact details will be published before auctions open."
+            "Lewis operates Hewge and is responsible for the personal information you choose to share with us to manage release interest, accounts, bids, payments and ownership."
           }
         </FullStops>
       </p>
+      <SellerDetails />
       <h2>What we collect</h2>
       <p>
         <FullStops>
@@ -2355,6 +2360,11 @@ function Privacy() {
         </FullStops>
       </p>
       <h2>Your choices</h2>
+      <p>
+        For privacy requests, including access, correction or deletion, email{" "}
+        <a href={`mailto:${seller.email}`}>{seller.email}</a>
+        <FullStops>{"."}</FullStops>
+      </p>
       <p>
         Edit preferences and switch off release emails in your collector account
         or through a fresh link at <a href="/membership">membership</a>

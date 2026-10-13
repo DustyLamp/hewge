@@ -12,6 +12,7 @@ import {
   type SESv2Client,
 } from "@aws-sdk/client-sesv2";
 import { sizes } from "../shared/catalog";
+import { seller, sellerContactText } from "../shared/seller";
 
 const digest = (value: string) =>
   createHash("sha256").update(value).digest("hex");
@@ -107,6 +108,7 @@ export function membershipService(
       const sent = await ses.send(
         new SendEmailCommand({
           FromEmailAddress: "HEWGE <hello@hewge.design>",
+          ReplyToAddresses: [seller.email],
           Destination: { ToAddresses: [mail.email] },
           ...(process.env.EMAIL_CONFIGURATION_SET
             ? { ConfigurationSetName: process.env.EMAIL_CONFIGURATION_SET }
@@ -114,7 +116,7 @@ export function membershipService(
           Content: {
             Simple: {
               Subject: { Data: mail.subject },
-              Body: { Text: { Data: mail.text } },
+              Body: { Text: { Data: `${mail.text}\n\n${sellerContactText}` } },
             },
           },
         }),

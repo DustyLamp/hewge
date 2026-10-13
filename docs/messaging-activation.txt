@@ -1,0 +1,54 @@
+HEWGE — MESSAGING ACTIVATION
+13 October 2026
+
+Public business identity
+Lewis (Einzelfirma)
+Unterdorfstrasse 2
+8165 Schöfflisdorf
+Switzerland
+Customer service: jez@hewge.design
+
+The owner confirmed these details for public seller disclosures and messaging setup.
+The website and outbound email templates use shared/seller.ts as their contact source.
+
+Email
+SES production access was requested and declined on 13 October 2026. The current account remains in the SES sandbox. Public membership verification delivery is blocked; the form explains this. No claim is made that a queued request has received mail. Domain identity and DKIM are verified. Updating the public seller information does not itself reverse the denial.
+
+The AWS Support API is unavailable on the account's current support plan. Read the actual denial correspondence in AWS Support Center before replying. The following follow-up is prepared for review and has NOT been sent.
+
+SES follow-up draft
+Please reconsider production access in eu-north-1 for Hewge's user-requested membership verification emails.
+
+The operator is Lewis (Einzelfirma), Unterdorfstrasse 2, 8165 Schöfflisdorf, Switzerland. Our public customer-service contact is jez@hewge.design. The confirmed operator details are now published at https://hewge.design/privacy and https://hewge.design/terms.
+
+Hewge presents one-of-one artist garments. Future sales use free, timed highest-bid auctions. There are no paid entries, random draws or lottery tickets. Bidding, payments and release campaigns remain disabled pending completion of our launch requirements. The immediate email use case is confirming ownership of an address submitted by its visitor, and managing that person's preferences.
+
+Our website takes an email address with a clear verification and release-announcement notice. Membership remains unverified until its recipient explicitly confirms a single-use link. Links expire in 48 hours. Requests are limited to four per address and twelve per IP per hour, with a honeypot and additional API throttling. We do not buy, scrape or import mailing lists. Unverified and expired membership addresses are excluded from release campaigns. Future announcements respect the most recent verified consent or opt-out and size preferences.
+
+Verified members can turn off announcements through a limited preferences session. The privacy page also offers an unsubscribe-only confirmation link and our public customer-service contact for requests.
+
+Mail comes from hello@hewge.design with replies directed to jez@hewge.design and the operator's postal address included in the footer. The domain and DKIM identity are verified. Configuration set hewge-delivery enables bounce and complaint suppression and publishes bounce, complaint, delivery and rejection metrics to CloudWatch. Operators will monitor these metrics and the SES suppression list. Failed or ambiguous sends are not automatically repeated. Initial use is low-volume individual verification requests, with no dedicated IP or bulk campaign sending requested.
+
+Please identify any further information required to assess this specific use case.
+
+SMS
+The CDK stack prepares the HEWGE sender ID for Swiss destinations in eu-north-1. This is a dynamic sender identity, not a government registration or a worldwide sender approval. It does not lease a phone number or enable sending from the application. The existing account is in the SMS sandbox with its USD 1 monthly text-message spend limit unchanged. AWS spend limits should not be treated as a hard real-time budget guarantee.
+
+Before public SMS delivery:
+- Verify a willing test recipient through AWS's sandbox flow and test actual delivery. The owner has been asked which number should receive one verification SMS; no number or receipt is invented.
+- Implement and test the application's phone-verification flow, code expiry/attempt limits, per-person and global send limits, consent withdrawal and delivery-event handling. Saving a phone number or SMS preference is not phone verification.
+- Provide an accessible unsubscribe link for one-way sender-ID messages; do not promise STOP replies where no reply channel exists.
+- Fully test the sandbox integration, then request SMS production access through AWS Support Center. Declare release announcements as promotional and verification codes as OTP, rather than disguising announcements as transactional messages.
+- Review each destination separately before enabling it. A Swiss sender identity does not cover countries that require other registrations or originating numbers. Shipping destinations and SMS-enabled destinations are separate decisions.
+
+Primary references checked 13 October 2026
+AWS End User Messaging regional endpoints:
+https://docs.aws.amazon.com/general/latest/gr/end-user-messaging.html
+Sender IDs and costs:
+https://docs.aws.amazon.com/sms-voice/latest/userguide/sender-id.html
+Country capabilities (Switzerland supports sender IDs, no two-way SMS):
+https://docs.aws.amazon.com/sms-voice/latest/userguide/phone-numbers-sms-by-country.html
+Sandbox restrictions and production request steps:
+https://docs.aws.amazon.com/sms-voice/latest/userguide/sandbox.html
+CloudFormation sender identity resource:
+https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-smsvoice-senderid.html

@@ -28,6 +28,7 @@ import {
 import { sizes, piece } from "../shared/catalog";
 import { ownershipRegistry } from "./ownership";
 import { membershipService } from "./membership";
+import { seller, sellerContactText } from "../shared/seller";
 
 const db = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
   marshallOptions: { removeUndefinedValues: true },
@@ -322,6 +323,7 @@ async function tick() {
       const sent = await ses.send(
         new SendEmailCommand({
           FromEmailAddress: `HEWGE <hello@hewge.design>`,
+          ReplyToAddresses: [seller.email],
           ...(process.env.EMAIL_CONFIGURATION_SET
             ? { ConfigurationSetName: process.env.EMAIL_CONFIGURATION_SET }
             : {}),
@@ -329,7 +331,7 @@ async function tick() {
           Content: {
             Simple: {
               Subject: { Data: mail.subject },
-              Body: { Text: { Data: mail.text } },
+              Body: { Text: { Data: `${mail.text}\n\n${sellerContactText}` } },
             },
           },
         }),

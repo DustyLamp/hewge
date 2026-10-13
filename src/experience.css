@@ -675,6 +675,19 @@
   padding: 18px 24px;
   background: #dfe4d7;
 }
+.seller-details {
+  max-width: 740px;
+  padding: 22px 0;
+  margin-bottom: 25px;
+  border-block: 1px solid #1113;
+  font-size: 15px;
+  font-style: normal;
+  line-height: 1.8;
+}
+.seller-details strong {
+  display: block;
+  margin-bottom: 6px;
+}
 .legal-page > button {
   color: var(--ink);
   background: none;

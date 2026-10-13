@@ -24,6 +24,7 @@ import * as ses from "aws-cdk-lib/aws-ses";
 import * as route53 from "aws-cdk-lib/aws-route53";
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as smsvoice from "aws-cdk-lib/aws-smsvoice";
 
 class HewgeStack extends Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
@@ -109,6 +110,14 @@ class HewgeStack extends Stack {
       ),
     });
     const emailEnabled = this.node.tryGetContext("emailEnabled") === "true";
+    // Swiss dynamic sender ID; no leased phone number or active SMS sending.
+    // Other destinations require their own country and registration review.
+    const swissSmsSender = new smsvoice.CfnSenderId(this, "SwissSmsSender", {
+      senderId: "HEWGE",
+      isoCountryCode: "CH",
+      deletionProtectionEnabled: true,
+    });
+    swissSmsSender.applyRemovalPolicy(RemovalPolicy.RETAIN);
     const emailConfig = new ses.ConfigurationSet(this, "EmailDelivery", {
       configurationSetName: "hewge-delivery",
       reputationMetrics: true,

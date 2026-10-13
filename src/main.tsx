@@ -17,6 +17,7 @@ import "./styles.css";
 import { Experience } from "./experience";
 import { MembershipSignup as Signup } from "./membership";
 import { PieceTitle, FullStops } from "./typography";
+import { SellerDetails } from "./seller";
 
 function Wordmark({ className = "" }: { className?: string }) {
   return <span className={`wordmark ${className}`}>HEWGE</span>;
@@ -518,6 +519,7 @@ function App() {
             <h2>
               <FullStops>{"Privacy."}</FullStops>
             </h2>
+            <SellerDetails />
             <p>
               <FullStops>
                 {

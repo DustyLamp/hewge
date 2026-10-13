@@ -15,7 +15,7 @@ Implemented and safe to use now
 - Payment deadline, controlled next-bidder workflow, certificates and insured fulfilment checklist.
 
 Required before accepting a binding bid
-1. Legal seller: Lewis, a Swiss sole proprietorship, confirmed by the owner on 13 October 2026. Postal address and public support contact are still required for seller disclosures and SMS business registration. jez@hewge.design was supplied for admin access only; do not assume it is the published legal support address.
+1. Seller identity confirmed by the owner on 13 October 2026: Lewis (Einzelfirma), Unterdorfstrasse 2, 8165 Schöfflisdorf, Switzerland. Public customer-service email: jez@hewge.design. These details are used in the terms/privacy disclosures and outbound email footer/reply-to. This confirms the contact details, not completion of legal review or SMS approval.
 2. Actual artist, provenance/rights, material/composition, size, measurements and final garment images.
 3. Specific opening and closing dates. No fabricated countdowns. Once open, auction data cannot be rewritten.
 4. Insurable destinations, shipping charge, duties/taxes, delivery promises and product safety/label requirements for target markets. Country codes are an explicit allowlist, not an automated sanctions check.

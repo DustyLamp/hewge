@@ -52,7 +52,7 @@ At published rates checked 13 October 2026, [Stripe Switzerland](https://stripe.
 
 ## Launch gates
 
-1. The owner confirmed **Lewis**, a Swiss sole proprietorship, as the legal seller on 13 October 2026. Still required: its postal address and confirmed public customer-service contact; final tax, duties, shipping/returns/defects terms; and the actual artist, rights/provenance, material composition, size, measurements and final garment photos. The admin email is not assumed to be the legal support contact. Use Lewis for seller disclosures and SMS business registration once the remaining details are supplied.
+1. The owner confirmed **Lewis (Einzelfirma)**, Unterdorfstrasse 2, **8165 Schöfflisdorf, Switzerland**, with **jez@hewge.design** as the public customer-service contact on 13 October 2026. These details are shared by the terms/privacy disclosures and outbound email contact footer in `shared/seller.ts`. Still required: final tax, duties, shipping/returns/defects terms and the actual artist, rights/provenance, material composition, size, measurements and final garment photos.
 2. Review the auction contract with Swiss counsel, including cross-border consumer obligations, formation of the sale, bid validity, unpaid winners, notices/grace periods, next-bidder offers and mandatory product disclosures. Mystery marketing cannot override required material/label disclosures. Publish final `/terms` and `/privacy` content and replace `TERMS_VERSION` in `shared/auction.ts`.
 3. Onboard a Swiss Stripe account with cards/TWINT as appropriate. Store `{ "secretKey": "…", "webhookSecret": "…" }` only in AWS Secrets Manager in the authorised region. Register the stack's `WebhookUrl` for `checkout.session.completed` and `checkout.session.async_payment_succeeded`. No secrets belong in frontend configuration.
 4. Complete real Stripe sandbox tests, including competing bids, winner checkout, asynchronous payment, session expiry, duplicate/stale webhooks, ambiguous creation and next-bidder handover. Mocked unit tests do not replace this. Establish refund/dispute and stolen-object handling; those are operator procedures, not automated by this version.
@@ -60,7 +60,7 @@ At published rates checked 13 October 2026, [Stripe Switzerland](https://stripe.
 6. Activate only after the preceding steps: `AWS_PROFILE=hewge npm run deploy:infra -- -c stripeSecretArn=<ARN> -c checkoutEnabled=true -c emailEnabled=true -c sellerTermsApproved=true -c termsUrl=https://hewge.design/terms`. Retain these non-secret deployment choices locally on later deploys; omitted flags default to disabled. Do not store credentials as CDK context.
 7. Configure the release in the studio, explicitly review shipping charges and insurable country allowlist, then schedule actual opening/closing dates. Country codes are not an automatic sanctions check. Future releases can be spaced however the studio chooses.
 
-See `docs/launch-readiness.txt` for legal sources and operational details. The UI's draft terms must be replaced before enabling bids; a deployment flag is an operator assertion, not a legal review.
+See `docs/launch-readiness.txt` for legal sources and operational details, and `docs/messaging-activation.txt` for the prepared SES follow-up and remaining SMS activation steps. The UI's draft terms must be replaced before enabling bids; a deployment flag is an operator assertion, not a legal review.
 
 ## Payment and delivery integrity
 
