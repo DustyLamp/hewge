@@ -99,6 +99,28 @@ class HewgeStack extends Stack {
       ),
       removalPolicy: RemovalPolicy.RETAIN,
     });
+    // Preserve the visible audit key as well as its locked historical versions.
+    auditBucket.addToResourcePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.DENY,
+        principals: [new iam.AnyPrincipal()],
+        actions: ["s3:PutObject"],
+        resources: [auditBucket.arnForObjects("events/*")],
+        conditions: {
+          Null: { "s3:if-none-match": "true" },
+          Bool: { "s3:ObjectCreationOperation": "true" },
+        },
+      }),
+    );
+    auditBucket.addToResourcePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.DENY,
+        principals: [new iam.AnyPrincipal()],
+        actions: ["s3:DeleteObject", "s3:DeleteObjectVersion"],
+        resources: [auditBucket.arnForObjects("events/*")],
+      }),
+    );
+    auditBucket.policy!.applyRemovalPolicy(RemovalPolicy.RETAIN);
     const mediaBucket = new s3.Bucket(this, "MediaLibrary", {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,

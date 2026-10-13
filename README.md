@@ -18,6 +18,7 @@ AWS_PROFILE=hewge npm run deploy:infra
 AWS_PROFILE=hewge node scripts/smoke.mjs
 AWS_PROFILE=hewge node scripts/smoke-auth.mjs
 AWS_PROFILE=hewge node scripts/smoke-ownership.mjs
+AWS_PROFILE=hewge npx tsx scripts/smoke-audit.ts
 AWS_PROFILE=hewge npm run deploy
 ```
 
