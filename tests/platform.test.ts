@@ -1,3 +1,4 @@
+import { digest } from "../services/audit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const mock = vi.hoisted(() => ({
   send: vi.fn(),
@@ -7,12 +8,22 @@ const mock = vi.hoisted(() => ({
   expire: vi.fn(),
   construct: vi.fn(),
   mail: vi.fn(),
+  archive: vi.fn(),
 }));
 vi.mock("@aws-sdk/lib-dynamodb", async () => {
   const actual = await vi.importActual<any>("@aws-sdk/lib-dynamodb");
   return {
     ...actual,
     DynamoDBDocumentClient: { from: () => ({ send: mock.send }) },
+  };
+});
+vi.mock("@aws-sdk/client-s3", async () => {
+  const actual = await vi.importActual<any>("@aws-sdk/client-s3");
+  return {
+    ...actual,
+    S3Client: class {
+      send = mock.archive;
+    },
   };
 });
 vi.mock("aws-jwt-verify", () => ({
@@ -55,6 +66,8 @@ vi.mock("stripe", () => ({
 vi.stubEnv("USER_POOL_ID", "eu-north-1_test");
 vi.stubEnv("USER_POOL_CLIENT_ID", "client");
 vi.stubEnv("AUCTION_TABLE", "auctions");
+vi.stubEnv("AUDIT_TABLE", "audit");
+vi.stubEnv("AUDIT_BUCKET", "archive");
 vi.stubEnv("TABLE_NAME", "legacy");
 vi.stubEnv("ALLOWED_ORIGINS", "https://hewge.design");
 vi.stubEnv("OWNER_EMAIL", "jez@hewge.design");
@@ -63,7 +76,11 @@ const { handler } = await import("../services/platform");
 const event = (path: string, body: any = {}, method = "POST") => ({
   rawPath: path,
   body: JSON.stringify(body),
-  headers: { origin: "https://hewge.design", authorization: "Bearer token" },
+  headers: {
+    origin: "https://hewge.design",
+    authorization: "Bearer token",
+    "x-hewge-studio": "a".repeat(64),
+  },
   requestContext: { http: { method, sourceIp: "192.0.2.1" } },
 });
 const now = Date.now();
@@ -96,6 +113,7 @@ beforeEach(() => {
   vi.stubEnv("CHECKOUT_ENABLED", "false");
   vi.stubEnv("EMAIL_ENABLED", "false");
   vi.stubEnv("STRIPE_SECRET_ARN", "test");
+  mock.archive.mockResolvedValue({});
   current = { ...auction };
   profile = { sizes: ["M"], country: "CH" };
   mock.mail.mockResolvedValue({
@@ -108,6 +126,19 @@ beforeEach(() => {
     email_verified: true,
   });
   mock.send.mockImplementation(async (cmd: any) => {
+    if (cmd.input.TableName === "audit")
+      return cmd.constructor.name === "QueryCommand" ? { Items: [] } : {};
+    if (
+      cmd.constructor.name === "GetCommand" &&
+      cmd.input.Key.pk.startsWith("ADMIN_SESSION#")
+    )
+      return {
+        Item: {
+          userId: "owner",
+          tokenHash: digest("token"),
+          expiresAt: Date.now() / 1000 + 900,
+        },
+      };
     if (
       cmd.constructor.name === "GetCommand" &&
       cmd.input.TableName === "legacy"
@@ -221,7 +252,7 @@ describe("platform access and bidding", () => {
       .map((c) => c[0])
       .find((c) => c.constructor.name === "TransactWriteCommand")
       .input.TransactItems;
-    expect(tx).toHaveLength(3);
+    expect(tx).toHaveLength(6); // business mutation + transactional audit head, event and outbox
     expect(tx[0].Update.ConditionExpression).toContain("revision=:v");
     expect(tx[0].Update.ConditionExpression).toContain("closesAt>:now");
     expect(tx[1].Put.Item).toMatchObject({
@@ -542,7 +573,16 @@ describe("release audience consent", () => {
         sizes: ["XL"],
       },
     ];
+    for (const p of profiles) Object.assign(p, { pk: `USER#${p.email}` });
+    for (const g of guests)
+      Object.assign(g, { pk: `EMAIL#${digest(g.email)}` });
     mock.send.mockImplementation(async (cmd: any) => {
+      if (cmd.constructor.name === "GetCommand")
+        return {
+          Item: [...profiles, ...guests].find(
+            (x: any) => x.pk === cmd.input.Key.pk,
+          ),
+        };
       if (cmd.constructor.name === "ScanCommand") return { Items: guests };
       if (cmd.constructor.name === "QueryCommand") {
         const kind = Object.values(cmd.input.ExpressionAttributeValues)[0];

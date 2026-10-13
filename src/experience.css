@@ -1573,3 +1573,125 @@
     flex-wrap: wrap;
   }
 }
+
+/* Private studio tools share the storefront's restrained typography. */
+.studio-login {
+  max-width: 660px;
+  margin: 0 auto;
+}
+.studio-login .stack-form {
+  margin: 30px 0;
+}
+.studio-panel {
+  max-width: 980px;
+  padding: 28px 0;
+}
+.studio-panel > h2 {
+  font-size: clamp(32px, 5vw, 54px);
+  margin-bottom: 22px;
+}
+.studio-panel > p {
+  max-width: 760px;
+  line-height: 1.6;
+  margin: 16px 0;
+}
+.studio-panel > label,
+.upload-control label {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+}
+.studio-panel input,
+.studio-panel select,
+.studio-panel textarea,
+.upload-control input {
+  max-width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #1114;
+  background: transparent;
+  font: inherit;
+}
+.studio-tabs {
+  flex-wrap: wrap;
+}
+.studio-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  align-items: center;
+}
+.security-setup {
+  padding: 20px;
+  background: #dce4df;
+}
+.security-setup code {
+  display: block;
+  overflow-wrap: anywhere;
+  padding-top: 15px;
+  font-size: 17px;
+}
+.media-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 20px;
+  margin: 24px 0;
+}
+.media-list article {
+  border: 1px solid #1113;
+  padding: 20px;
+  overflow-wrap: anywhere;
+}
+.media-list .text-link {
+  margin-top: 15px;
+}
+.studio-preview {
+  max-height: 500px;
+  object-fit: contain;
+}
+.audit-events {
+  list-style: none;
+  padding: 0;
+}
+.audit-events li {
+  padding: 18px 0;
+  border-bottom: 1px solid #1113;
+}
+.audit-events code,
+.audit-events small {
+  display: block;
+  overflow-wrap: anywhere;
+  margin: 10px 0;
+}
+.security-details {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 18px;
+  line-height: 1.6;
+}
+.security-details dt {
+  font-weight: 700;
+}
+.security-details dd {
+  margin: 0;
+}
+.cost-fields {
+  margin: 22px 0;
+  border: 1px solid #1113;
+  padding: 18px;
+}
+@media (max-width: 700px) {
+  .security-details {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .security-details dd {
+    margin-bottom: 14px;
+  }
+  .studio-tabs {
+    gap: 6px;
+  }
+  .studio-tabs button {
+    padding: 10px;
+  }
+}

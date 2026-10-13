@@ -1,6 +1,15 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { ArrowUpRight, ArrowRight, Check, Share2 } from "lucide-react";
-import { api, cognito, getToken, getReleases, signIn, signOut } from "./api";
+import {
+  api,
+  cognito,
+  getToken,
+  getStudioSession,
+  getReleases,
+  signIn,
+  signOut,
+  respondMfa,
+} from "./api";
 import {
   minimumBid,
   preview,
@@ -11,6 +20,7 @@ import {
 import { sizes } from "../shared/catalog";
 import {
   TransferRequest,
+  RecoveryRequest,
   TransferList,
   AdminTransfers,
   RegistryPage,
@@ -20,6 +30,17 @@ import { PieceTitle, FullStops } from "./typography";
 import { MembershipSignup, MembershipPage } from "./membership";
 import { SellerDetails } from "./seller";
 import { seller } from "../shared/seller";
+import {
+  StudioLogin,
+  ImageUpload,
+  MediaPanel,
+  AuditPanel,
+  RecoveryPanel,
+  EngagementPanel,
+  SecurityPanel,
+  NfcPage,
+  AuthenticityPanel,
+} from "./studio";
 
 const money = (n: number) =>
   `CHF ${new Intl.NumberFormat("de-CH", { maximumFractionDigits: 2 }).format(n / 100)}`;
@@ -842,9 +863,12 @@ function Archive() {
 }
 function Auth({ onLogin }: { onLogin: () => void }) {
   const [mode, setMode] = useState<
-    "login" | "signup" | "verify" | "reset" | "new-password"
+    "login" | "signup" | "verify" | "reset" | "new-password" | "mfa"
   >("login");
   const [email, setEmail] = useState("");
+  const [mfa, setMfa] = useState<{ session: string; username: string } | null>(
+    null,
+  );
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   async function submit(e: FormEvent<HTMLFormElement>) {
@@ -855,7 +879,13 @@ function Auth({ onLogin }: { onLogin: () => void }) {
       password = String(f.get("password") || "");
     try {
       if (mode === "login") {
-        await signIn(email, password);
+        const challenge = await signIn(email, password);
+        if (challenge) {
+          setMfa(challenge);
+          setMode("mfa");
+        } else onLogin();
+      } else if (mode === "mfa" && mfa) {
+        await respondMfa(mfa.session, mfa.username, String(f.get("code")));
         onLogin();
       } else if (mode === "signup") {
         await cognito("SignUp", {
@@ -920,7 +950,9 @@ function Auth({ onLogin }: { onLogin: () => void }) {
                 ? "Create an account."
                 : mode === "verify"
                   ? "Verify your email."
-                  : "Reset your password."}
+                  : mode === "mfa"
+                    ? "Verify your authenticator."
+                    : "Reset your password."}
           </FullStops>
         </h2>
         <form className="stack-form" onSubmit={submit}>
@@ -934,9 +966,9 @@ function Auth({ onLogin }: { onLogin: () => void }) {
               onChange={(e) => setEmail(e.target.value)}
             />
           </label>
-          {["verify", "new-password"].includes(mode) && (
+          {["verify", "new-password", "mfa"].includes(mode) && (
             <label>
-              Email code
+              {mode === "mfa" ? "Authenticator code" : "Email code"}
               <input
                 name="code"
                 required
@@ -990,7 +1022,9 @@ function Auth({ onLogin }: { onLogin: () => void }) {
                       ? "Verify email"
                       : mode === "reset"
                         ? "Send reset code"
-                        : "Save password"}
+                        : mode === "mfa"
+                          ? "Verify authenticator"
+                          : "Save password"}
             </FullStops>
             <ArrowRight size={18} />
           </button>
@@ -1293,7 +1327,8 @@ function WonPiece({ a, reload }: { a: any; reload: () => void }) {
             </FullStops>
           </p>
           <p className="certificate-code">
-            <FullStops>{a.certificateId}</FullStops>
+            <FullStops>{a.certificateId}</FullStops> · Version{" "}
+            {a.certificateRevision || 1}
           </p>
           <form className="stack-form" onSubmit={ownership}>
             <label>
@@ -1329,6 +1364,7 @@ function WonPiece({ a, reload }: { a: any; reload: () => void }) {
             View the register →
           </a>
           <TransferRequest piece={a} reload={reload} />
+          <RecoveryRequest piece={a} reload={reload} />
         </>
       ) : (
         <p>
@@ -1452,7 +1488,8 @@ function PrintableCertificate({ a, onClose }: { a: any; onClose: () => void }) {
           <FullStops>{a.size}</FullStops> · <FullStops>{a.material}</FullStops>
         </p>
         <p>
-          <FullStops>{a.certificateId}</FullStops>
+          <FullStops>{a.certificateId}</FullStops> · Version{" "}
+          {a.certificateRevision || 1}
         </p>
         <p>
           <FullStops>
@@ -1494,7 +1531,8 @@ function PrintableCertificate({ a, onClose }: { a: any; onClose: () => void }) {
           <FullStops>{"Thank you."}</FullStops>
         </p>
         <small>
-          <FullStops>{a.certificateId}</FullStops>
+          <FullStops>{a.certificateId}</FullStops> · Version{" "}
+          {a.certificateRevision || 1}
         </small>
       </article>
     </div>
@@ -1507,18 +1545,24 @@ function Dashboard() {
   const [tab, setTab] = useState("collectors");
   const [draft, setDraft] = useState<any>(preview);
   const [print, setPrint] = useState<any>(null);
-  const [signed, setSigned] = useState(!!getToken());
+  const [signed, setSigned] = useState(!!getToken() && !!getStudioSession());
   const [busy, setBusy] = useState(false);
   function load() {
     api("/admin")
       .then(setData)
       .catch((e) => {
         setError(errorText(e));
-        if (!getToken()) setSigned(false);
+        if (!getToken() || !getStudioSession()) setSigned(false);
       });
   }
   useEffect(() => {
     if (signed) load();
+    const expired = () => {
+      setSigned(false);
+      setData(null);
+    };
+    window.addEventListener("hewge-studio-expired", expired);
+    return () => window.removeEventListener("hewge-studio-expired", expired);
   }, [signed]);
   async function call(path: string, body: any) {
     setBusy(true);
@@ -1533,7 +1577,7 @@ function Dashboard() {
       setBusy(false);
     }
   }
-  if (!signed) return <Auth onLogin={() => setSigned(true)} />;
+  if (!signed) return <StudioLogin onLogin={() => setSigned(true)} />;
   if (!data)
     return (
       <main className="page-shell">
@@ -1598,12 +1642,21 @@ function Dashboard() {
         openingBid: Math.round(Number(f.get("openingBid")) * 100),
         minimumIncrement: Math.round(Number(f.get("minimumIncrement")) * 100),
         shippingFee: Math.round(Number(f.get("shippingFee")) * 100),
+        productionCost: Math.round(Number(f.get("productionCost") || 0) * 100),
+        artistCost: Math.round(Number(f.get("artistCost") || 0) * 100),
+        otherCost: Math.round(Number(f.get("otherCost") || 0) * 100),
         paymentHours: Number(f.get("paymentHours")),
         countries: String(f.get("countries"))
           .toUpperCase()
           .split(/[\s,]+/)
           .filter(Boolean),
         publish,
+        plannedOpensAt: f.get("opensAt")
+          ? swissTimestamp(String(f.get("opensAt")))
+          : null,
+        plannedClosesAt: f.get("closesAt")
+          ? swissTimestamp(String(f.get("closesAt")))
+          : null,
         ...(publish
           ? {
               opensAt: swissTimestamp(String(f.get("opensAt"))),
@@ -1699,7 +1752,18 @@ function Dashboard() {
         </span>
       </div>
       <div className="studio-tabs">
-        {["collectors", "releases", "transfers", "fulfilment"].map((t) => (
+        {[
+          "collectors",
+          "releases",
+          "media",
+          "engagement",
+          "transfers",
+          "authenticity",
+          "recovery",
+          "audit",
+          "security",
+          "fulfilment",
+        ].map((t) => (
           <button key={t} aria-pressed={tab === t} onClick={() => setTab(t)}>
             <FullStops>{t}</FullStops>
           </button>
@@ -1708,7 +1772,24 @@ function Dashboard() {
       <p role="status" className="form-message">
         <FullStops>{error}</FullStops>
       </p>
-      {tab === "transfers" ? (
+      {tab === "authenticity" ? (
+        <AuthenticityPanel auctions={data.auctions} call={call} busy={busy} />
+      ) : tab === "media" ? (
+        <MediaPanel items={data.media || []} auctions={data.auctions} />
+      ) : tab === "audit" ? (
+        <AuditPanel auctions={data.auctions} />
+      ) : tab === "recovery" ? (
+        <RecoveryPanel cases={data.recoveries || []} call={call} busy={busy} />
+      ) : tab === "engagement" ? (
+        <EngagementPanel
+          campaigns={data.campaigns || []}
+          call={call}
+          busy={busy}
+          enabled={data.emailEnabled}
+        />
+      ) : tab === "security" ? (
+        <SecurityPanel security={data.security || {}} />
+      ) : tab === "transfers" ? (
         <AdminTransfers
           transfers={data.transfers || []}
           call={call}
@@ -1926,7 +2007,7 @@ function Dashboard() {
                 ["slug", "Page slug"],
                 ["name", "Piece name"],
                 ["number", "Piece number"],
-                ["image", "Image path"],
+
                 ["artistName", "Artist name"],
                 ["artistOrigin", "Artist home / origin"],
                 ["artistPractice", "Art practice"],
@@ -1936,12 +2017,26 @@ function Dashboard() {
                   <FullStops>{label}</FullStops>
                   <input
                     name={k}
+                    readOnly={k === "id"}
                     defaultValue={draft[k]}
                     required={["id", "slug", "name", "image"].includes(k)}
                   />
                 </label>
               ))}
             </div>
+            <ImageUpload
+              releaseId={draft.id}
+              onUploaded={(image) => setDraft({ ...draft, image })}
+            />
+            <label>
+              Selected artwork
+              <input
+                name="image"
+                value={draft.image || ""}
+                onChange={(e) => setDraft({ ...draft, image: e.target.value })}
+                required
+              />
+            </label>
             {[
               ["story", "The piece’s story"],
               ["artistBiography", "Artist biography"],
@@ -2024,13 +2119,92 @@ function Dashboard() {
               </label>
               <label>
                 Opens · Switzerland
-                <input type="datetime-local" name="opensAt" />
+                <input
+                  type="datetime-local"
+                  name="opensAt"
+                  defaultValue={
+                    draft.opensAt || draft.plannedOpensAt
+                      ? new Intl.DateTimeFormat("sv-SE", {
+                          timeZone: "Europe/Zurich",
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                          .format(draft.opensAt || draft.plannedOpensAt)
+                          .replace(" ", "T")
+                      : ""
+                  }
+                />
               </label>
               <label>
                 Closes · Switzerland
-                <input type="datetime-local" name="closesAt" />
+                <input
+                  type="datetime-local"
+                  name="closesAt"
+                  defaultValue={
+                    draft.closesAt || draft.plannedClosesAt
+                      ? new Intl.DateTimeFormat("sv-SE", {
+                          timeZone: "Europe/Zurich",
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                          .format(draft.closesAt || draft.plannedClosesAt)
+                          .replace(" ", "T")
+                      : ""
+                  }
+                />
               </label>
             </div>
+            <fieldset className="cost-fields">
+              <legend>Internal costs · private</legend>
+              <div className="two-fields">
+                {[
+                  ["productionCost", "Production · CHF"],
+                  ["artistCost", "Artist · CHF"],
+                  ["otherCost", "Other · CHF"],
+                ].map(([key, label]) => (
+                  <label key={key}>
+                    {label}
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      name={key}
+                      defaultValue={(draft[key] || 0) / 100}
+                    />
+                  </label>
+                ))}
+              </div>
+              <label>
+                Cost notes
+                <textarea
+                  name="costNotes"
+                  defaultValue={draft.costNotes}
+                  maxLength={1000}
+                />
+              </label>
+              <p>
+                Recorded cost:{" "}
+                {money(
+                  (draft.productionCost || 0) +
+                    (draft.artistCost || 0) +
+                    (draft.otherCost || 0),
+                )}
+                . Opening bid less recorded cost:{" "}
+                {money(
+                  (draft.openingBid || 0) -
+                    (draft.productionCost || 0) -
+                    (draft.artistCost || 0) -
+                    (draft.otherCost || 0),
+                )}
+                , before payment charges and tax.
+              </p>
+            </fieldset>
             <label>
               Eligible countries · ISO codes
               <input
@@ -2053,7 +2227,7 @@ function Dashboard() {
                 value="draft"
                 disabled={busy}
               >
-                Save preview
+                Save private draft
               </button>
               <button
                 className="button button-dark"
@@ -2115,7 +2289,8 @@ function Dashboard() {
                 ) : (
                   <>
                     <p>
-                      <FullStops>{a.certificateId}</FullStops>
+                      <FullStops>{a.certificateId}</FullStops> · Version{" "}
+                      {a.certificateRevision || 1}
                     </p>
                     <button className="text-link" onClick={() => setPrint(a)}>
                       Print certificate & congratulations card{" "}
@@ -2454,6 +2629,8 @@ export function Experience() {
         <MembershipPage />
       ) : route === "/latest" ? (
         <LatestPage />
+      ) : route === "/verify" ? (
+        <NfcPage />
       ) : route.startsWith("/registry/") ? (
         <RegistryPage />
       ) : route.startsWith("/pieces/") ? (

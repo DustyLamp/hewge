@@ -28,6 +28,8 @@ export function TransferRequest({
         id: piece.id,
         email: f.get("email"),
         confirmed: f.has("confirmed"),
+        kind: f.get("kind"),
+        resaleAmount: Math.round(Number(f.get("resaleAmount") || 0) * 100),
       });
       setMessage(
         "Requested. Ask the recipient to sign in at hewge.design/account with that email. No invitation email has been sent.",
@@ -45,7 +47,14 @@ export function TransferRequest({
       <p>
         <FullStops>{"You request. They accept. Hewge verifies."}</FullStops>
       </p>
-      {piece.pendingTransferId ? (
+      {piece.verificationHold ? (
+        <p>
+          <FullStops>
+            Verification is on hold. Resolve your recovery case before a
+            transfer.
+          </FullStops>
+        </p>
+      ) : piece.pendingTransferId ? (
         <p>
           <FullStops>{"A transfer is in progress. Manage it below."}</FullStops>
         </p>
@@ -61,6 +70,26 @@ export function TransferRequest({
               maxLength={254}
             />
           </label>
+          <label>
+            Transfer type
+            <select name="kind">
+              <option value="sale">Resale</option>
+              <option value="gift">Gift · use last verified sale value</option>
+            </select>
+          </label>
+          <label>
+            Resale price · CHF
+            <input type="number" name="resaleAmount" min="1" step="0.01" />
+          </label>
+          <p>
+            <FullStops>
+              The recipient pays 0.5% of the resale price. Gifts use the last
+              verified sale value (
+              {`CHF ${((piece.lastVerifiedValue || 0) / 100).toFixed(2)}`}).
+              Payment-provider charges are separate. Hewge does not hold the
+              resale funds.
+            </FullStops>
+          </p>
           <label className="check-row">
             <input name="confirmed" type="checkbox" required />
             <FullStops>
@@ -163,6 +192,7 @@ export function TransferList({
                     certificateId: f.get("certificateId"),
                     hologramId: f.get("hologramId"),
                     received: f.has("received"),
+                    feeConsent: f.has("feeConsent"),
                     anonymous: f.get("visibility") === "anonymous",
                     name: f.get("name"),
                   });
@@ -193,6 +223,15 @@ export function TransferList({
                   to the <a href="/terms">transfer terms</a>
                   <FullStops>{"."}</FullStops>
                 </label>
+                <label className="check-row">
+                  <input type="checkbox" name="feeConsent" required />
+                  <FullStops>
+                    I accept the recipient fee of CHF{" "}
+                    {((t.quote?.fee || 0) / 100).toFixed(2)} (0.5% of CHF{" "}
+                    {((t.quote?.value || 0) / 100).toFixed(2)}), separate from
+                    resale funds and payment-provider charges.
+                  </FullStops>
+                </label>
                 <button className="button button-dark" disabled={busy}>
                   Accept for Hewge review
                 </button>
@@ -204,6 +243,32 @@ export function TransferList({
                   {"Accepted. Awaiting Hewge’s physical and provenance checks."}
                 </FullStops>
               </p>
+            )}
+            {!t.outgoing && t.reviewed && t.feeStatus === "unpaid" && (
+              <div>
+                <p>
+                  Inspection complete. Transfer fee: CHF{" "}
+                  {((t.quote?.fee || 0) / 100).toFixed(2)}.
+                </p>
+                <button
+                  className="button button-dark"
+                  disabled={busy || !t.feePaymentsEnabled}
+                  onClick={() =>
+                    api("/transfer/checkout", { transferId: t.id })
+                      .then((r) => {
+                        if (r.url) location.href = r.url;
+                      })
+                      .catch((e) => setMessage(messageOf(e)))
+                  }
+                >
+                  {t.feePaymentsEnabled
+                    ? "Pay transfer fee"
+                    : "Fee payment awaiting activation"}
+                </button>
+              </div>
+            )}
+            {t.feeStatus === "paid" && (
+              <p>Fee received. Awaiting final ownership approval.</p>
             )}
             {t.status === "approved" && (
               <a href={`/registry/${t.auctionId}`}>
@@ -282,7 +347,10 @@ export function AdminTransfers({
                 e.preventDefault();
                 const f = new FormData(e.currentTarget);
                 call("/admin/transfer", {
-                  action: "approve",
+                  action:
+                    (e.nativeEvent as SubmitEvent).submitter?.getAttribute(
+                      "value",
+                    ) || "review",
                   transferId: t.id,
                   certificateId: f.get("certificateId"),
                   hologramId: f.get("hologramId"),
@@ -326,7 +394,22 @@ export function AdminTransfers({
                   }
                 </FullStops>
               </label>
-              <button className="button button-dark" disabled={busy}>
+              <p>
+                Recipient fee: CHF {((t.quote?.fee || 0) / 100).toFixed(2)} ·{" "}
+                {t.feeStatus || "quote required"}.
+              </p>
+              <button
+                className="button button-dark"
+                value="review"
+                disabled={busy}
+              >
+                Confirm physical inspection
+              </button>
+              <button
+                className="button button-dark"
+                value="approve"
+                disabled={busy || t.feeStatus !== "paid" || !t.reviewed}
+              >
                 Approve ownership transfer
               </button>
             </form>
@@ -350,6 +433,30 @@ export function AdminTransfers({
               Reject request
             </button>
           )}
+          {t.status !== "approved" &&
+            ["paid", "refund-review", "refund-pending"].includes(
+              t.feeStatus,
+            ) && (
+              <form
+                className="stack-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const f = new FormData(e.currentTarget);
+                  call("/admin/transfer/refund", {
+                    transferId: t.id,
+                    reason: f.get("reason"),
+                  });
+                }}
+              >
+                <label>
+                  Refund reason
+                  <input name="reason" minLength={12} required />
+                </label>
+                <button className="text-link" disabled={busy}>
+                  Refund fee / reconcile refund
+                </button>
+              </form>
+            )}
           {t.status === "approved" && (
             <p>
               Approved <FullStops>{date(t.approvedAt)}</FullStops>
@@ -396,7 +503,17 @@ export function RegistryPage() {
       </h1>
       <img className="registry-image" src={a.image} alt={a.name} />
       <div className="registry-details">
-        <span className="eyebrow">Registered original</span>
+        <span className="eyebrow">
+          {record.verificationHold
+            ? "Verification under review"
+            : "Registered original"}
+        </span>
+        {record.verificationHold && (
+          <p>
+            This piece has an open verification concern. Contact Hewge before
+            any transfer.
+          </p>
+        )}
         <h2>
           <FullStops>{a.certificateId}</FullStops>
         </h2>
@@ -443,5 +560,78 @@ export function RegistryPage() {
         </a>
       </div>
     </main>
+  );
+}
+
+export function RecoveryRequest({
+  piece,
+  reload,
+}: {
+  piece: any;
+  reload: () => void;
+}) {
+  const [message, setMessage] = useState(""),
+    [busy, setBusy] = useState(false);
+  return (
+    <details className="transfer-request">
+      <summary>Damaged tag or missing certificate →</summary>
+      <p>
+        <FullStops>
+          Your registration remains on record. A request pauses transfers and
+          tag verification until Hewge reviews the physical original and
+          supporting evidence.
+        </FullStops>
+      </p>
+      {piece.recoveryId ? (
+        <p>Recovery case open: {piece.recoveryId}</p>
+      ) : (
+        <form
+          className="stack-form"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setBusy(true);
+            const f = new FormData(e.currentTarget);
+            try {
+              await api("/recovery/request", {
+                id: piece.id,
+                reason: f.get("reason"),
+                evidence: f.get("evidence"),
+              });
+              setMessage("Recovery requested. Your ownership has not changed.");
+              reload();
+            } catch (e) {
+              setMessage(messageOf(e));
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <label>
+            Reason
+            <select name="reason">
+              <option value="damaged-tag">Damaged identifier</option>
+              <option value="lost-certificate">Lost certificate</option>
+              <option value="suspected-theft">Suspected theft</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+          <label>
+            Evidence and what happened
+            <textarea
+              name="evidence"
+              minLength={20}
+              maxLength={1000}
+              required
+            />
+          </label>
+          <button className="button button-dark" disabled={busy}>
+            Request Hewge review
+          </button>
+        </form>
+      )}
+      <p role="status">
+        <FullStops>{message}</FullStops>
+      </p>
+    </details>
   );
 }

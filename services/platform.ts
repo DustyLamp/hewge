@@ -1,3 +1,4 @@
+import { suppressionWrite, suppressionKey } from "./consent";
 import { createHash, randomUUID } from "node:crypto";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
@@ -17,6 +18,16 @@ import {
 } from "@aws-sdk/client-secrets-manager";
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 import Stripe from "stripe";
+import { S3Client } from "@aws-sdk/client-s3";
+import { KMSClient } from "@aws-sdk/client-kms";
+import { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
+import { auditLedger } from "./audit";
+import { studioSecurity } from "./security";
+import { mediaLibrary } from "./media";
+import { recoveryService } from "./recovery";
+import { transferPayments } from "./transfer-payments";
+import { campaignService } from "./campaigns";
+import { nfcVerifier } from "./nfc";
 import {
   preview,
   publicRelease,
@@ -34,7 +45,32 @@ const db = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
   marshallOptions: { removeUndefinedValues: true },
 });
 const TableName = process.env.AUCTION_TABLE!;
-const registry = ownershipRegistry(db, TableName);
+const s3 = new S3Client({});
+const ledger = auditLedger(
+  db,
+  s3,
+  process.env.AUDIT_TABLE!,
+  process.env.AUDIT_BUCKET!,
+);
+const registry = ownershipRegistry(db, TableName, ledger.commit);
+const media = mediaLibrary(
+  db,
+  s3,
+  TableName,
+  process.env.MEDIA_BUCKET!,
+  ledger.commit,
+);
+
+const fees = transferPayments(db, TableName, ledger.commit, stripe);
+const campaigns = campaignService(
+  db,
+  TableName,
+  process.env.TABLE_NAME!,
+  ledger.commit,
+  index,
+);
+const nfc = nfcVerifier(db, new KMSClient({}), TableName, ledger.commit);
+const recovery = recoveryService(db, TableName, ledger.commit, nfc.proof);
 const membership = membershipService(
   db,
   new SESv2Client({}),
@@ -49,6 +85,13 @@ const verifier = process.env.USER_POOL_ID
       tokenUse: "id",
     })
   : null;
+const security = studioSecurity(
+  db,
+  new CognitoIdentityProviderClient({}),
+  TableName,
+  (token) => verifier!.verify(token),
+  ledger.commit,
+);
 const response = (statusCode: number, data: unknown) => ({
   statusCode,
   headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
@@ -104,6 +147,25 @@ async function index(kind: string) {
   } while (cursor);
   return all;
 }
+async function effectiveConsent(profile: any) {
+  if (!profile?.email) return profile;
+  const suppression = (
+    await db.send(
+      new GetCommand({
+        TableName: process.env.TABLE_NAME!,
+        Key: suppressionKey(profile.email),
+        ConsistentRead: true,
+      }),
+    )
+  ).Item;
+  const stamp =
+    typeof profile.consentAt === "string"
+      ? Date.parse(profile.consentAt)
+      : profile.consentAt || 0;
+  return suppression && suppression.consentAt >= stamp
+    ? { ...profile, releaseConsent: false, consentAt: suppression.consentAt }
+    : profile;
+}
 async function auth(event: any, admin = false) {
   try {
     const token = (event.headers?.authorization || "").replace(/^Bearer /, "");
@@ -112,8 +174,15 @@ async function auth(event: any, admin = false) {
       (user["cognito:groups"] || []).includes("admins") ||
       String(user.email).toLowerCase() === process.env.OWNER_EMAIL;
     if (user.email_verified !== true || (admin && !isAdmin)) throw Error();
+    if (admin)
+      await security.requireSession(
+        user.sub,
+        token,
+        event.headers?.["x-hewge-studio"] || "",
+      );
     return { id: user.sub, email: String(user.email), admin: isAdmin };
-  } catch {
+  } catch (e: any) {
+    if (e.status === 401) throw e;
     throw Object.assign(
       Error(
         admin
@@ -200,29 +269,32 @@ async function settle(a: any, now = Date.now()) {
     revision: a.revision + 1,
   };
   try {
-    await db.send(
-      new TransactWriteCommand({
-        TransactItems: [
-          {
-            Put: {
-              TableName,
-              Item: next,
-              ConditionExpression: "revision=:v",
-              ExpressionAttributeValues: { ":v": a.revision },
-            },
+    await ledger.commit(
+      [
+        {
+          Put: {
+            TableName,
+            Item: next,
+            ConditionExpression: "revision=:v",
+            ExpressionAttributeValues: { ":v": a.revision },
           },
-          ...(a.highestBidder
-            ? [
-                {
-                  Put: {
-                    TableName,
-                    Item: notice(next, a.highestBidderEmail, "winner"),
-                  },
+        },
+        ...(a.highestBidder
+          ? [
+              {
+                Put: {
+                  TableName,
+                  Item: notice(next, a.highestBidderEmail, "winner"),
                 },
-              ]
-            : []),
-        ],
-      }),
+              },
+            ]
+          : []),
+      ],
+      {
+        entity: `piece:${a.id}`,
+        actor: "scheduler",
+        action: "auction-settled",
+      },
     );
   } catch (e) {
     if (!conflict(e)) throw e;
@@ -230,41 +302,12 @@ async function settle(a: any, now = Date.now()) {
 }
 async function announce(a: any) {
   if (!a.opensAt || Date.now() < a.opensAt || a.releaseMailQueued) return;
-  const profiles = await index("COLLECTORS");
-  let cursor;
-  const guests: any[] = [];
-  do {
-    const r: any = await db.send(
-      new ScanCommand({
-        TableName: process.env.TABLE_NAME!,
-        FilterExpression: "begins_with(pk,:p)",
-        ExpressionAttributeValues: { ":p": "EMAIL#" },
-        ExclusiveStartKey: cursor,
-      }),
-    );
-    guests.push(...(r.Items || []));
-    cursor = r.LastEvaluatedKey;
-  } while (cursor);
-  const recipients = new Map<string, any>();
-  for (const p of profiles) {
-    if (p.releaseConsent) recipients.set(p.email, p);
-  }
-  const profilesByEmail = new Map(profiles.map((p) => [p.email, p]));
-  for (const g of guests) {
-    if (g.emailVerified !== true || g.expiresAt <= Date.now() / 1000) continue;
-    const p = profilesByEmail.get(g.email);
-    const profileConsentAt =
-      typeof p?.consentAt === "string"
-        ? Date.parse(p.consentAt)
-        : p?.consentAt || 0;
-    if (p && profileConsentAt > g.consentAt) continue;
-    if (g.releaseConsent === true) recipients.set(g.email, { ...p, ...g });
-    else recipients.delete(g.email);
-  }
-  for (const [email, p] of recipients) {
+  const recipients = await campaigns.audience();
+  for (const p of recipients) {
+    const email = p.email;
     if (p.sizes?.length && !p.sizes.includes(a.size)) continue;
-    await putMail(
-      mailItem(
+    await putMail({
+      ...mailItem(
         `${a.id}-release-${hash(email)}`,
         email,
         `The next original is here. HEWGE No. ${a.number}`,
@@ -272,7 +315,9 @@ async function announce(a: any) {
 
 You asked to hear about Hewge releases. Unsubscribe at ${process.env.SITE_URL}/privacy or switch off release emails in your collector profile.`,
       ),
-    );
+      kind: "release",
+      profileKey: p.profileKey,
+    });
   }
   await db.send(
     new UpdateCommand({
@@ -288,6 +333,7 @@ async function tick() {
     await settle(a);
     if (process.env.EMAIL_ENABLED === "true") await announce(a);
   }
+  await campaigns.queue();
   const queued = await index("MAIL");
   await membership.sendQueued(queued);
   if (process.env.EMAIL_ENABLED !== "true") return;
@@ -299,6 +345,18 @@ async function tick() {
       m.status === "pending" &&
       m.attempts < 5,
   )) {
+    if (!(await campaigns.canSend(mail))) {
+      await db.send(
+        new UpdateCommand({
+          TableName,
+          Key: { pk: mail.pk, sk: mail.sk },
+          UpdateExpression: "SET #s=:s REMOVE #text",
+          ExpressionAttributeNames: { "#s": "status", "#text": "text" },
+          ExpressionAttributeValues: { ":s": "suppressed" },
+        }),
+      );
+      continue;
+    }
     // Claim before delivery. Ambiguous sends stay 'sending' for owner review, never blindly duplicate a winner email.
     try {
       await db.send(
@@ -340,8 +398,8 @@ async function tick() {
         new UpdateCommand({
           TableName,
           Key: { pk: mail.pk, sk: mail.sk },
-          UpdateExpression: "SET #s=:sent, messageId=:id",
-          ExpressionAttributeNames: { "#s": "status" },
+          UpdateExpression: "SET #s=:sent, messageId=:id REMOVE #text",
+          ExpressionAttributeNames: { "#s": "status", "#text": "text" },
           ExpressionAttributeValues: { ":sent": "sent", ":id": sent.MessageId },
         }),
       );
@@ -378,28 +436,39 @@ async function completePayment(session: Stripe.Checkout.Session) {
     soldAt: Date.now(),
     sessionId: session.id,
     ownerId: a.winnerId,
+    lastVerifiedValue: a.offerAmount,
+    certificateRevision: 1,
     publicOwner: { name: null, anonymous: true },
     certificateId: `HEWGE-${a.number}-${randomUUID().slice(0, 8).toUpperCase()}`,
     revision: a.revision + 1,
   };
-  await db.send(
-    new TransactWriteCommand({
-      TransactItems: [
-        {
-          Put: {
-            TableName,
-            Item: paid,
-            ConditionExpression: "revision=:v AND #s=:s",
-            ExpressionAttributeNames: { "#s": "status" },
-            ExpressionAttributeValues: {
-              ":v": a.revision,
-              ":s": "awaiting-payment",
-            },
+  await ledger.commit(
+    [
+      {
+        Put: {
+          TableName,
+          Item: paid,
+          ConditionExpression: "revision=:v AND #s=:s",
+          ExpressionAttributeNames: { "#s": "status" },
+          ExpressionAttributeValues: {
+            ":v": a.revision,
+            ":s": "awaiting-payment",
           },
         },
-        { Put: { TableName, Item: notice(paid, a.winnerEmail, "paid") } },
-      ],
-    }),
+      },
+      { Put: { TableName, Item: notice(paid, a.winnerEmail, "paid") } },
+    ],
+    {
+      entity: `piece:${a.id}`,
+      actor: "stripe-webhook",
+      action: "ownership-registered",
+      details: {
+        certificateId: paid.certificateId,
+        owner: hash(a.winnerId),
+        amount: a.offerAmount,
+        currency: "CHF",
+      },
+    },
   );
 }
 async function checkout(a: any, user: any) {
@@ -543,7 +612,7 @@ async function checkout(a: any, user: any) {
   );
   return { url: session.url };
 }
-async function nextBidder(a: any) {
+async function nextBidder(a: any, actor: string) {
   if (a.status !== "awaiting-payment" || Date.now() < a.paymentDueAt)
     throw Object.assign(Error("The payment window is still open."), {
       status: 409,
@@ -590,40 +659,40 @@ async function nextBidder(a: any) {
     checkoutAttempt: undefined,
     revision: a.revision + 1,
   };
-  await db.send(
-    new TransactWriteCommand({
-      TransactItems: [
-        {
-          Put: {
-            TableName,
-            Item: next,
-            ConditionExpression: "revision=:v",
-            ExpressionAttributeValues: { ":v": a.revision },
+  await ledger.commit(
+    [
+      {
+        Put: {
+          TableName,
+          Item: next,
+          ConditionExpression: "revision=:v",
+          ExpressionAttributeValues: { ":v": a.revision },
+        },
+      },
+      ...(bid
+        ? [{ Put: { TableName, Item: notice(next, bid.email, "winner") } }]
+        : []),
+      {
+        Put: {
+          TableName,
+          Item: {
+            pk: `AUCTION#${a.id}`,
+            sk: `AUDIT#${Date.now()}`,
+            action: "unpaid-offer-released",
+            previousWinner: a.winnerId,
+            offerId: a.offerId,
+            createdAt: Date.now(),
           },
         },
-        ...(bid
-          ? [{ Put: { TableName, Item: notice(next, bid.email, "winner") } }]
-          : []),
-        {
-          Put: {
-            TableName,
-            Item: {
-              pk: `AUCTION#${a.id}`,
-              sk: `AUDIT#${Date.now()}`,
-              action: "unpaid-offer-released",
-              previousWinner: a.winnerId,
-              offerId: a.offerId,
-              createdAt: Date.now(),
-            },
-          },
-        },
-      ],
-    }),
+      },
+    ],
+    { entity: `piece:${a.id}`, actor, action: "unpaid-offer-released" },
   );
   return { ok: true };
 }
 export async function handler(event: any) {
   if (event.source === "aws.events") {
+    await ledger.drain();
     await tick();
     return { ok: true };
   }
@@ -650,8 +719,29 @@ export async function handler(event: any) {
           "checkout.session.async_payment_succeeded",
         ].includes(e.type)
       )
-        await completePayment(e.data.object as Stripe.Checkout.Session);
+        if (
+          (e.data.object as Stripe.Checkout.Session).metadata?.purpose ===
+          "ownership-transfer-fee"
+        )
+          await fees.paid(e.data.object as Stripe.Checkout.Session);
+        else await completePayment(e.data.object as Stripe.Checkout.Session);
+      if (
+        ["refund.updated", "refund.created"].includes(e.type) &&
+        (e.data.object as Stripe.Refund).metadata?.purpose ===
+          "ownership-transfer-fee"
+      )
+        await fees.reconcileRefund(e.data.object as Stripe.Refund);
       return response(200, { received: true });
+    }
+    if (method === "GET" && path.startsWith("/media/")) {
+      return {
+        statusCode: 302,
+        headers: {
+          Location: await media.publicImage(path.slice(7)),
+          "Cache-Control": "no-store",
+        },
+        body: "",
+      };
     }
     if (method === "GET" && path === "/releases") {
       const items = (await index("AUCTIONS")).filter(
@@ -678,6 +768,8 @@ export async function handler(event: any) {
         return response(404, { message: "Record not found." });
       return response(200, {
         release: publicRelease(a),
+        verificationHold: a.verificationHold === true,
+        certificateRevision: a.certificateRevision || 1,
         history: [
           { at: a.soldAt, kind: "registered" },
           ...(await registry.history(id)),
@@ -741,11 +833,63 @@ export async function handler(event: any) {
         ? response(200, result)
         : response(404, { message: "Not found." });
     }
+    if (path === "/security/login" && typeof body.email === "string") {
+      await db.send(
+        new UpdateCommand({
+          TableName,
+          Key: {
+            pk: `AUTH_RATE#${hash(hour + ":" + body.email.trim().toLowerCase())}`,
+            sk: "RATE",
+          },
+          UpdateExpression: "SET expiresAt=:ttl ADD hits :one",
+          ConditionExpression: "attribute_not_exists(hits) OR hits<:max",
+          ExpressionAttributeValues: {
+            ":ttl": (hour + 2) * 3600,
+            ":one": 1,
+            ":max": 12,
+          },
+        }),
+      );
+    }
+    if (path.startsWith("/security/"))
+      return response(200, await security.handle(path, body));
+    if (path === "/verify/nfc") return response(200, await nfc.verify(body));
     if (path === "/checkout")
       return response(409, {
         message: "This piece is available only to its winning bidder.",
       });
     const user = await auth(event, path.startsWith("/admin"));
+    if (path === "/admin/tag")
+      return response(200, await nfc.activate(body, user));
+    if (path.startsWith("/admin/media/"))
+      return response(200, await media.handle(path, body, user));
+    if (path === "/recovery/request" || path === "/admin/recovery")
+      return response(200, await recovery.handle(path, body, user));
+    if (path === "/admin/transfer/refund")
+      return response(
+        200,
+        await fees.refund(
+          clean(body.transferId, 80),
+          user,
+          clean(body.reason, 1000),
+        ),
+      );
+    if (path === "/transfer/checkout")
+      return response(
+        200,
+        await fees.checkout(clean(body.transferId, 80), user),
+      );
+    if (path === "/admin/audit")
+      return response(
+        200,
+        await ledger.history(
+          clean(body.entity, 160),
+          body.cursor,
+          body.verify === true,
+        ),
+      );
+    if (path === "/admin/campaign")
+      return response(200, await campaigns.handle(body, user));
     if (
       [
         "/transfer/request",
@@ -787,9 +931,14 @@ export async function handler(event: any) {
           canPay: a.status === "awaiting-payment",
           pendingTransferId: a.pendingTransferId,
           fulfillment: a.fulfillment || {},
+          verificationHold: a.verificationHold === true,
+          recoveryId: a.recoveryId,
+          certificateRevision: a.certificateRevision || 1,
+          lastVerifiedValue:
+            a.lastVerifiedValue || a.offerAmount || a.highestBid,
         }));
       return response(200, {
-        profile: {
+        profile: await effectiveConsent({
           ...preferences,
           ...profile,
           email: user.email,
@@ -797,7 +946,7 @@ export async function handler(event: any) {
           ...(preferences.consentAt >= profileConsentAt
             ? { releaseConsent: preferences.releaseConsent }
             : {}),
-        },
+        }),
         admin: user.admin,
         auctions,
         transfers: await registry.forUser(user),
@@ -834,32 +983,40 @@ export async function handler(event: any) {
           status: 400,
         });
       const old = await get(`USER#${user.id}`, "PROFILE");
+      const consentAt = Date.now();
+      const profileItem = {
+        pk: `USER#${user.id}`,
+        sk: "PROFILE",
+        gpk: "COLLECTORS",
+        gsk: old?.gsk || `${Date.now()}#${user.id}`,
+        email: user.email,
+        displayName: clean(body.displayName, 80),
+        sizes: chosen,
+        country,
+        instagram,
+        followers,
+        phone: clean(body.phone, 40),
+        about: clean(body.about, 600),
+        releaseConsent: body.releaseConsent === true,
+        consentAt,
+        emailVerified: true,
+        createdAt: old?.createdAt || Date.now(),
+        updatedAt: Date.now(),
+      };
       await db.send(
-        new PutCommand({
-          TableName,
-          Item: {
-            pk: `USER#${user.id}`,
-            sk: "PROFILE",
-            gpk: "COLLECTORS",
-            gsk: old?.gsk || `${Date.now()}#${user.id}`,
-            email: user.email,
-            displayName: clean(body.displayName, 80),
-            sizes: chosen,
-            country,
-            instagram,
-            followers,
-            phone: clean(body.phone, 40),
-            about: clean(body.about, 600),
-            releaseConsent: body.releaseConsent === true,
-            consentAt:
-              old?.releaseConsent === (body.releaseConsent === true) &&
-              old?.consentAt
-                ? old.consentAt
-                : Date.now(),
-            emailVerified: true,
-            createdAt: old?.createdAt || Date.now(),
-            updatedAt: Date.now(),
-          },
+        new TransactWriteCommand({
+          TransactItems: [
+            { Put: { TableName, Item: profileItem } },
+            ...(!profileItem.releaseConsent
+              ? [
+                  suppressionWrite(
+                    process.env.TABLE_NAME!,
+                    user.email,
+                    consentAt,
+                  ),
+                ]
+              : []),
+          ],
         }),
       );
       return response(200, { ok: true });
@@ -872,9 +1029,16 @@ export async function handler(event: any) {
             "Your account has auction records. Contact the seller to request deletion; records needed for a sale or dispute must be retained.",
         });
       await db.send(
-        new DeleteCommand({
-          TableName,
-          Key: { pk: `USER#${user.id}`, sk: "PROFILE" },
+        new TransactWriteCommand({
+          TransactItems: [
+            {
+              Delete: {
+                TableName,
+                Key: { pk: `USER#${user.id}`, sk: "PROFILE" },
+              },
+            },
+            suppressionWrite(process.env.TABLE_NAME!, user.email, Date.now()),
+          ],
         }),
       );
       return response(200, { ok: true });
@@ -911,55 +1075,59 @@ export async function handler(event: any) {
         });
       const now = Date.now();
       const bidId = randomUUID();
-      await db.send(
-        new TransactWriteCommand({
-          TransactItems: [
-            {
-              Update: {
-                TableName,
-                Key: key(a.id),
-                UpdateExpression:
-                  "SET highestBid=:amount, highestBidder=:bidder, highestBidderEmail=:email ADD revision :one, bidCount :one",
-                ConditionExpression:
-                  "revision=:v AND opensAt<=:now AND closesAt>:now AND (#s=:scheduled OR #s=:open)",
-                ExpressionAttributeNames: { "#s": "status" },
-                ExpressionAttributeValues: {
-                  ":amount": amount,
-                  ":bidder": user.id,
-                  ":email": user.email,
-                  ":one": 1,
-                  ":v": a.revision,
-                  ":now": now,
-                  ":scheduled": "scheduled",
-                  ":open": "open",
-                },
+      await ledger.commit(
+        [
+          {
+            Update: {
+              TableName,
+              Key: key(a.id),
+              UpdateExpression:
+                "SET highestBid=:amount, highestBidder=:bidder, highestBidderEmail=:email ADD revision :one, bidCount :one",
+              ConditionExpression:
+                "revision=:v AND opensAt<=:now AND closesAt>:now AND (#s=:scheduled OR #s=:open)",
+              ExpressionAttributeNames: { "#s": "status" },
+              ExpressionAttributeValues: {
+                ":amount": amount,
+                ":bidder": user.id,
+                ":email": user.email,
+                ":one": 1,
+                ":v": a.revision,
+                ":now": now,
+                ":scheduled": "scheduled",
+                ":open": "open",
               },
             },
-            {
-              Put: {
-                TableName,
-                Item: {
-                  pk: `AUCTION#${a.id}`,
-                  sk: `BID#${now}#${bidId}`,
-                  bidderId: user.id,
-                  email: user.email,
-                  amount,
-                  createdAt: now,
-                  termsVersion: a.termsVersion,
-                  accepted: true,
-                  country: profile.country,
-                  size: a.size,
-                },
+          },
+          {
+            Put: {
+              TableName,
+              Item: {
+                pk: `AUCTION#${a.id}`,
+                sk: `BID#${now}#${bidId}`,
+                bidderId: user.id,
+                email: user.email,
+                amount,
+                createdAt: now,
+                termsVersion: a.termsVersion,
+                accepted: true,
+                country: profile.country,
+                size: a.size,
               },
             },
-            {
-              Put: {
-                TableName,
-                Item: { pk: `USER#${user.id}`, sk: "ACTIVITY", lastBidAt: now },
-              },
+          },
+          {
+            Put: {
+              TableName,
+              Item: { pk: `USER#${user.id}`, sk: "ACTIVITY", lastBidAt: now },
             },
-          ],
-        }),
+          },
+        ],
+        {
+          entity: `piece:${a.id}`,
+          actor: user.id,
+          action: "bid-accepted",
+          details: { bidId, amount },
+        },
       );
       return response(200, { ok: true, amount });
     }
@@ -977,31 +1145,51 @@ export async function handler(event: any) {
       const name = anonymous ? null : clean(body.name, 80);
       if (!anonymous && !name)
         throw Object.assign(Error("Choose a public name."), { status: 400 });
-      await db.send(
-        new UpdateCommand({
-          TableName,
-          Key: key(a.id),
-          UpdateExpression: "SET publicOwner=:owner",
-          ConditionExpression: "ownerId=:u AND #s=:sold",
-          ExpressionAttributeNames: { "#s": "status" },
-          ExpressionAttributeValues: {
-            ":owner": { anonymous, name },
-            ":u": user.id,
-            ":sold": "sold",
+      await ledger.commit(
+        [
+          {
+            Update: {
+              TableName,
+              Key: key(a.id),
+              UpdateExpression: "SET publicOwner=:owner",
+              ConditionExpression: "ownerId=:u AND #s=:sold",
+              ExpressionAttributeNames: { "#s": "status" },
+              ExpressionAttributeValues: {
+                ":owner": { anonymous, name },
+                ":u": user.id,
+                ":sold": "sold",
+              },
+            },
           },
-        }),
+        ],
+        {
+          entity: `piece:${a.id}`,
+          actor: user.id,
+          action: "ownership-visibility-updated",
+        },
       );
       return response(200, { ok: true });
     }
     if (path === "/admin" && method === "GET") {
-      const [collectors, auctions, mail, settings, transfers] =
-        await Promise.all([
-          index("COLLECTORS"),
-          index("AUCTIONS"),
-          index("MAIL"),
-          get("SETTINGS", "RELEASES"),
-          index("TRANSFERS"),
-        ]);
+      const [
+        collectors,
+        auctions,
+        mail,
+        settings,
+        transfers,
+        mediaItems,
+        recoveryCases,
+        campaignItems,
+      ] = await Promise.all([
+        index("COLLECTORS"),
+        index("AUCTIONS"),
+        index("MAIL"),
+        get("SETTINGS", "RELEASES"),
+        index("TRANSFERS"),
+        index("MEDIA"),
+        index("RECOVERIES"),
+        index("CAMPAIGNS"),
+      ]);
       let cursor;
       const guestlist: any[] = [];
       do {
@@ -1017,10 +1205,26 @@ export async function handler(event: any) {
         cursor = r.LastEvaluatedKey;
       } while (cursor);
       return response(200, {
-        collectors,
+        collectors: await Promise.all(collectors.map(effectiveConsent)),
         auctions,
         transfers,
-        guestlist: guestlist.filter((g) => g.expiresAt > Date.now() / 1000),
+        media: mediaItems,
+        recoveries: recoveryCases,
+        campaigns: campaignItems,
+        security: {
+          mfaRequired: true,
+          auditRetention:
+            "non-expiring; legal hold and 100-year renewable compliance retention",
+          region: "eu-north-1",
+          transferPaymentsEnabled:
+            process.env.TRANSFER_PAYMENTS_ENABLED === "true",
+          nfcEnabled: process.env.NFC_ENABLED === "true",
+        },
+        guestlist: await Promise.all(
+          guestlist
+            .filter((g) => g.expiresAt > Date.now() / 1000)
+            .map(effectiveConsent),
+        ),
         mail: mail.map((m) => ({
           id: m.pk,
           email: m.email,
@@ -1037,17 +1241,26 @@ export async function handler(event: any) {
     if (path === "/admin/settings") {
       if (!["individual"].includes(body.cadence))
         throw Object.assign(Error("Choose a schedule mode."), { status: 400 });
-      await db.send(
-        new PutCommand({
-          TableName,
-          Item: {
-            pk: "SETTINGS",
-            sk: "RELEASES",
-            cadence: body.cadence,
-            updatedBy: user.id,
-            updatedAt: Date.now(),
+      await ledger.commit(
+        [
+          {
+            Put: {
+              TableName,
+              Item: {
+                pk: "SETTINGS",
+                sk: "RELEASES",
+                cadence: body.cadence,
+                updatedBy: user.id,
+                updatedAt: Date.now(),
+              },
+            },
           },
-        }),
+        ],
+        {
+          entity: "studio:settings",
+          actor: user.id,
+          action: "settings-updated",
+        },
       );
       return response(200, { ok: true });
     }
@@ -1110,6 +1323,10 @@ export async function handler(event: any) {
         artistWorks: clean(body.artistWorks, 2000),
         size: clean(body.size, 10),
         measurements: clean(body.measurements, 300),
+        productionCost: Number(body.productionCost || 0),
+        artistCost: Number(body.artistCost || 0),
+        otherCost: Number(body.otherCost || 0),
+        costNotes: clean(body.costNotes, 1000),
         openingBid,
         minimumIncrement,
         paymentHours,
@@ -1123,6 +1340,8 @@ export async function handler(event: any) {
               ),
             ]
           : [],
+        plannedOpensAt: Number(body.plannedOpensAt || body.opensAt) || null,
+        plannedClosesAt: Number(body.plannedClosesAt || body.closesAt) || null,
         opensAt: publish ? Number(body.opensAt) : null,
         closesAt: publish ? Number(body.closesAt) : null,
         status: publish ? "scheduled" : "unannounced",
@@ -1136,13 +1355,27 @@ export async function handler(event: any) {
       if (
         !/^[a-z0-9-]+$/.test(item.slug) ||
         (item.slug === preview.slug && id !== preview.id) ||
-        !item.image.startsWith("/images/") ||
-        item.image.includes("..") ||
         !item.name
       )
         throw Object.assign(Error("Use a slug and an image from /images/."), {
           status: 400,
         });
+      if (
+        ![item.productionCost, item.artistCost, item.otherCost].every(
+          (n) => Number.isSafeInteger(n) && n >= 0 && n <= 100000000,
+        )
+      )
+        return response(400, { message: "Check the internal costs." });
+      if (
+        (item.plannedOpensAt || item.plannedClosesAt) &&
+        (!Number.isSafeInteger(item.plannedOpensAt) ||
+          !Number.isSafeInteger(item.plannedClosesAt) ||
+          item.plannedClosesAt <= item.plannedOpensAt)
+      )
+        return response(400, {
+          message: "Choose both planned dates, with closing after opening.",
+        });
+      await media.validateImage(item.image, id);
       if (publish) {
         if (
           process.env.CHECKOUT_ENABLED !== "true" ||
@@ -1213,44 +1446,48 @@ export async function handler(event: any) {
           throw Object.assign(Error("Another release overlaps these dates."), {
             status: 409,
           });
-        await db.send(
-          new TransactWriteCommand({
-            TransactItems: [
-              {
-                Put: {
-                  TableName,
-                  Item: { pk: `SLUG#${item.slug}`, sk: "SLUG", auctionId: id },
-                  ConditionExpression:
-                    "attribute_not_exists(pk) OR auctionId=:id",
-                  ExpressionAttributeValues: { ":id": id },
+        await ledger.commit(
+          [
+            {
+              Put: {
+                TableName,
+                Item: { pk: `SLUG#${item.slug}`, sk: "SLUG", auctionId: id },
+                ConditionExpression:
+                  "attribute_not_exists(pk) OR auctionId=:id",
+                ExpressionAttributeValues: { ":id": id },
+              },
+            },
+            {
+              Put: {
+                TableName,
+                Item: item,
+                ConditionExpression: old
+                  ? "revision=:v"
+                  : "attribute_not_exists(pk)",
+                ...(old
+                  ? { ExpressionAttributeValues: { ":v": old.revision } }
+                  : {}),
+              },
+            },
+            {
+              Put: {
+                TableName,
+                Item: {
+                  pk: "RELEASE_WINDOWS",
+                  sk: id,
+                  id,
+                  opensAt: item.opensAt || 0,
+                  closesAt: item.closesAt || 0,
                 },
               },
-              {
-                Put: {
-                  TableName,
-                  Item: item,
-                  ConditionExpression: old
-                    ? "revision=:v"
-                    : "attribute_not_exists(pk)",
-                  ...(old
-                    ? { ExpressionAttributeValues: { ":v": old.revision } }
-                    : {}),
-                },
-              },
-              {
-                Put: {
-                  TableName,
-                  Item: {
-                    pk: "RELEASE_WINDOWS",
-                    sk: id,
-                    id,
-                    opensAt: item.opensAt || 0,
-                    closesAt: item.closesAt || 0,
-                  },
-                },
-              },
-            ],
-          }),
+            },
+          ],
+          {
+            entity: `release:${id}`,
+            actor: user.id,
+            action: publish ? "release-scheduled" : "release-drafted",
+            details: { revision: item.revision },
+          },
         );
       } finally {
         await db.send(
@@ -1268,13 +1505,27 @@ export async function handler(event: any) {
       const a = await get(`AUCTION#${clean(body.id, 80)}`, "HEAD");
       if (!a?.artistName || !a?.material)
         return response(409, { message: "Add the artist and material first." });
-      await db.send(
-        new UpdateCommand({
-          TableName,
-          Key: key(a.id),
-          UpdateExpression: "SET identityRevealed=:yes ADD revision :one",
-          ExpressionAttributeValues: { ":yes": true, ":one": 1 },
-        }),
+      await ledger.commit(
+        [
+          {
+            Update: {
+              TableName,
+              Key: key(a.id),
+              UpdateExpression: "SET identityRevealed=:yes ADD revision :one",
+              ConditionExpression: "revision=:v",
+              ExpressionAttributeValues: {
+                ":yes": true,
+                ":one": 1,
+                ":v": a.revision,
+              },
+            },
+          },
+        ],
+        {
+          entity: `release:${a.id}`,
+          actor: user.id,
+          action: "identity-revealed",
+        },
       );
       return response(200, { ok: true });
     }
@@ -1287,7 +1538,7 @@ export async function handler(event: any) {
           { status: 400 },
         );
       const a = await get(`AUCTION#${clean(body.id, 80)}`, "HEAD");
-      return response(200, await nextBidder(a || {}));
+      return response(200, await nextBidder(a || {}, user.id));
     }
     if (path === "/admin/fulfillment") {
       const a = await get(`AUCTION#${clean(body.id, 80)}`, "HEAD");
@@ -1295,13 +1546,24 @@ export async function handler(event: any) {
         return response(409, {
           message: "Fulfilment starts after confirmed payment.",
         });
+      if (
+        a.fulfillment?.shippedAt &&
+        (clean(body.hologramId, 80) !== a.fulfillment.hologramId ||
+          body.certificateSigned !== true ||
+          body.shipped !== true)
+      )
+        return response(409, {
+          message:
+            "Use a reviewed recovery case to replace identifiers or a signed certificate after dispatch.",
+        });
       const fulfillment = {
         certificateSigned: body.certificateSigned === true,
         cardIncluded: body.cardIncluded === true,
         hologramId: clean(body.hologramId, 80),
         insured: body.insured === true,
         tracking: clean(body.tracking, 200),
-        shippedAt: body.shipped === true ? Date.now() : null,
+        shippedAt:
+          body.shipped === true ? a.fulfillment?.shippedAt || Date.now() : null,
       };
       if (
         fulfillment.shippedAt &&
@@ -1315,13 +1577,31 @@ export async function handler(event: any) {
           message:
             "Complete the signed certificate, ownership card, hologram, insurance and tracking before dispatch.",
         });
-      await db.send(
-        new UpdateCommand({
-          TableName,
-          Key: key(a.id),
-          UpdateExpression: "SET fulfillment=:f",
-          ExpressionAttributeValues: { ":f": fulfillment },
-        }),
+      await ledger.commit(
+        [
+          {
+            Update: {
+              TableName,
+              Key: key(a.id),
+              UpdateExpression: "SET fulfillment=:f",
+              ConditionExpression:
+                "ownerId=:owner AND attribute_not_exists(recoveryId) AND attribute_not_exists(pendingTransferId) AND " +
+                (a.fulfillment
+                  ? "fulfillment=:old"
+                  : "attribute_not_exists(fulfillment)"),
+              ExpressionAttributeValues: {
+                ":f": fulfillment,
+                ":owner": a.ownerId,
+                ...(a.fulfillment ? { ":old": a.fulfillment } : {}),
+              },
+            },
+          },
+        ],
+        {
+          entity: `piece:${a.id}`,
+          actor: user.id,
+          action: "fulfilment-updated",
+        },
       );
       return response(200, { ok: true });
     }

@@ -13,6 +13,7 @@ let piece: any, transfer: any;
 const accept = {
   transferId: "transfer",
   received: true,
+  feeConsent: true,
   certificateId: "CERT-1",
   hologramId: "SEAL-1",
 };
@@ -88,7 +89,13 @@ describe("validated ownership transfers", () => {
     delete piece.pendingTransferId;
     const r = await registry.handle(
       "/transfer/request",
-      { id: "piece", email: recipient.email.toUpperCase(), confirmed: true },
+      {
+        id: "piece",
+        email: recipient.email.toUpperCase(),
+        confirmed: true,
+        kind: "sale",
+        resaleAmount: 100000,
+      },
       owner,
     );
     expect(r.id).toBeTruthy();
@@ -164,6 +171,9 @@ describe("validated ownership transfers", () => {
       status: "awaiting-review",
       recipientId: recipient.id,
       publicOwner: { anonymous: true, name: null },
+      reviewed: true,
+      feeStatus: "paid",
+      quote: { value: 100000, fee: 500 },
     });
     await registry.handle("/admin/transfer", approval, admin);
     const tx = transactions()[0];

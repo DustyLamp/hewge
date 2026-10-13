@@ -1,5 +1,5 @@
 HEWGE / AUTHENTICITY & OWNERSHIP
-13 October 2026
+14 October 2026
 
 Recommended package
 1. A permanent garment identity label with piece number/name/artist, a tamper-evident serialised holographic feature, and a concealed secure NFC tag.
@@ -25,7 +25,28 @@ Limits to test before manufacture
 Transfer implementation
 Verified current owner requests; verified intended recipient accepts and confirms physical possession; Hewge reviews the actual original/certificate and entitlement evidence; an atomic transaction changes the registered owner and appends provenance. Exact printed identifiers are supporting checks, not sufficient authentication. Public ownership remains opt-in, defaulting to 'anonymous bidder'. Registry history shows dates, not private contact details. This is a registration process, not an international legal-title adjudication system, a resale checkout, or a copyright assignment.
 
-Manufacturing and cryptographic verification remain to be implemented after the hardware choice. The current website explicitly labels its verification page as a registry record and does not claim that an NFC scan was verified.
+The server now implements encrypted SUN verification, AES-CMAC checked against published vectors, UID binding and an atomic monotonic counter check together with the piece verification hold. /verify consumes a fresh URL fragment only on an explicit button press. NFC remains disabled until real hardware commissioning is complete. Successful verification identifies the registered chip, not legal title or the surrounding garment.
+
+What to buy
+Request samples of Identiv ID-Garment-A511-NTAG424DNA (25 mm round), or the A474 variant if the sewn label needs another form factor. Specify the NTAG 424 DNA version, not an ordinary static-UID or UHF-only tag. The manufacturer describes the inlay as washable and slightly flexible. Get the actual wash/temperature/chemical specifications and test the completed attachment with the garment's care process before bulk purchase. Do not infer lifetime wash durability from a chip certificate. The supplier product page provides its sales contact; GoToTags also lists a 25 mm NTAG 424 DNA garment tag for small-quantity sourcing. Availability, configuration service and delivered Swiss price must be confirmed with the supplier.
+https://identiv.com/product-family/id-garment/
+https://www.identiv.com/uploads/IoTProduct/ID-Garment-A511-424-DNA_Datasheet_12_23.pdf
+https://store.gototags.com/clear-nfc-garment-tag-ntag-424-dna-25-mm-circle-nfc-tag/
+
+Commissioning profile
+Have the encoder/supplier use NTAG 424 DNA file 02 with encrypted PICC data, mirrored UID and read counter, encrypted PICC field e (32 hex characters), and truncated MAC field c (16 hex characters). This verifier uses SDMMACInputOffset == SDMMACOffset (empty application MAC input); other profiles require a corresponding reviewed verifier change. Program NDEF as https://hewge.design/verify#tag=<UUID>&e=<dynamic PICC>&c=<dynamic MAC>. Calculate offsets against actual NDEF bytes, including the URI prefix; do not copy offsets from another URL. Set distinct random per-chip SDMMetaRead and SDMFileRead AES-128 keys, replace factory admin/write keys, lock unauthenticated configuration writes, and keep programmer/admin keys separately offline. Never reuse keys for a backup tag. The phone does not receive keys.
+
+Register the keys after secure programming with:
+AWS_PROFILE=hewge npx tsx scripts/provision-tag.ts --piece <piece-id> --uid <UID> --keys /private/tag-keys.json --tag <the-UUID-programmed-in-NDEF>
+The file must be owner-readable only (chmod 600) and contain {"meta":"32 hex digits","file":"32 hex digits"}. Never pass secrets in command arguments or commit the file. Registration encrypts with the retained NFC KMS key and encryption context bound to piece/tag, records the UID uniquely, and leaves the tag provisioned/inactive. It does not program hardware. Archive programmer keys under controlled encrypted custody, then remove working plaintext files safely.
+
+Use the studio Authenticity tab to commission up to two distinct tags before dispatch, with a fresh tap, physical inspection and artist certificate evidence. This consumes that tap. Test subsequent taps on iPhone/Android, repeat/replayed links, tampering, wash/flex durability and removal/transplant scenarios. Enable public verification only after commissioning with the nfcCommissioned=true deployment context; the flag is an operator assertion, not proof of a wash test. Replacement tags are activated only through a reviewed recovery case, with a fresh e/c proof and revocation of replaced tag IDs.
+
+Damage, loss and certificates
+The permanent piece identity and provenance survive tag failure. The verified owner can open a recovery case from their collection; this freezes verification/transfers. Hewge checks physical characteristics and stored photographs, the artist's record/signature, original sale evidence and registered ownership. A printed code, spare tag or unsigned certificate alone is insufficient. Keep one artist-signed paper certificate and an archived photographic copy. The certificate has a version; reissue requires a new artist signature and a permanent recovery event. Do not silently overwrite the original record. A second independently keyed chip is optional redundancy, not an extra transferable bearer title. If account access is also lost, a reviewed account recovery precedes a transfer.
+
+Blockchain
+No token/blockchain is required for this architecture. A timestamped hash or NFT cannot establish physical authenticity or repair a damaged tag on its own. Do not equate token control with legal garment ownership. Independent signed exports/checkpoints could add external evidence later without replacing physical inspection or the privacy-preserving registry. See permanent-provenance.txt for archive continuity, recovery drills, the recipient-paid 0.5% fee and the third-party custody recommendation.
 
 Primary references
 NXP NTAG 424 DNA / TagTamper product and security capabilities:

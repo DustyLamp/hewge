@@ -6,6 +6,9 @@ import {
   TransactWriteCommand,
 } from "@aws-sdk/lib-dynamodb";
 
+import { transferQuote } from "../shared/transfer";
+import { digest, type Commit } from "./audit";
+
 type User = { id: string; email: string; admin: boolean };
 const text = (v: unknown, max = 200) =>
   typeof v === "string" ? v.trim().slice(0, max) : "";
@@ -20,7 +23,13 @@ const active = (t: any) =>
 export function ownershipRegistry(
   db: DynamoDBDocumentClient,
   TableName: string,
+  audited?: Commit,
 ) {
+  const commit: Commit =
+    audited ||
+    (async (items) => {
+      await db.send(new TransactWriteCommand({ TransactItems: items }));
+    });
   const get = async (pk: string, sk = "HEAD") =>
     (
       await db.send(
@@ -71,6 +80,10 @@ export function ownershipRegistry(
         outgoing: t!.fromId === user.id,
         recipient: t!.fromId === user.id ? t!.toEmail : undefined,
         certificateId: t!.certificateId,
+        quote: t!.quote,
+        feeStatus: t!.feeStatus,
+        reviewed: t!.reviewed === true,
+        feePaymentsEnabled: process.env.TRANSFER_PAYMENTS_ENABLED === "true",
       }));
   }
   async function history(id: string) {
@@ -85,6 +98,8 @@ export function ownershipRegistry(
       const a = await get(`AUCTION#${text(body.id, 80)}`);
       if (a?.status !== "sold" || a.ownerId !== user.id)
         fail("Only the registered owner can request a transfer.", 403);
+      if (a.verificationHold)
+        fail("Hewge must resolve the verification hold before a transfer.");
       if (a.pendingTransferId)
         fail("Finish or cancel the existing transfer first.");
       if (
@@ -103,6 +118,11 @@ export function ownershipRegistry(
         fail("Enter the new owner's email address.", 400);
       if (body.confirmed !== true)
         fail("Confirm that you are entitled to transfer this original.", 400);
+      const quote = transferQuote(
+        body.kind,
+        body.resaleAmount,
+        a.lastVerifiedValue || a.offerAmount || a.highestBid,
+      );
       const id = randomUUID();
       const transfer = {
         pk: `TRANSFER#${id}`,
@@ -120,48 +140,56 @@ export function ownershipRegistry(
         requestedAt: now,
         deadlineAt: now + 7 * 86400000,
         revision: 1,
+        quote,
+        kind: body.kind,
+        feeStatus: "unpaid",
       };
-      await db.send(
-        new TransactWriteCommand({
-          TransactItems: [
-            {
-              Update: {
-                TableName,
-                Key: { pk: a.pk, sk: "HEAD" },
-                UpdateExpression: "SET pendingTransferId=:t",
-                ConditionExpression:
-                  "ownerId=:owner AND #s=:sold AND attribute_not_exists(pendingTransferId)",
-                ExpressionAttributeNames: { "#s": "status" },
-                ExpressionAttributeValues: {
-                  ":owner": user.id,
-                  ":sold": "sold",
-                  ":t": id,
-                },
+      await commit(
+        [
+          {
+            Update: {
+              TableName,
+              Key: { pk: a.pk, sk: "HEAD" },
+              UpdateExpression: "SET pendingTransferId=:t",
+              ConditionExpression:
+                "ownerId=:owner AND #s=:sold AND attribute_not_exists(pendingTransferId) AND (attribute_not_exists(verificationHold) OR verificationHold=:no)",
+              ExpressionAttributeNames: { "#s": "status" },
+              ExpressionAttributeValues: {
+                ":owner": user.id,
+                ":sold": "sold",
+                ":t": id,
+                ":no": false,
               },
             },
-            {
-              Put: {
-                TableName,
-                Item: transfer,
-                ConditionExpression: "attribute_not_exists(pk)",
-              },
+          },
+          {
+            Put: {
+              TableName,
+              Item: transfer,
+              ConditionExpression: "attribute_not_exists(pk)",
             },
-            ...[
-              `TRANSFERS_FROM#${user.id}`,
-              `TRANSFERS_TO#${emailKey(toEmail)}`,
-            ].map((pk) => ({
-              Put: { TableName, Item: { pk, sk: id, transferId: id } },
-            })),
-            {
-              Update: {
-                TableName,
-                Key: { pk: `USER#${user.id}`, sk: "ACTIVITY" },
-                UpdateExpression: "SET lastTransferAt=:now",
-                ExpressionAttributeValues: { ":now": now },
-              },
+          },
+          ...[
+            `TRANSFERS_FROM#${user.id}`,
+            `TRANSFERS_TO#${emailKey(toEmail)}`,
+          ].map((pk) => ({
+            Put: { TableName, Item: { pk, sk: id, transferId: id } },
+          })),
+          {
+            Update: {
+              TableName,
+              Key: { pk: `USER#${user.id}`, sk: "ACTIVITY" },
+              UpdateExpression: "SET lastTransferAt=:now",
+              ExpressionAttributeValues: { ":now": now },
             },
-          ],
-        }),
+          },
+        ],
+        {
+          entity: `piece:${a.id}`,
+          actor: user.id,
+          action: "transfer-requested",
+          details: { transferId: id },
+        },
       );
       return { ok: true, id };
     }
@@ -178,9 +206,14 @@ export function ownershipRegistry(
     const headKey = { pk: a.pk, sk: "HEAD" };
     const transferKey = { pk: t.pk, sk: "HEAD" };
     const ownerCondition =
-      "ownerId=:owner AND pendingTransferId=:t AND #s=:sold";
+      "ownerId=:owner AND pendingTransferId=:t AND #s=:sold AND (attribute_not_exists(verificationHold) OR verificationHold=:no)";
     const ownerNames = { "#s": "status" };
-    const ownerValues = { ":owner": t.fromId, ":t": t.id, ":sold": "sold" };
+    const ownerValues = {
+      ":owner": t.fromId,
+      ":t": t.id,
+      ":sold": "sold",
+      ":no": false,
+    };
     if (path === "/transfer/accept") {
       if (t.toEmail !== user.email.toLowerCase() || t.fromId === user.id)
         fail("Sign in with the recipient's verified email.", 403);
@@ -195,52 +228,58 @@ export function ownershipRegistry(
           "Confirm possession and check the certificate and garment seal.",
           400,
         );
+      if (body.feeConsent !== true)
+        fail("Accept the 0.5% recipient transfer fee before continuing.", 400);
       const anonymous = body.anonymous !== false;
       const name = anonymous ? null : text(body.name, 80);
       if (!anonymous && !name) fail("Choose a public name.", 400);
-      await db.send(
-        new TransactWriteCommand({
-          TransactItems: [
-            {
-              ConditionCheck: {
-                TableName,
-                Key: headKey,
-                ConditionExpression: ownerCondition,
-                ExpressionAttributeNames: ownerNames,
-                ExpressionAttributeValues: ownerValues,
+      await commit(
+        [
+          {
+            ConditionCheck: {
+              TableName,
+              Key: headKey,
+              ConditionExpression: ownerCondition,
+              ExpressionAttributeNames: ownerNames,
+              ExpressionAttributeValues: ownerValues,
+            },
+          },
+          {
+            Update: {
+              TableName,
+              Key: transferKey,
+              UpdateExpression:
+                "SET #s=:review, recipientId=:u, acceptedAt=:now, feeConsentAt=:now, publicOwner=:p, possessionConfirmed=:yes ADD revision :one",
+              ConditionExpression:
+                "revision=:v AND #s=:pending AND deadlineAt>:now",
+              ExpressionAttributeNames: { "#s": "status" },
+              ExpressionAttributeValues: {
+                ":review": "awaiting-review",
+                ":u": user.id,
+                ":now": now,
+                ":p": { anonymous, name },
+                ":yes": true,
+                ":one": 1,
+                ":v": t.revision,
+                ":pending": "awaiting-recipient",
               },
             },
-            {
-              Update: {
-                TableName,
-                Key: transferKey,
-                UpdateExpression:
-                  "SET #s=:review, recipientId=:u, acceptedAt=:now, publicOwner=:p, possessionConfirmed=:yes ADD revision :one",
-                ConditionExpression:
-                  "revision=:v AND #s=:pending AND deadlineAt>:now",
-                ExpressionAttributeNames: { "#s": "status" },
-                ExpressionAttributeValues: {
-                  ":review": "awaiting-review",
-                  ":u": user.id,
-                  ":now": now,
-                  ":p": { anonymous, name },
-                  ":yes": true,
-                  ":one": 1,
-                  ":v": t.revision,
-                  ":pending": "awaiting-recipient",
-                },
-              },
+          },
+          {
+            Update: {
+              TableName,
+              Key: { pk: `USER#${user.id}`, sk: "ACTIVITY" },
+              UpdateExpression: "SET lastTransferAt=:now",
+              ExpressionAttributeValues: { ":now": now },
             },
-            {
-              Update: {
-                TableName,
-                Key: { pk: `USER#${user.id}`, sk: "ACTIVITY" },
-                UpdateExpression: "SET lastTransferAt=:now",
-                ExpressionAttributeValues: { ":now": now },
-              },
-            },
-          ],
-        }),
+          },
+        ],
+        {
+          entity: `piece:${a.id}`,
+          actor: user.id,
+          action: "transfer-accepted",
+          details: { transferId: t.id },
+        },
       );
       return { ok: true };
     }
@@ -254,46 +293,52 @@ export function ownershipRegistry(
         t.toEmail !== user.email.toLowerCase()
       )
         fail("Only the participants can cancel this transfer.", 403);
+      if (["paid", "refund-pending", "refund-review"].includes(t.feeStatus))
+        fail("A paid transfer requires a reviewed refund before cancellation.");
       const status = path === "/admin/transfer" ? "rejected" : "cancelled";
-      await db.send(
-        new TransactWriteCommand({
-          TransactItems: [
-            {
-              Update: {
-                TableName,
-                Key: headKey,
-                UpdateExpression: "REMOVE pendingTransferId",
-                ConditionExpression: ownerCondition,
-                ExpressionAttributeNames: ownerNames,
-                ExpressionAttributeValues: ownerValues,
+      await commit(
+        [
+          {
+            Update: {
+              TableName,
+              Key: headKey,
+              UpdateExpression: "REMOVE pendingTransferId",
+              ConditionExpression: ownerCondition,
+              ExpressionAttributeNames: ownerNames,
+              ExpressionAttributeValues: ownerValues,
+            },
+          },
+          {
+            Update: {
+              TableName,
+              Key: transferKey,
+              UpdateExpression:
+                "SET #s=:s, endedAt=:now, endedBy=:u ADD revision :one",
+              ConditionExpression: "revision=:v",
+              ExpressionAttributeNames: { "#s": "status" },
+              ExpressionAttributeValues: {
+                ":s": status,
+                ":now": now,
+                ":u": user.id,
+                ":one": 1,
+                ":v": t.revision,
               },
             },
-            {
-              Update: {
-                TableName,
-                Key: transferKey,
-                UpdateExpression:
-                  "SET #s=:s, endedAt=:now, endedBy=:u ADD revision :one",
-                ConditionExpression: "revision=:v",
-                ExpressionAttributeNames: { "#s": "status" },
-                ExpressionAttributeValues: {
-                  ":s": status,
-                  ":now": now,
-                  ":u": user.id,
-                  ":one": 1,
-                  ":v": t.revision,
-                },
-              },
-            },
-          ],
-        }),
+          },
+        ],
+        {
+          entity: `piece:${a.id}`,
+          actor: user.id,
+          action: "transfer-ended",
+          details: { transferId: t.id },
+        },
       );
       return { ok: true };
     }
     if (path !== "/admin/transfer" || !user.admin)
       fail("Owner access required.", 403);
     if (
-      body.action !== "approve" ||
+      !["approve", "review"].includes(body.action) ||
       t.status !== "awaiting-review" ||
       !t.recipientId
     )
@@ -310,40 +355,21 @@ export function ownershipRegistry(
         "Record your physical inspection and entitlement evidence, and match the certificate and seal.",
         400,
       );
-    await db.send(
-      new TransactWriteCommand({
-        TransactItems: [
-          {
-            Update: {
-              TableName,
-              Key: headKey,
-              UpdateExpression:
-                "SET ownerId=:new, publicOwner=:public, ownershipUpdatedAt=:now REMOVE pendingTransferId",
-              ConditionExpression: `${ownerCondition} AND certificateId=:cert AND fulfillment.hologramId=:seal`,
-              ExpressionAttributeNames: ownerNames,
-              ExpressionAttributeValues: {
-                ...ownerValues,
-                ":new": t.recipientId,
-                ":public": t.publicOwner,
-                ":now": now,
-                ":cert": a.certificateId,
-                ":seal": a.fulfillment.hologramId,
-              },
-            },
-          },
+    if (body.action === "review") {
+      await commit(
+        [
           {
             Update: {
               TableName,
               Key: transferKey,
               UpdateExpression:
-                "SET #s=:approved, approvedAt=:now, approvedBy=:u, evidence=:e ADD revision :one",
+                "SET reviewed=:yes, reviewEvidence=:e, reviewedBy=:u ADD revision :one",
               ConditionExpression: "revision=:v AND #s=:review",
               ExpressionAttributeNames: { "#s": "status" },
               ExpressionAttributeValues: {
-                ":approved": "approved",
-                ":now": now,
-                ":u": user.id,
+                ":yes": true,
                 ":e": evidence,
+                ":u": user.id,
                 ":one": 1,
                 ":v": t.revision,
                 ":review": "awaiting-review",
@@ -351,23 +377,101 @@ export function ownershipRegistry(
             },
           },
           {
-            Put: {
+            ConditionCheck: {
               TableName,
-              Item: {
-                pk: `PROVENANCE#${a.id}`,
-                sk: `${now}#${t.id}`,
-                at: now,
-                transferId: t.id,
-                fromId: t.fromId,
-                toId: t.recipientId,
-                reviewedBy: user.id,
-                certificateId: a.certificateId,
-              },
-              ConditionExpression: "attribute_not_exists(pk)",
+              Key: headKey,
+              ConditionExpression: ownerCondition,
+              ExpressionAttributeNames: ownerNames,
+              ExpressionAttributeValues: ownerValues,
             },
           },
         ],
-      }),
+        {
+          entity: `piece:${a.id}`,
+          actor: user.id,
+          action: "transfer-inspection-completed",
+          details: { transferId: t.id, evidenceHash: digest(evidence) },
+        },
+      );
+      return { ok: true };
+    }
+    if (!t.reviewed || t.feeStatus !== "paid" || !t.quote)
+      fail(
+        "Complete inspection and collect the recipient's transfer fee before approval.",
+      );
+    await commit(
+      [
+        {
+          Update: {
+            TableName,
+            Key: headKey,
+            UpdateExpression:
+              "SET ownerId=:new, publicOwner=:public, ownershipUpdatedAt=:now, lastVerifiedValue=:value REMOVE pendingTransferId",
+            ConditionExpression: `${ownerCondition} AND certificateId=:cert AND fulfillment.hologramId=:seal`,
+            ExpressionAttributeNames: ownerNames,
+            ExpressionAttributeValues: {
+              ...ownerValues,
+              ":new": t.recipientId,
+              ":value": t.quote.value,
+              ":public": t.publicOwner,
+              ":now": now,
+              ":cert": a.certificateId,
+              ":seal": a.fulfillment.hologramId,
+            },
+          },
+        },
+        {
+          Update: {
+            TableName,
+            Key: transferKey,
+            UpdateExpression:
+              "SET #s=:approved, approvedAt=:now, approvedBy=:u, evidence=:e ADD revision :one",
+            ConditionExpression:
+              "revision=:v AND #s=:review AND feeStatus=:paid",
+            ExpressionAttributeNames: { "#s": "status" },
+            ExpressionAttributeValues: {
+              ":paid": "paid",
+              ":approved": "approved",
+              ":now": now,
+              ":u": user.id,
+              ":e": evidence,
+              ":one": 1,
+              ":v": t.revision,
+              ":review": "awaiting-review",
+            },
+          },
+        },
+        {
+          Put: {
+            TableName,
+            Item: {
+              pk: `PROVENANCE#${a.id}`,
+              sk: `${now}#${t.id}`,
+              at: now,
+              transferId: t.id,
+              fromId: t.fromId,
+              toId: t.recipientId,
+              reviewedBy: user.id,
+              certificateId: a.certificateId,
+            },
+            ConditionExpression: "attribute_not_exists(pk)",
+          },
+        },
+      ],
+      {
+        entity: `piece:${a.id}`,
+        actor: user.id,
+        action: "ownership-transferred",
+        details: {
+          transferId: t.id,
+          from: digest(t.fromId),
+          to: digest(t.recipientId),
+          certificateId: a.certificateId,
+          certificateRevision: a.certificateRevision || 1,
+          quote: t.quote,
+          evidenceHash: digest(evidence),
+        },
+      },
     );
     return { ok: true };
   }

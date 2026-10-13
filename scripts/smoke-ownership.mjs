@@ -1,4 +1,5 @@
 // Temporary, undiscoverable QA piece; no payment, real customer or email delivery.
+import { enrollStudio } from "./qa-security.mjs";
 import assert from "node:assert/strict";
 import { createHash, randomUUID, randomBytes } from "node:crypto";
 import {
@@ -17,6 +18,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
   PutCommand,
+  UpdateCommand,
   DeleteCommand,
   GetCommand,
   QueryCommand,
@@ -79,6 +81,15 @@ async function createUser(role) {
   );
   u.token = r.AuthenticationResult.IdToken;
   u.id = JSON.parse(Buffer.from(u.token.split(".")[1], "base64url")).sub;
+  if (role === "admin") {
+    const authenticated = await enrollStudio(
+      (p, b) => call(u, p, b),
+      u.email,
+      u.password,
+    );
+    u.token = authenticated.idToken;
+    u.studio = authenticated.adminSession;
+  }
   return u;
 }
 async function call(user, path, body) {
@@ -88,10 +99,15 @@ async function call(user, path, body) {
       Origin: "https://hewge.design",
       "Content-Type": "application/json",
       ...(user ? { Authorization: `Bearer ${user.token}` } : {}),
+      ...(user?.studio ? { "X-Hewge-Studio": user.studio } : {}),
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
-  return { status: r.status, data: await r.json() };
+  return {
+    status: r.status,
+    data: await r.json(),
+    serverTime: Date.parse(r.headers.get("date")),
+  };
 }
 async function rows(pk) {
   return (
@@ -145,7 +161,13 @@ try {
       ConditionExpression: "attribute_not_exists(pk)",
     }),
   );
-  const request = { id, email: recipient.email, confirmed: true };
+  const request = {
+    id,
+    email: recipient.email,
+    confirmed: true,
+    kind: "sale",
+    resaleAmount: 100000,
+  };
   assert.equal(
     (await call(recipient, "/transfer/request", request)).status,
     403,
@@ -167,6 +189,7 @@ try {
   const accept = {
     transferId,
     received: true,
+    feeConsent: true,
     certificateId: `CERT-${id}`,
     hologramId: `SEAL-${id}`,
   };
@@ -202,6 +225,27 @@ try {
       })
     ).status,
     400,
+  );
+  assert.equal((await call(admin, "/admin/transfer", approval)).status, 409);
+  const review = await call(admin, "/admin/transfer", {
+    ...approval,
+    action: "review",
+  });
+  assert.equal(review.status, 200, JSON.stringify(review));
+  assert.equal(
+    (await call(recipient, "/transfer/checkout", { transferId })).status,
+    409,
+  );
+  // Synthetic fixture ONLY: no Stripe charge. Never apply this to a real sale.
+  assert(id.startsWith("qa-"));
+  await db.send(
+    new UpdateCommand({
+      TableName,
+      Key: { pk: `TRANSFER#${transferId}`, sk: "HEAD" },
+      UpdateExpression: "SET feeStatus=:paid",
+      ConditionExpression: "auctionId=:id AND reviewed=:yes",
+      ExpressionAttributeValues: { ":paid": "paid", ":id": id, ":yes": true },
+    }),
   );
   const approved = await call(admin, "/admin/transfer", approval);
   assert.equal(approved.status, 200, JSON.stringify(approved));
@@ -248,6 +292,7 @@ try {
     id,
     email: owner.email,
     confirmed: true,
+    kind: "gift",
   });
   assert.equal(reverse.status, 200);
   transferIds.add(reverse.data.id);
@@ -289,15 +334,22 @@ try {
         Key: { pk: `TRANSFER#${transferId}`, sk: "HEAD" },
       }),
     );
-  for (const u of users)
+  for (const u of users) {
+    await db.send(
+      new DeleteCommand({
+        TableName,
+        Key: { pk: `ADMIN_MFA#${u.id}`, sk: "SECURITY" },
+      }),
+    );
     await cognito.send(
       new AdminDeleteUserCommand({
         UserPoolId: o.UserPoolId,
         Username: u.email,
       }),
     );
+  }
   assert.equal(await head(), undefined);
   console.log(
-    "All QA identities, piece, transfer, activity and provenance records removed. No messages or payments sent.",
+    "Disposable QA operational records removed. Protected synthetic audit events remain permanently. Fee status was a test fixture; no messages or payments sent.",
   );
 }

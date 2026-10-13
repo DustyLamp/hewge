@@ -1,3 +1,4 @@
+import { suppressionWrite } from "./consent";
 import { createHash, randomBytes } from "node:crypto";
 import {
   GetCommand,
@@ -373,6 +374,7 @@ export function membershipService(
                   : {}),
               },
             },
+            ...(leave ? [suppressionWrite(membersTable, m.email, now)] : []),
             ...(!leave
               ? [{ Put: { TableName: table, Item: newSession } }]
               : []),
@@ -452,6 +454,9 @@ export function membershipService(
       await db.send(
         new TransactWriteCommand({
           TransactItems: [
+            ...(!next.releaseConsent
+              ? [suppressionWrite(membersTable, m.email, next.consentAt)]
+              : []),
             {
               ConditionCheck: {
                 TableName: table,

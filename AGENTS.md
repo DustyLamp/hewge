@@ -15,3 +15,5 @@ Checkout stays disabled until the owner’s Stripe account, real product sizing/
 Jez explicitly prohibits brims on prints (2026-09-26). Never enable or reintroduce brims unless Jez explicitly reverses that instruction. Use `brim_type: no_brim`, `brim_width: 0`, and zero prime-tower brim width where applicable.
 
 Releases have individually chosen dates, never an assumed recurring weekday. Keep unrevealed artist/material fields out of public API responses. Paid ownership transfers require verified recipient acceptance and Hewge review; a printed code alone is not proof of authenticity.
+
+Ownership/security provenance must not expire. Preserve the non-TTL ledger and protected archives; corrections append events. Ownership transfer fees are 0.5%, paid by the recipient, on resale value (gifts use the last verified sale value). Do not treat printed identifiers or blockchain tokens as sufficient physical or legal ownership proof.

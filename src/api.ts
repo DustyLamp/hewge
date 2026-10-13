@@ -15,7 +15,11 @@ export const getConfig = () =>
 export function getToken() {
   return sessionStorage.getItem("hewge-token") || "";
 }
+export function getStudioSession() {
+  return sessionStorage.getItem("hewge-studio") || "";
+}
 export function signOut() {
+  sessionStorage.removeItem("hewge-studio");
   sessionStorage.removeItem("hewge-token");
 }
 export async function api(path: string, body?: unknown) {
@@ -27,13 +31,22 @@ export async function api(path: string, body?: unknown) {
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(getStudioSession() ? { "X-Hewge-Studio": getStudioSession() } : {}),
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
     signal: AbortSignal.timeout(20000),
   });
   const data = await r.json();
   if (!r.ok) {
-    if (r.status === 401 && !path.startsWith("/membership/")) signOut();
+    if (r.status === 401 && path.startsWith("/admin")) {
+      sessionStorage.removeItem("hewge-studio");
+      window.dispatchEvent(new Event("hewge-studio-expired"));
+    } else if (
+      r.status === 401 &&
+      !path.startsWith("/membership/") &&
+      !path.startsWith("/security/")
+    )
+      signOut();
     throw Error(data.message || "Please try again.");
   }
   return data;
@@ -76,7 +89,27 @@ export async function signIn(email: string, password: string) {
     AuthFlow: "USER_PASSWORD_AUTH",
     AuthParameters: { USERNAME: email, PASSWORD: password },
   });
+  if (data.ChallengeName === "SOFTWARE_TOKEN_MFA")
+    return {
+      session: data.Session,
+      username: data.ChallengeParameters?.USER_ID_FOR_SRP || email,
+    };
   if (!data.AuthenticationResult?.IdToken)
     throw Error("Finish your email verification before signing in.");
+  sessionStorage.setItem("hewge-token", data.AuthenticationResult.IdToken);
+}
+
+export async function respondMfa(
+  session: string,
+  username: string,
+  code: string,
+) {
+  const data = await cognito("RespondToAuthChallenge", {
+    ChallengeName: "SOFTWARE_TOKEN_MFA",
+    Session: session,
+    ChallengeResponses: { USERNAME: username, SOFTWARE_TOKEN_MFA_CODE: code },
+  });
+  if (!data.AuthenticationResult?.IdToken)
+    throw Error("Sign in again with your authenticator.");
   sessionStorage.setItem("hewge-token", data.AuthenticationResult.IdToken);
 }

@@ -24,6 +24,10 @@ import * as ses from "aws-cdk-lib/aws-ses";
 import * as route53 from "aws-cdk-lib/aws-route53";
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as s3 from "aws-cdk-lib/aws-s3";
+import * as backup from "aws-cdk-lib/aws-backup";
+import * as kms from "aws-cdk-lib/aws-kms";
+import * as cloudtrail from "aws-cdk-lib/aws-cloudtrail";
 import * as smsvoice from "aws-cdk-lib/aws-smsvoice";
 
 class HewgeStack extends Stack {
@@ -56,6 +60,7 @@ class HewgeStack extends Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       timeToLiveAttribute: "expiresAt",
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       removalPolicy: RemovalPolicy.RETAIN,
       deletionProtection: true,
     });
@@ -74,9 +79,116 @@ class HewgeStack extends Stack {
       partitionKey: { name: "gpk", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "gsk", type: dynamodb.AttributeType.STRING },
     });
+    const auditTable = new dynamodb.Table(this, "AuditData", {
+      tableName: "hewge-audit",
+      partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "sk", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      deletionProtection: true,
+      removalPolicy: RemovalPolicy.RETAIN,
+    });
+    const auditBucket = new s3.Bucket(this, "AuditArchive", {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      enforceSSL: true,
+      versioned: true,
+      objectLockEnabled: true,
+      objectLockDefaultRetention: s3.ObjectLockRetention.compliance(
+        Duration.days(36500),
+      ),
+      removalPolicy: RemovalPolicy.RETAIN,
+    });
+    const mediaBucket = new s3.Bucket(this, "MediaLibrary", {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      enforceSSL: true,
+      versioned: true,
+      removalPolicy: RemovalPolicy.RETAIN,
+      cors: [
+        {
+          allowedOrigins: origins,
+          allowedMethods: [s3.HttpMethods.PUT],
+          allowedHeaders: ["Content-Type", "If-None-Match", "x-amz-*"],
+          exposedHeaders: ["ETag"],
+        },
+      ],
+      lifecycleRules: [
+        {
+          prefix: "staging/",
+          expiration: Duration.days(1),
+          noncurrentVersionExpiration: Duration.days(1),
+        },
+      ],
+    });
+    const nfcKey = new kms.Key(this, "TagEncryptionKey", {
+      enableKeyRotation: true,
+      removalPolicy: RemovalPolicy.RETAIN,
+      description:
+        "Hewge NFC verification keys; retain for provenance continuity",
+    });
+    const vault = new backup.BackupVault(this, "BackupVault", {
+      backupVaultName: "hewge-protected-backups",
+      removalPolicy: RemovalPolicy.RETAIN,
+      lockConfiguration: {
+        minRetention: Duration.days(35),
+        maxRetention: Duration.days(365),
+        changeableFor: Duration.days(7),
+      },
+    });
+    const plan = new backup.BackupPlan(this, "BackupPlan", {
+      backupPlanName: "hewge-daily-recovery",
+      backupVault: vault,
+    });
+    plan.addRule(
+      new backup.BackupPlanRule({
+        ruleName: "Daily",
+        scheduleExpression: events.Schedule.cron({ minute: "0", hour: "3" }),
+        deleteAfter: Duration.days(35),
+        startWindow: Duration.hours(1),
+        completionWindow: Duration.hours(4),
+      }),
+    );
+    plan.addSelection("Tables", {
+      resources: [
+        backup.BackupResource.fromDynamoDbTable(table),
+        backup.BackupResource.fromDynamoDbTable(auctionTable),
+        backup.BackupResource.fromDynamoDbTable(auditTable),
+      ],
+    });
+    const trail = new cloudtrail.Trail(this, "SecurityTrail", {
+      bucket: auditBucket,
+      s3KeyPrefix: "cloudtrail",
+      isMultiRegionTrail: false,
+      includeGlobalServiceEvents: false,
+      enableFileValidation: true,
+    });
+    const trailResource = trail.node.defaultChild as cloudtrail.CfnTrail;
+    trailResource.eventSelectors = undefined;
+    trailResource.advancedEventSelectors = [
+      {
+        name: "Management",
+        fieldSelectors: [{ field: "eventCategory", equalTo: ["Management"] }],
+      },
+      {
+        name: "Registry writes",
+        fieldSelectors: [
+          { field: "eventCategory", equalTo: ["Data"] },
+          { field: "resources.type", equalTo: ["AWS::DynamoDB::Table"] },
+          {
+            field: "resources.ARN",
+            equalTo: [auctionTable.tableArn, auditTable.tableArn],
+          },
+          { field: "readOnly", equalTo: ["false"] },
+        ],
+      },
+    ];
     const users = new cognito.UserPool(this, "Collectors", {
       userPoolName: "hewge-collectors",
       selfSignUpEnabled: true,
+      deletionProtection: true,
+      mfa: cognito.Mfa.OPTIONAL,
+      mfaSecondFactor: { sms: false, otp: true },
       signInAliases: { email: true },
       autoVerify: { email: true },
       standardAttributes: { email: { required: true, mutable: false } },
@@ -165,6 +277,20 @@ class HewgeStack extends Stack {
       bundling: { minify: true, sourceMap: false, externalModules: [] },
       environment: {
         OWNER_EMAIL: "jez@hewge.design",
+        AUDIT_TABLE: auditTable.tableName,
+        AUDIT_BUCKET: auditBucket.bucketName,
+        AUDIT_RETENTION_DAYS: "36500",
+        MEDIA_BUCKET: mediaBucket.bucketName,
+        NFC_KEY_ID: nfcKey.keyArn,
+        NFC_ENABLED:
+          this.node.tryGetContext("nfcCommissioned") === "true"
+            ? "true"
+            : "false",
+        TRANSFER_PAYMENTS_ENABLED:
+          enabled &&
+          this.node.tryGetContext("transferPaymentsApproved") === "true"
+            ? "true"
+            : "false",
         AUCTION_TABLE: auctionTable.tableName,
         USER_POOL_ID: users.userPoolId,
         USER_POOL_CLIENT_ID: userClient.userPoolClientId,
@@ -178,6 +304,51 @@ class HewgeStack extends Stack {
         ...(secretArn ? { STRIPE_SECRET_ARN: secretArn } : {}),
       },
     });
+    auditTable.grantReadWriteData(commerce);
+    auditBucket.grantReadWrite(commerce);
+    commerce.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["s3:PutObjectLegalHold", "s3:PutObjectRetention"],
+        resources: [auditBucket.arnForObjects("events/*")],
+      }),
+    );
+    commerce.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.DENY,
+        actions: ["s3:DeleteObject", "s3:DeleteObjectVersion"],
+        resources: [auditBucket.arnForObjects("*")],
+      }),
+    );
+    commerce.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.DENY,
+        actions: ["s3:PutObjectRetention"],
+        resources: [auditBucket.arnForObjects("*")],
+        conditions: {
+          StringNotEquals: { "s3:object-lock-mode": "COMPLIANCE" },
+        },
+      }),
+    );
+    commerce.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.DENY,
+        actions: ["s3:PutObjectLegalHold"],
+        resources: [auditBucket.arnForObjects("*")],
+        conditions: { StringEquals: { "s3:object-lock-legal-hold": "OFF" } },
+      }),
+    );
+    commerce.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.DENY,
+        actions: ["dynamodb:UpdateItem", "dynamodb:DeleteItem"],
+        resources: [auditTable.tableArn],
+        conditions: {
+          "ForAnyValue:StringLike": { "dynamodb:LeadingKeys": ["ENTITY#*"] },
+        },
+      }),
+    );
+    mediaBucket.grantReadWrite(commerce);
+    nfcKey.grantDecrypt(commerce);
     table.grantReadWriteData(commerce);
     commerce.addToRolePolicy(
       new iam.PolicyStatement({
@@ -214,10 +385,11 @@ class HewgeStack extends Stack {
       corsPreflight: {
         allowOrigins: origins,
         allowMethods: [apigw.CorsHttpMethod.GET, apigw.CorsHttpMethod.POST],
-        allowHeaders: ["Content-Type", "Authorization"],
+        allowHeaders: ["Content-Type", "Authorization", "X-Hewge-Studio"],
         maxAge: Duration.hours(1),
       },
     });
+    commerce.addEnvironment("MEDIA_API_URL", api.apiEndpoint);
     const integration = new HttpLambdaIntegration(
       "CommerceIntegration",
       commerce,
@@ -228,9 +400,22 @@ class HewgeStack extends Stack {
       "/registry/{id}",
       "/me",
       "/admin",
+      "/media/{id}",
     ])
       api.addRoutes({ path, methods: [apigw.HttpMethod.GET], integration });
     for (const path of [
+      "/security/login",
+      "/security/respond",
+      "/verify/nfc",
+      "/admin/tag",
+      "/admin/media/upload",
+      "/admin/media/read",
+      "/admin/media/complete",
+      "/admin/audit",
+      "/admin/campaign",
+      "/admin/recovery",
+      "/recovery/request",
+      "/transfer/checkout",
       "/waitlist",
       "/waitlist/remove",
       "/membership/link",
@@ -248,6 +433,7 @@ class HewgeStack extends Stack {
       "/transfer/accept",
       "/transfer/cancel",
       "/admin/transfer",
+      "/admin/transfer/refund",
       "/admin/settings",
       "/admin/release",
       "/admin/next-bidder",
@@ -261,7 +447,11 @@ class HewgeStack extends Stack {
       throttlingRateLimit: 5,
       throttlingBurstLimit: 10,
     };
-    app.customHeaders = `customHeaders:\n  - pattern: '**'\n    headers:\n      - key: X-Content-Type-Options\n        value: nosniff\n      - key: Referrer-Policy\n        value: strict-origin-when-cross-origin\n      - key: X-Frame-Options\n        value: DENY\n      - key: Strict-Transport-Security\n        value: max-age=31536000; includeSubDomains\n      - key: Permissions-Policy\n        value: camera=(), microphone=(), geolocation=()\n      - key: Content-Security-Policy\n        value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' ${api.apiEndpoint} https://cognito-idp.eu-north-1.amazonaws.com; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"\n  - pattern: '/config.json'\n    headers:\n      - key: Cache-Control\n        value: no-store\n  - pattern: '/images/**'\n    headers:\n      - key: Cache-Control\n        value: public, max-age=86400\n  - pattern: '/assets/**'\n    headers:\n      - key: Cache-Control\n        value: public, max-age=31536000, immutable\n`;
+    app.customHeaders = `customHeaders:\n  - pattern: '**'\n    headers:\n      - key: X-Content-Type-Options\n        value: nosniff\n      - key: Referrer-Policy\n        value: strict-origin-when-cross-origin\n      - key: X-Frame-Options\n        value: DENY\n      - key: Strict-Transport-Security\n        value: max-age=31536000; includeSubDomains\n      - key: Permissions-Policy\n        value: camera=(), microphone=(), geolocation=()\n      - key: Content-Security-Policy\n        value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: ${api.apiEndpoint} https://${mediaBucket.bucketRegionalDomainName}; font-src 'self'; connect-src 'self' ${api.apiEndpoint} https://${mediaBucket.bucketRegionalDomainName} https://cognito-idp.eu-north-1.amazonaws.com; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"\n  - pattern: '/config.json'\n    headers:\n      - key: Cache-Control\n        value: no-store\n  - pattern: '/images/**'\n    headers:\n      - key: Cache-Control\n        value: public, max-age=86400\n  - pattern: '/assets/**'\n    headers:\n      - key: Cache-Control\n        value: public, max-age=31536000, immutable\n`;
+    new CfnOutput(this, "AuditTableName", { value: auditTable.tableName });
+    new CfnOutput(this, "AuditBucketName", { value: auditBucket.bucketName });
+    new CfnOutput(this, "MediaBucketName", { value: mediaBucket.bucketName });
+    new CfnOutput(this, "NfcKeyArn", { value: nfcKey.keyArn });
     if (this.node.tryGetContext("customDomain") === "true") {
       const hostedDomain = new amplify.CfnDomain(this, "Domain", {
         appId: app.attrAppId,
