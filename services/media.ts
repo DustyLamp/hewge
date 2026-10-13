@@ -59,7 +59,7 @@ export function mediaLibrary(
         !Number.isSafeInteger(body.size) ||
         body.size < 32 ||
         body.size > 12 * 1024 * 1024 ||
-        !["artwork", "evidence"].includes(body.kind)
+        !["artwork", "evidence", "page"].includes(body.kind)
       )
         return fail("Choose a JPEG, PNG or WebP under 12 MB and a release ID.");
       const id = randomUUID();
@@ -199,13 +199,34 @@ export function mediaLibrary(
   async function publicImage(id: string) {
     if (!/^[a-f0-9-]{36}$/.test(id)) return fail("Image not found.", 404);
     const record = await get(`MEDIA#${id}`);
-    if (!record || record.kind !== "artwork" || record.status !== "ready")
+    if (
+      !record ||
+      !["artwork", "page"].includes(record.kind) ||
+      record.status !== "ready"
+    )
       return fail("Image not found.", 404);
+    if (record.kind === "page") {
+      const page = await get("CMS", `LIVE#${record.releaseId.slice(5)}`);
+      if (
+        !record.releaseId.startsWith("page-") ||
+        !page ||
+        ![page.data?.image, page.data?.guestImage].includes(url(id))
+      )
+        return fail("Image not found.", 404);
+      return getSignedUrl(
+        s3,
+        new GetObjectCommand({ Bucket: bucket, Key: `media/${id}` }),
+        { expiresIn: 60 },
+      );
+    }
     const release = await get(`AUCTION#${record.releaseId}`);
     if (
       !release?.published ||
       publicRelease(release).designHidden ||
-      release.image !== url(id)
+      ![
+        release.image,
+        ...(release.gallery || []).map((g: any) => g.image),
+      ].includes(url(id))
     )
       return fail("Image not found.", 404);
     return getSignedUrl(
@@ -222,7 +243,7 @@ export function mediaLibrary(
     const record = await get(`MEDIA#${image.slice(prefix.length)}`);
     if (
       !record ||
-      record.kind !== "artwork" ||
+      record.kind !== (releaseId.startsWith("page-") ? "page" : "artwork") ||
       record.status !== "ready" ||
       record.releaseId !== releaseId
     )

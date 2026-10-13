@@ -1,4 +1,5 @@
 import { withdrawalService } from "./withdrawals";
+import { contentService } from "./content";
 import { suppressionWrite, suppressionKey } from "./consent";
 import { auctionCards, cardKey } from "./auction-cards";
 import {
@@ -45,7 +46,7 @@ import {
   validateBid,
   TERMS_VERSION,
 } from "../shared/auction";
-import { sizes, piece } from "../shared/catalog";
+import { sizes } from "../shared/catalog";
 import { ownershipRegistry } from "./ownership";
 import { membershipService } from "./membership";
 import { seller, sellerContactText } from "../shared/seller";
@@ -68,6 +69,14 @@ const media = mediaLibrary(
   TableName,
   process.env.MEDIA_BUCKET!,
   ledger.commit,
+);
+const content = contentService(
+  db,
+  s3,
+  TableName,
+  process.env.MEDIA_BUCKET!,
+  ledger.commit,
+  media.validateImage,
 );
 
 const fees = transferPayments(db, TableName, ledger.commit, stripe);
@@ -876,21 +885,49 @@ export async function handler(event: any) {
       };
     }
     if (method === "GET" && path === "/releases") {
-      const items = (await index("AUCTIONS")).filter(
-        (a) => a.published !== false,
-      );
+      // The GSI discovers IDs only. Re-read the authority so an old index image
+      // cannot publish a withdrawn draft or stale bid head.
+      const items = (
+        await Promise.all(
+          (await index("AUCTIONS")).map((a) => get(`AUCTION#${a.id}`, "HEAD")),
+        )
+      ).filter((a): a is Record<string, any> => a?.published === true);
       return response(200, {
-        releases: items.length
-          ? items
-              .map((a) => publicRelease(a))
-              .sort((a, b) => (b.opensAt || 0) - (a.opensAt || 0))
-          : [{ ...preview, serverNow: Date.now() }],
+        releases: items
+          .map((a) => publicRelease(a))
+          .sort((a, b) => (b.opensAt || 0) - (a.opensAt || 0)),
         biddingEnabled: process.env.CHECKOUT_ENABLED === "true",
         emailEnabled: process.env.EMAIL_ENABLED === "true",
       });
     }
-    if (method === "GET" && path === "/catalog")
-      return response(200, { ...piece, status: "coming-soon" });
+    if (method === "GET" && path.startsWith("/content/")) {
+      const page = await content.get(path.slice(9));
+      if (!page) return response(404, { message: "Page not found." });
+      const featured =
+        page.id === "home"
+          ? await get(`AUCTION#${page.data.featuredReleaseId}`, "HEAD")
+          : null;
+      return response(200, {
+        page,
+        release: featured?.published === true ? publicRelease(featured) : null,
+      });
+    }
+    if (method === "GET" && path === "/catalog") {
+      const home = await content.get("home");
+      const item = home
+        ? await get(`AUCTION#${home.data.featuredReleaseId}`, "HEAD")
+        : null;
+      if (!item?.published)
+        return response(404, { message: "Piece not found." });
+      const release = publicRelease(item);
+      return response(200, {
+        ...release,
+        collection: release.name,
+        price: release.openingBid,
+        currency: "chf",
+        status: "coming-soon",
+      });
+    }
     if (method === "GET" && path.startsWith("/registry/")) {
       const id = path.slice("/registry/".length);
       if (!/^[a-z0-9-]{1,80}$/.test(id))
@@ -993,6 +1030,8 @@ export async function handler(event: any) {
         message: "This piece is available only to its winning bidder.",
       });
     const user = await auth(event, path.startsWith("/admin"));
+    if (path === "/admin/content")
+      return response(200, await content.save(body, user));
     if (path === "/admin/withdrawal")
       return response(200, await withdrawals.review(body, user));
     if (path === "/admin/tag")
@@ -1185,6 +1224,25 @@ export async function handler(event: any) {
       return response(200, await cards.status(clean(body.id, 80), user));
     if (path === "/bid/card/setup")
       return response(200, await cards.start(clean(body.id, 80), body, user));
+    if (path === "/bid/receipt") {
+      if (
+        !/^[a-z0-9-]{1,80}$/.test(body.id || "") ||
+        !/^[a-f0-9-]{36}$/.test(body.requestId || "")
+      )
+        return response(400, { message: "Invalid bid receipt reference." });
+      const receipt = await get(`AUCTION#${body.id}`, `BID#${body.requestId}`);
+      return response(200, {
+        receipt:
+          receipt?.bidderId === user.id
+            ? {
+                bidId: receipt.bidId,
+                amount: receipt.amount,
+                receivedAt: receipt.createdAt,
+                sequence: receipt.sequence,
+              }
+            : null,
+      });
+    }
     if (path === "/bid") {
       if (process.env.CHECKOUT_ENABLED !== "true")
         return response(409, {
@@ -1194,6 +1252,27 @@ export async function handler(event: any) {
         return response(403, {
           message: "The seller cannot bid on their own auction.",
         });
+      if (!/^[a-f0-9-]{36}$/.test(body.requestId || ""))
+        return response(400, {
+          message: "Refresh the page before placing a bid.",
+        });
+      const existing = await get(
+        `AUCTION#${clean(body.id, 80)}`,
+        `BID#${body.requestId}`,
+      );
+      if (existing) {
+        if (existing.bidderId !== user.id || existing.amount !== body.amount)
+          return response(409, {
+            message: "This bid reference belongs to a different request.",
+          });
+        return response(200, {
+          ok: true,
+          amount: existing.amount,
+          bidId: existing.bidId,
+          receivedAt: existing.createdAt,
+          sequence: existing.sequence,
+        });
+      }
       const a = await get(`AUCTION#${clean(body.id, 80)}`, "HEAD");
       if (!a || auctionPhase(a as any) !== "open")
         return response(409, { message: "This auction is not open." });
@@ -1219,7 +1298,8 @@ export async function handler(event: any) {
         });
       const card = await cards.requireCard(a, user, profile);
       const now = Date.now();
-      const bidId = randomUUID();
+      const bidId = body.requestId;
+      const sequence = a.bidCount + 1;
       await ledger.commit(
         [
           {
@@ -1248,7 +1328,9 @@ export async function handler(event: any) {
               TableName,
               Item: {
                 pk: `AUCTION#${a.id}`,
-                sk: `BID#${now}#${bidId}`,
+                sk: `BID#${bidId}`,
+                bidId,
+                sequence,
                 bidderId: user.id,
                 email: user.email,
                 amount,
@@ -1263,6 +1345,7 @@ export async function handler(event: any) {
                 country: profile.country,
                 size: a.size,
               },
+              ConditionExpression: "attribute_not_exists(pk)",
             },
           },
           {
@@ -1295,6 +1378,8 @@ export async function handler(event: any) {
           action: "bid-accepted",
           details: {
             bidId,
+            sequence,
+            receivedAt: now,
             amount,
             termsVersion: a.termsVersion,
             termsHash: hash(termsText),
@@ -1302,8 +1387,15 @@ export async function handler(event: any) {
             mandateHash: hash(cardMandate),
           },
         },
+        { notAfter: a.closesAt },
       );
-      return response(200, { ok: true, amount });
+      return response(200, {
+        ok: true,
+        amount,
+        bidId,
+        receivedAt: now,
+        sequence,
+      });
     }
     if (path === "/winner/checkout") {
       const a = await get(`AUCTION#${clean(body.id, 80)}`, "HEAD");
@@ -1416,6 +1508,7 @@ export async function handler(event: any) {
           status: m.status,
         })),
         settings: settings || { cadence: "individual" },
+        pages: await content.list(),
         paymentsEnabled: process.env.CHECKOUT_ENABLED === "true",
         emailEnabled: process.env.EMAIL_ENABLED === "true",
         verificationEmailEnabled: await membership.deliveryEnabled(),
@@ -1453,6 +1546,10 @@ export async function handler(event: any) {
       if (!/^[a-z0-9-]+$/.test(id))
         throw Object.assign(Error("Use a simple release ID."), { status: 400 });
       const old = await get(`AUCTION#${id}`, "HEAD");
+      if (old && body.revision !== old.revision)
+        return response(409, {
+          message: "Someone saved a newer release. Reload before editing.",
+        });
       if (
         old &&
         (old.bidCount > 0 ||
@@ -1464,6 +1561,7 @@ export async function handler(event: any) {
           message: "A released auction cannot be rewritten.",
         });
       const publish = body.publish === true;
+      const publishPage = publish || body.publishPage === true;
       const openingBid = Number(body.openingBid),
         minimumIncrement = Number(body.minimumIncrement),
         paymentHours = PAYMENT_RECOVERY_HOURS,
@@ -1488,6 +1586,16 @@ export async function handler(event: any) {
         number: clean(body.number, 20),
         image: clean(body.image, 300),
         story: clean(body.story, 4000),
+        subtitle: clean(body.subtitle, 300),
+        storyHeading: clean(body.storyHeading, 150),
+        description: clean(body.description, 1500),
+        imageNote: clean(body.imageNote, 500),
+        gallery: Array.isArray(body.gallery)
+          ? body.gallery.slice(0, 8).map((g: any) => ({
+              image: clean(g.image, 300),
+              label: clean(g.label, 150),
+            }))
+          : [],
         designRevealMode:
           body.designRevealMode === "at-opening" ? "at-opening" : "now",
         material: clean(body.material, 150),
@@ -1528,18 +1636,15 @@ export async function handler(event: any) {
         opensAt: publish ? Number(body.opensAt) : null,
         closesAt: publish ? Number(body.closesAt) : null,
         status: publish ? "scheduled" : "unannounced",
-        published: publish,
+        published: publishPage,
         termsVersion: TERMS_VERSION,
         revision: (old?.revision || 0) + 1,
         gpk: "AUCTIONS",
         gsk: id,
         updatedBy: user.id,
+        updatedAt: Date.now(),
       };
-      if (
-        !/^[a-z0-9-]+$/.test(item.slug) ||
-        (item.slug === preview.slug && id !== preview.id) ||
-        !item.name
-      )
+      if (!/^[a-z0-9-]+$/.test(item.slug) || !item.name)
         throw Object.assign(Error("Use a slug and an image from /images/."), {
           status: 400,
         });
@@ -1559,6 +1664,8 @@ export async function handler(event: any) {
           message: "Choose both planned dates, with closing after opening.",
         });
       await media.validateImage(item.image, id);
+      for (const image of item.gallery)
+        await media.validateImage(image.image, id);
       if (publish) {
         if (
           process.env.CHECKOUT_ENABLED !== "true" ||
@@ -1633,6 +1740,7 @@ export async function handler(event: any) {
           throw Object.assign(Error("Another release overlaps these dates."), {
             status: 409,
           });
+        const snapshot = await content.snapshotRelease(item);
         await ledger.commit(
           [
             {
@@ -1672,8 +1780,12 @@ export async function handler(event: any) {
           {
             entity: `release:${id}`,
             actor: user.id,
-            action: publish ? "release-scheduled" : "release-drafted",
-            details: { revision: item.revision },
+            action: publish
+              ? "release-scheduled"
+              : publishPage
+                ? "release-page-published"
+                : "release-drafted",
+            details: { revision: item.revision, ...snapshot },
           },
         );
       } finally {

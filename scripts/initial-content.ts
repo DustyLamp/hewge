@@ -1,0 +1,38 @@
+import { type Release } from "../shared/auction";
+import { TERMS_VERSION, PAYMENT_RECOVERY_HOURS } from "../shared/legal";
+// One-time migration input, never imported by the application.
+export const initialRelease: Release = {
+  id: "toucan-001",
+  slug: "after-hours",
+  name: "After Hours",
+  designRevealMode: "now",
+  material: "",
+  revealMode: "manual",
+  identityRevealed: false,
+  number: "001",
+  image: "/images/shirt-front.webp",
+  story:
+    "An invitation. A dance floor. The morning after. A whole night unfolds across six illustrated panels: toucans dressed for trouble, hidden among tangled leaves. One story, told all the way around.",
+  artistName: "",
+  artistOrigin: "",
+  artistPractice: "",
+  artistBiography: "",
+  artistWorks: "",
+  size: "",
+  measurements: "",
+  status: "unannounced",
+  opensAt: null,
+  closesAt: null,
+  openingBid: 33900,
+  highestBid: null,
+  bidCount: 0,
+  minimumIncrement: 1000,
+  paymentHours: PAYMENT_RECOVERY_HOURS,
+  shippingFee: 0,
+  taxDetails: "",
+  deliveryDetails: "",
+  countries: [],
+  publicOwner: null,
+  serverNow: Date.now(),
+  termsVersion: TERMS_VERSION,
+};

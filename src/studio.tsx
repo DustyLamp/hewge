@@ -108,7 +108,7 @@ export function ImageUpload({
   onUploaded,
 }: {
   releaseId: string;
-  kind?: "artwork" | "evidence";
+  kind?: "artwork" | "evidence" | "page";
   onUploaded?: (url: string) => void;
 }) {
   const [message, setMessage] = useState(""),
@@ -137,7 +137,9 @@ export function ImageUpload({
       setMessage(
         kind === "evidence"
           ? `Private evidence saved: ${r.id}`
-          : "Image ready. Save the release to use it.",
+          : kind === "page"
+            ? "Image ready. Publish the page to use it."
+            : "Image ready. Save the release to use it.",
       );
     } catch (e) {
       setMessage(error(e));
@@ -162,7 +164,9 @@ export function ImageUpload({
         JPEG, PNG or WebP · up to 12 MB ·{" "}
         {kind === "artwork"
           ? "private until the published design reveal"
-          : "never public"}
+          : kind === "page"
+            ? "private until the page is published"
+            : "never public"}
       </small>
       <p role="status">
         <FullStops>{message}</FullStops>

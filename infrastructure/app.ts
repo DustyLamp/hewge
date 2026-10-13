@@ -420,6 +420,7 @@ class HewgeStack extends Stack {
     );
     for (const path of [
       "/catalog",
+      "/content/{id}",
       "/releases",
       "/registry/{id}",
       "/me",
@@ -432,6 +433,7 @@ class HewgeStack extends Stack {
       "/security/respond",
       "/verify/nfc",
       "/admin/tag",
+      "/admin/content",
       "/admin/media/upload",
       "/admin/media/read",
       "/admin/media/complete",
@@ -451,6 +453,7 @@ class HewgeStack extends Stack {
       "/me/profile",
       "/me/delete",
       "/bid",
+      "/bid/receipt",
       "/withdrawal",
       "/admin/withdrawal",
       "/bid/card/setup",

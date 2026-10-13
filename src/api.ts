@@ -1,5 +1,3 @@
-import { piece, type Catalog } from "../shared/catalog";
-import { preview } from "../shared/auction";
 export type Config = {
   apiUrl: string;
   userPoolId?: string;
@@ -47,17 +45,15 @@ export async function api(path: string, body?: unknown) {
       !path.startsWith("/security/")
     )
       signOut();
-    throw Error(data.message || "Please try again.");
+    throw Object.assign(Error(data.message || "Please try again."), {
+      status: r.status,
+    });
   }
   return data;
 }
-export async function getCatalog(): Promise<Catalog> {
-  if (!(await getConfig()).apiUrl) return { ...piece, status: "coming-soon" };
-  return api("/catalog");
-}
 export async function getReleases() {
   if (!(await getConfig()).apiUrl)
-    return { releases: [preview], biddingEnabled: false };
+    return { releases: [], biddingEnabled: false };
   return api("/releases");
 }
 export const joinList = (email: string, website: string) =>

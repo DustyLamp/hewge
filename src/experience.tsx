@@ -1,3 +1,4 @@
+import { ContentPanel, EditorialPage } from "./content";
 import { WithdrawalPage, WithdrawalPanel } from "./withdrawal";
 import { CardCheck } from "./card-check";
 import {
@@ -7,7 +8,7 @@ import {
   termsSections,
   privacySections,
 } from "../shared/legal";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import { ArrowUpRight, ArrowRight, Check, Share2 } from "lucide-react";
 import {
   api,
@@ -162,13 +163,18 @@ function useReleases() {
   };
 }
 function Countdown({ release }: { release: Release }) {
-  const [now, setNow] = useState(Date.now());
-  const [offset, setOffset] = useState(0);
+  const [now, setNow] = useState(performance.now());
+  const [anchor, setAnchor] = useState({
+    server: release.serverNow,
+    local: performance.now(),
+  });
   useEffect(() => {
-    setOffset(release.serverNow - Date.now());
+    const local = performance.now();
+    setAnchor({ server: release.serverNow, local });
+    setNow(local);
   }, [release.serverNow]);
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
+    const timer = setInterval(() => setNow(performance.now()), 1000);
     return () => clearInterval(timer);
   }, []);
   const target =
@@ -182,7 +188,10 @@ function Countdown({ release }: { release: Release }) {
         </strong>
       </div>
     );
-  const seconds = Math.max(0, Math.floor((target - now - offset) / 1000));
+  const seconds = Math.max(
+    0,
+    Math.floor((target - anchor.server - (now - anchor.local)) / 1000),
+  );
   return (
     <div className="countdown">
       <span>
@@ -266,6 +275,32 @@ function BidBox({
   const [amount, setAmount] = useState("");
   const [confirm, setConfirm] = useState(false);
   const [cardVerified, setCardVerified] = useState(false);
+  const pending = useRef<{ requestId: string; amount: number } | null>(null);
+  const receiptKey = `hewge-bid-${release.id}`;
+  useEffect(() => {
+    try {
+      pending.current = JSON.parse(
+        sessionStorage.getItem(receiptKey) || "null",
+      );
+    } catch {
+      pending.current = null;
+    }
+    if (pending.current)
+      api("/bid/receipt", {
+        id: release.id,
+        requestId: pending.current.requestId,
+      })
+        .then((r) => {
+          if (r.receipt) {
+            setMessage(
+              `Bid recorded: ${money(r.receipt.amount)}. Receipt ${r.receipt.bidId}.`,
+            );
+            sessionStorage.removeItem(receiptKey);
+            pending.current = null;
+          }
+        })
+        .catch(() => {});
+  }, [release.id]);
   async function bid(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!confirm) {
@@ -275,7 +310,20 @@ function BidBox({
     setBusy(true);
     setMessage("");
     try {
-      await api("/bid", {
+      const cents = Math.round(Number(amount) * 100);
+      if (pending.current && pending.current.amount !== cents) {
+        const check = await api("/bid/receipt", {
+          id: release.id,
+          requestId: pending.current.requestId,
+        });
+        if (check.receipt)
+          setMessage(`Previous bid recorded: ${money(check.receipt.amount)}.`);
+        pending.current = null;
+      }
+      pending.current ??= { requestId: crypto.randomUUID(), amount: cents };
+      sessionStorage.setItem(receiptKey, JSON.stringify(pending.current));
+      const receipt = await api("/bid", {
+        requestId: pending.current.requestId,
         id: release.id,
         amount: Math.round(Number(amount) * 100),
         termsVersion: release.termsVersion,
@@ -283,12 +331,41 @@ function BidBox({
         accepted: true,
         adult: true,
       });
-      setMessage(`Bid accepted: ${money(Math.round(Number(amount) * 100))}.`);
+      setMessage(
+        `Bid accepted: ${money(receipt.amount)}. Receipt ${receipt.bidId}.`,
+      );
+      pending.current = null;
+      sessionStorage.removeItem(receiptKey);
       setConfirm(false);
       setAmount("");
       onBid();
     } catch (e) {
       setMessage(errorText(e));
+      if (pending.current) {
+        try {
+          const check = await api("/bid/receipt", {
+            id: release.id,
+            requestId: pending.current.requestId,
+          });
+          if (check.receipt) {
+            setMessage(
+              `Bid recorded: ${money(check.receipt.amount)}. Receipt ${check.receipt.bidId}.`,
+            );
+            pending.current = null;
+            sessionStorage.removeItem(receiptKey);
+          } else if ([400, 403, 409].includes((e as any).status)) {
+            pending.current = null;
+            sessionStorage.removeItem(receiptKey);
+          } else
+            setMessage(
+              "Confirmation is pending. Keep this page open and retry the same bid to check its receipt.",
+            );
+        } catch {
+          setMessage(
+            "Confirmation is unavailable. Your bid reference is saved; check again before bidding another amount.",
+          );
+        }
+      }
       setConfirm(false);
       onBid();
     } finally {
@@ -486,6 +563,9 @@ function PiecePage() {
   const { releases, biddingEnabled, error, loading, refresh } = useReleases();
   const slug = location.pathname.split("/")[2];
   const release = releases.find((r) => r.slug === slug);
+  useEffect(() => {
+    if (release) document.title = `${release.name} — HEWGE`;
+  }, [release?.name]);
   if (!release)
     return (
       <main className="page-shell">
@@ -517,11 +597,7 @@ function PiecePage() {
       </div>
       <section className="article-title">
         <span className="eyebrow">
-          <FullStops>
-            {!release.designHidden && release.id === "toucan-001"
-              ? "A night out. An original."
-              : "Edition of one."}
-          </FullStops>
+          <FullStops>{release.subtitle || "Edition of one."}</FullStops>
         </span>
         <h1 className="piece-title">
           <PieceTitle name={release.name} />
@@ -529,15 +605,7 @@ function PiecePage() {
         <div className="article-deck">
           <p>
             <FullStops>
-              {!release.designHidden && release.id === "toucan-001"
-                ? "One very good night."
-                : "One original."}
-            </FullStops>
-            <br />
-            <FullStops>
-              {!release.designHidden && release.id === "toucan-001"
-                ? "One very bad morning."
-                : "Artist signed."}
+              {release.description || "One original. Artist signed."}
             </FullStops>
           </p>
           <span>
@@ -575,17 +643,9 @@ function PiecePage() {
           <div>
             <span className="eyebrow">The work</span>
             <h2>
-              {!release.designHidden && release.id === "toucan-001" ? (
-                <>
-                  Some nights
-                  <br />
-                  <FullStops>{"stay with you."}</FullStops>
-                </>
-              ) : (
-                <>
-                  <FullStops>{"About the piece."}</FullStops>
-                </>
-              )}
+              <FullStops>
+                {release.storyHeading || "About the piece."}
+              </FullStops>
             </h2>
           </div>
           <div>
@@ -599,37 +659,32 @@ function PiecePage() {
                 }
               </FullStops>
             </p>
-            {!release.designHidden && release.id === "toucan-001" && (
+            {release.imageNote && (
               <p className="image-note">
-                <FullStops>
-                  {
-                    "Shown here: the approved design mockup. Final garment photography and measurements accompany the release."
-                  }
-                </FullStops>
+                <FullStops>{release.imageNote}</FullStops>
               </p>
             )}
           </div>
         </section>
       )}
 
-      {!release.designHidden && release.id === "toucan-001" && (
-        <figure className="wide-art">
-          <img
-            src="/images/approved-mockup.webp"
-            alt="Approved After Hours shirt mockup, front and back"
-            loading="lazy"
-          />
-          <figcaption>After Hours / Front & back / Design study</figcaption>
-        </figure>
-      )}
+      {!release.designHidden &&
+        (release.gallery || []).map((g) => (
+          <figure className="wide-art" key={g.image}>
+            <img
+              src={g.image}
+              alt={`${release.name} — ${g.label}`}
+              loading="lazy"
+            />
+            <figcaption>
+              <FullStops>{`${release.name} / ${g.label}`}</FullStops>
+            </figcaption>
+          </figure>
+        ))}
       <section className="artist-section" id="artist">
         <div className="artist-art">
           <img
-            src={
-              !release.designHidden && release.id === "toucan-001"
-                ? "/images/front-right.webp"
-                : release.image
-            }
+            src={release.gallery?.[1]?.image || release.image}
             alt={
               release.designHidden
                 ? `Preview of piece No. ${release.number}`
@@ -871,8 +926,14 @@ function Archive() {
               <br />
               <FullStops>{"yet."}</FullStops>
             </h2>
-            <a href="/pieces/after-hours" className="text-link">
-              Meet After Hours <ArrowUpRight size={18} />
+            <a
+              href={releases[0] ? `/pieces/${releases[0].slug}` : "/latest"}
+              className="text-link"
+            >
+              <FullStops>
+                {releases[0] ? `Meet ${releases[0].name}` : "The latest"}
+              </FullStops>{" "}
+              <ArrowUpRight size={18} />
             </a>
           </div>
         </div>
@@ -962,10 +1023,7 @@ function Auth({ onLogin }: { onLogin: () => void }) {
         <p>
           <FullStops>{"Bid on releases and manage your pieces."}</FullStops>
         </p>
-        <img
-          src="/images/night.webp"
-          alt="A detail of the After Hours artwork"
-        />
+        <img src="/images/night.webp" alt="Hewge artwork" />
       </div>
       <div className="auth-panel">
         <span className="eyebrow">HEWGE / COLLECTOR ACCESS</span>
@@ -1591,13 +1649,21 @@ function Dashboard() {
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("");
   const [tab, setTab] = useState("collectors");
-  const [draft, setDraft] = useState<any>(preview);
+  const [draft, setDraft] = useState<any>({
+    ...preview,
+    id: `piece-${Date.now()}`,
+  });
   const [print, setPrint] = useState<any>(null);
   const [signed, setSigned] = useState(!!getToken() && !!getStudioSession());
   const [busy, setBusy] = useState(false);
   function load() {
     api("/admin")
-      .then(setData)
+      .then((next) => {
+        setData(next);
+        setDraft(
+          (old: any) => next.auctions.find((a: any) => a.id === old.id) || old,
+        );
+      })
       .catch((e) => {
         setError(errorText(e));
         if (!getToken() || !getStudioSession()) setSigned(false);
@@ -1699,6 +1765,9 @@ function Dashboard() {
           .split(/[\s,]+/)
           .filter(Boolean),
         publish,
+        publishPage:
+          (e.nativeEvent as SubmitEvent).submitter?.getAttribute("value") ===
+          "page",
         plannedOpensAt: f.get("opensAt")
           ? swissTimestamp(String(f.get("opensAt")))
           : null,
@@ -1803,6 +1872,7 @@ function Dashboard() {
         {[
           "collectors",
           "releases",
+          "pages",
           "media",
           "engagement",
           "transfers",
@@ -1821,7 +1891,13 @@ function Dashboard() {
       <p role="status" className="form-message">
         <FullStops>{error}</FullStops>
       </p>
-      {tab === "authenticity" ? (
+      {tab === "pages" ? (
+        <ContentPanel
+          pages={data.pages || []}
+          auctions={data.auctions}
+          refresh={load}
+        />
+      ) : tab === "authenticity" ? (
         <AuthenticityPanel auctions={data.auctions} call={call} busy={busy} />
       ) : tab === "media" ? (
         <MediaPanel items={data.media || []} auctions={data.auctions} />
@@ -2093,6 +2169,10 @@ function Dashboard() {
               />
             </label>
             {[
+              ["subtitle", "Short introduction"],
+              ["storyHeading", "Story heading"],
+              ["description", "Piece description"],
+              ["imageNote", "Image caption / photography note"],
               ["story", "The piece’s story"],
               ["artistBiography", "Artist biography"],
               ["artistWorks", "Other works in their collection"],
@@ -2102,6 +2182,70 @@ function Dashboard() {
                 <textarea name={k} rows={4} defaultValue={draft[k]} />
               </label>
             ))}
+            <fieldset>
+              <legend>Piece gallery</legend>
+              {(draft.gallery || []).map((g: any, i: number) => (
+                <div className="two-fields" key={i}>
+                  <label>
+                    Image {i + 1}
+                    <input
+                      value={g.image}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          gallery: draft.gallery.map((x: any, n: number) =>
+                            n === i ? { ...x, image: e.target.value } : x,
+                          ),
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Caption
+                    <input
+                      value={g.label}
+                      maxLength={150}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          gallery: draft.gallery.map((x: any, n: number) =>
+                            n === i ? { ...x, label: e.target.value } : x,
+                          ),
+                        })
+                      }
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="text-link"
+                    onClick={() =>
+                      setDraft({
+                        ...draft,
+                        gallery: draft.gallery.filter(
+                          (_: any, n: number) => n !== i,
+                        ),
+                      })
+                    }
+                  >
+                    Remove view
+                  </button>
+                </div>
+              ))}
+              {(draft.gallery || []).length < 8 && (
+                <ImageUpload
+                  releaseId={draft.id}
+                  onUploaded={(image) =>
+                    setDraft({
+                      ...draft,
+                      gallery: [
+                        ...(draft.gallery || []),
+                        { image, label: "Detail" },
+                      ],
+                    })
+                  }
+                />
+              )}
+            </fieldset>
             <label>
               Design reveal
               <select
@@ -2299,6 +2443,14 @@ function Dashboard() {
               <button
                 className="button button-dark"
                 name="action"
+                value="page"
+                disabled={busy}
+              >
+                Publish piece page
+              </button>
+              <button
+                className="button button-dark"
+                name="action"
                 value="publish"
                 disabled={busy || !data.paymentsEnabled || !data.emailEnabled}
               >
@@ -2308,7 +2460,7 @@ function Dashboard() {
             <p className="fine-print">
               <FullStops>
                 {
-                  "Scheduling locks after opening. One auction at a time. Artist details, measurements, payment setup, transactional email and approved seller terms are required before bidding."
+                  "Publish a piece page without opening bidding. Saving privately removes it from public pages. Schedule bidding only when details and payment setup are ready. Scheduling locks after opening."
                 }
               </FullStops>
             </p>
@@ -2722,7 +2874,7 @@ export function Experience() {
                   ? "Withdraw from contract — HEWGE"
                   : route === "/privacy"
                     ? "Privacy — HEWGE"
-                    : "After Hours — The Hewge Journal";
+                    : "The Hewge Journal — HEWGE";
     const canonical = document.querySelector('link[rel="canonical"]');
     canonical?.setAttribute("href", `https://hewge.design${route}`);
   }, [route]);
@@ -2739,6 +2891,8 @@ export function Experience() {
         <RegistryPage />
       ) : route.startsWith("/pieces/") ? (
         <PiecePage />
+      ) : route.startsWith("/pages/") ? (
+        <EditorialPage />
       ) : route === "/archive" ? (
         <Archive />
       ) : route === "/account" ? (

@@ -1,0 +1,39 @@
+CMS and auction authority — 14 October 2026
+
+Short version
+- Dashboard > Releases owns the one canonical piece name, story, photos, pricing and dates.
+- Dashboard > Pages owns the homepage and editorial pages at /pages/<slug>.
+- Text, release records and publication pointers live in DynamoDB. Images and content snapshots live in private, encrypted, versioned S3. Lambda is stateless validation and transaction code, not persistent content storage.
+- Page publication takes effect on the next read without rebuilding the application. Private drafts do not replace published pages. Release drafts explicitly remove the piece from public view; publishing a piece page does not enable bidding.
+- There is no paid CMS plugin or external auction platform. React/Vite builds the application; GitHub Actions verifies it; the authorised local AWS deployment publishes it to Amplify.
+
+Data and editing
+CMS uses strong reads on CMS / LIVE#<id> and DRAFT#<id>. A conditional transaction changes the draft revision and live pointer together with the audit event. Concurrent editors cannot silently overwrite one another. Each save writes a uniquely named S3 snapshot, with its key and hash in the protected audit. Failed saves can leave unreferenced snapshots; these are not publications.
+Release pages share AUCTION#<id> / HEAD. The homepage stores its featured release ID, never another copy of the name or price. The stable internal ID toucan-001 is retained for existing references; the public name is After Hours.
+Release discovery uses a GSI, then strongly reads each canonical record; a newly created release may briefly be absent from discovery while the index catches up. Homepage lookup is direct and strongly consistent. Bidding and ownership decisions never trust the GSI.
+Artwork and page-image URLs are checked against the currently published record before a short-lived S3 URL is issued. Private evidence cannot be selected as public artwork. Previously published images cannot be made secret again; a signed URL may remain usable for its remaining 60-second lifetime.
+Plain text is rendered as text, never executable HTML. Accepted auction terms and privacy versions remain controlled, immutable documents rather than freely mutable CMS copy. Changing contractual rules still requires a versioned application release.
+
+Worldwide bidding, order and time
+All bidders currently submit to the same Stockholm authority. Strong DynamoDB reads plus revision conditions and a transaction commit the bid, winning head, card mandate state and audit event together. The highest accepted valid amount wins. Equal or stale bids cannot replace it. Different users can reach the service from anywhere; this does not mean writes occur in every region.
+Each bid request has a persistent UUID. Retrying that UUID retrieves the same accepted receipt instead of creating another bid. The receipt is available only to that bidder and includes its amount, server UTC timestamp and increasing per-piece bid sequence. An interrupted response is not proof of rejection. /bid/receipt reconciles it.
+Bid sequence and the protected audit sequence establish order. UTC wall-clock timestamps are descriptive and enforce the configured eligibility window; the bidder's device clock is never authoritative. The browser countdown uses a server timestamp and monotonic elapsed time, but remains an estimate because network delay exists.
+The service checks the deadline again after preparing the immutable audit intent and immediately before submitting the conditional transaction. Settlement competes on the same revision, so both cannot commit against the same head. The SDK/database may take time to complete that transaction; there is no claim of a globally synchronized, zero-error physical commit timestamp. Lambda clock precision and global network fairness have not been independently certified. Intent records are not accepted bids; committed ledger events are.
+The protected audit contains pseudonymous actor references, UTC time, action, sequence, previous hash and change hash. Private operational records link authenticated accounts to actions. S3 intent and committed receipts have compliance retention and legal holds. See permanent-provenance.txt for custody and recovery limitations.
+
+Scale, cost and regional failure
+The stack is API Gateway, Lambda, DynamoDB on demand, S3 and Amplify. No always-running CMS or auction server and no CMS subscription. Usage, bandwidth, backups, security services and permanent archives still cost money. A successful bid touches multiple transactional items and protected S3 objects; one bid is not one billable write.
+One auction's winning head must serialize. A very popular piece is a contention hotspot; DSQL does not remove conflicting writes to the same winner record. Current integration tests exercise correctness, not a certified high-volume global load envelope. Measure peak concurrency, end-to-end p95/p99, conflicts, throttling, cold starts and the final-second burst before opening bidding. API/account limits and the existing abuse limits also need testing against the intended audience. Do not advertise unlimited throughput or guaranteed free running costs.
+Storage is resilient across AWS Availability Zones in Stockholm. This deployment has no second regional write endpoint. A whole-region outage pauses writes rather than creating competing winners or owners. Backups are recovery tools, not automatic regional failover.
+DynamoDB MRSC is not a drop-in upgrade: AWS documents no transaction API support and its listed EU region set excludes Stockholm. Existing multi-item ownership and audit transactions therefore cannot simply be switched to MRSC.
+Aurora DSQL supports transactional multi-region clusters within supported region sets, including European regions, but not cross-continent clusters. It is a candidate if the requirement becomes zero-loss continued transactional writes through a regional failure. That entails application/payment/audit failover design, migration, region authorisation and failure testing, not just changing a database setting. No DSQL or second-region resources were provisioned.
+
+Primary AWS references checked 14 October 2026
+https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html
+https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html
+https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-global-table-design.html
+https://docs.aws.amazon.com/aurora-dsql/latest/userguide/what-is-aurora-dsql.html
+https://aws.amazon.com/dynamodb/pricing/
+
+Migration
+Run AWS_PROFILE=hewge AWS_REGION=eu-north-1 npx tsx scripts/migrate-content.ts once with Node 22 before publishing the new frontend. It verifies account 082229154968, migrates already-public artwork into S3 and seeds the existing After Hours release/homepage through audited writes. Repeated runs preserve existing records. initial-content.ts is migration input only; the frontend/backend do not import its editorial copy. Do not rerun it to overwrite CMS edits.

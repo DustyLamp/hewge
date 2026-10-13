@@ -7,6 +7,11 @@ export type Release = {
   number: string;
   image: string;
   story: string;
+  subtitle?: string;
+  storyHeading?: string;
+  description?: string;
+  imageNote?: string;
+  gallery?: { image: string; label: string }[];
   artistName: string;
   artistOrigin: string;
   artistPractice: string;
@@ -156,6 +161,11 @@ export function publicRelease(
     "number",
     "image",
     "story",
+    "subtitle",
+    "storyHeading",
+    "description",
+    "imageNote",
+    "gallery",
     "artistName",
     "artistOrigin",
     "artistPractice",
@@ -212,21 +222,25 @@ export function publicRelease(
     output.name = `No. ${item.number}`;
     output.image = "/images/foliage.webp";
     output.story = "";
+    output.subtitle = "";
+    output.storyHeading = "";
+    output.description = "";
+    output.imageNote = "";
+    output.gallery = [];
   }
   return output;
 }
 export const preview: Release = {
-  id: "toucan-001",
-  slug: "after-hours",
-  name: "After Hours",
+  id: "",
+  slug: "",
+  name: "",
   designRevealMode: "now",
   material: "",
   revealMode: "manual",
   identityRevealed: false,
   number: "001",
-  image: "/images/shirt-front.webp",
-  story:
-    "An invitation. A dance floor. The morning after. A whole night unfolds across six illustrated panels: toucans dressed for trouble, hidden among tangled leaves. One story, told all the way around.",
+  image: "",
+  story: "",
   artistName: "",
   artistOrigin: "",
   artistPractice: "",

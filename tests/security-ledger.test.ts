@@ -101,6 +101,28 @@ describe("permanent provenance and failure boundaries", () => {
     );
     expect(rows.size).toBe(0);
   });
+  it("rejects a bid whose deadline passes during archive preparation", async () => {
+    const original = s3.send.getMockImplementation();
+    const clock = vi.spyOn(Date, "now").mockReturnValue(1000);
+    s3.send.mockImplementation(async (c: any) => {
+      const result = await original(c);
+      clock.mockReturnValue(2000);
+      return result;
+    });
+    try {
+      await expect(
+        ledger.commit(
+          changed,
+          { ...meta, action: "bid-accepted" },
+          { notAfter: 2000 },
+        ),
+      ).rejects.toMatchObject({ status: 409 });
+      expect(rows.size).toBe(0);
+      expect(objects.size).toBe(1); // An intent is not an accepted bid.
+    } finally {
+      clock.mockRestore();
+    }
+  });
   it("keeps one coherent owner under concurrent commits and protects both intents", async () => {
     const r = await Promise.allSettled([
       ledger.commit(changed, meta),
@@ -366,6 +388,36 @@ describe("fees, private data and recovery boundaries", () => {
     record.kind = "evidence";
     await expect(m.publicImage(id)).rejects.toMatchObject({ status: 404 });
     expect(imageType(Buffer.from("<svg onload=alert(1)>bad</svg>"))).toBeNull();
+  });
+  it("never serves draft-only page images or artwork selected from another page", async () => {
+    vi.stubEnv("MEDIA_API_URL", "api");
+    const id = "11111111-1111-4111-8111-111111111111";
+    let live: any;
+    const record = {
+      id,
+      kind: "page",
+      status: "ready",
+      releaseId: "page-studio",
+    };
+    const db = {
+      send: vi.fn(async (c: any) => ({
+        Item: c.input.Key.pk.startsWith("MEDIA#") ? record : live,
+      })),
+    };
+    const media = mediaLibrary(
+      db as any,
+      {} as any,
+      "table",
+      "bucket",
+      vi.fn(),
+    );
+    await expect(media.publicImage(id)).rejects.toMatchObject({ status: 404 });
+    live = { data: { image: "api/media/a-different-image" } };
+    await expect(media.publicImage(id)).rejects.toMatchObject({ status: 404 });
+    await expect(
+      media.validateImage(`api/media/${id}`, "page-home"),
+    ).rejects.toMatchObject({ status: 400 });
+    vi.unstubAllEnvs();
   });
   it("requires a matching owner and detailed recovery evidence", async () => {
     const piece = {

@@ -1739,3 +1739,13 @@
   padding: 1rem;
   background: #e6e6df;
 }
+
+.cms-lines {
+  white-space: pre-line;
+}
+.cms-body {
+  max-width: 740px;
+  margin: 0 auto 70px;
+  font-size: 17px;
+  line-height: 1.8;
+}

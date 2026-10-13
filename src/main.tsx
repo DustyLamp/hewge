@@ -11,8 +11,9 @@ import {
   Pause,
   Play,
 } from "lucide-react";
-import { piece, type Catalog } from "../shared/catalog";
-import { getCatalog, leaveList } from "./api";
+import { type Release } from "../shared/auction";
+import { type PageContent } from "../shared/content";
+import { api, leaveList } from "./api";
 import "./styles.css";
 import { Experience } from "./experience";
 import { MembershipSignup as Signup } from "./membership";
@@ -23,16 +24,15 @@ function Wordmark({ className = "" }: { className?: string }) {
   return <span className={`wordmark ${className}`}>HEWGE</span>;
 }
 function App() {
-  const [catalog, setCatalog] = useState<Catalog>({
-    ...piece,
-    status: "coming-soon",
-  });
+  const [catalog, setCatalog] = useState<Release | null>(null);
+  const [page, setPage] = useState<PageContent | null>(null);
+  const [loadError, setLoadError] = useState("");
   const [modal, setModal] = useState<"signup" | "privacy" | "piece" | null>(
     null,
   );
   const [zoom, setZoom] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
-  const [view, setView] = useState("front");
+  const [view, setView] = useState("0");
   const [paused, setPaused] = useState(false);
   const [removeMessage, setRemoveMessage] = useState("");
   const shirt = useRef<HTMLDivElement>(null);
@@ -40,9 +40,15 @@ function App() {
     new URLSearchParams(location.search).get("checkout"),
   );
   useEffect(() => {
-    getCatalog()
-      .then(setCatalog)
-      .catch(() => {});
+    api("/content/home")
+      .then((r) => {
+        setCatalog(r.release);
+        setPage(r.page.data);
+        if (!r.release) setLoadError("The next piece will appear here soon.");
+      })
+      .catch(() =>
+        setLoadError("The page is temporarily unavailable. Please refresh."),
+      );
   }, []);
   useEffect(() => {
     const hash = () => {
@@ -77,7 +83,7 @@ function App() {
     );
     document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, []);
+  }, [catalog]);
   function close() {
     setModal(null);
     setZoom(null);
@@ -109,12 +115,33 @@ function App() {
       setRemoveMessage(e instanceof Error ? e.message : "Please try again.");
     }
   }
-  const statusText = {
-    "coming-soon": "Coming soon",
-    available: "One available",
-    reserved: "Currently reserved",
-    sold: "Collected",
-  }[catalog.status];
+  if (!catalog || !page)
+    return (
+      <main className="page-shell">
+        <a href="/" className="wordmark">
+          HEWGE
+        </a>
+        <p role="status">{loadError || "Loading the piece…"}</p>
+        <a href="/archive">Explore the archive →</a>
+      </main>
+    );
+  const gallery = catalog.gallery || [];
+  const views = [
+    { image: catalog.image, label: "Front" },
+    ...gallery.slice(0, 2),
+  ];
+  const activeImage = views[Number(view)] || views[0];
+  document.title = `${catalog.name} — HEWGE`;
+  const statusText = (
+    {
+      unannounced: "Coming soon",
+      scheduled: "Upcoming release",
+      open: "Bidding open",
+      closed: "Closed",
+      "awaiting-payment": "Payment pending",
+      sold: "Collected",
+    } as Record<string, string>
+  )[catalog.status];
   return (
     <div className={paused ? "site paused" : "site"}>
       <a className="skip-link" href="#edition">
@@ -155,7 +182,9 @@ function App() {
             <span>
               <FullStops>{"Artist originals."}</FullStops>
             </span>
-            <span className="live-dot">First edition coming soon</span>
+            <span className="live-dot">
+              <FullStops>{page.heroLabel}</FullStops>
+            </span>
           </div>
           <div className="hero-word" aria-hidden="true">
             <Wordmark />
@@ -163,8 +192,8 @@ function App() {
           <div className="hero-orbit" aria-hidden="true" />
           <div className="hero-product" ref={shirt}>
             <img
-              src="/images/shirt-front.webp"
-              alt="Hewge shirt with intricate green foliage and toucans on a night out"
+              src={catalog.image}
+              alt={`${catalog.name} — front view`}
               width="1100"
               height="1194"
               fetchPriority="high"
@@ -172,12 +201,10 @@ function App() {
           </div>
           <div className="hero-left">
             <span className="eyebrow">
-              <FullStops>{"Piece No. 001"}</FullStops>
+              <FullStops>{`Piece No. ${catalog.number}`}</FullStops>
             </span>
             <h1>
-              After
-              <br />
-              <FullStops>{"Hours."}</FullStops>
+              <PieceTitle name={catalog.name} />
             </h1>
             <a className="text-link" href="#edition">
               View the piece <ArrowUpRight size={19} />
@@ -202,7 +229,7 @@ function App() {
               </em>
             </span>
             <a href="#edition" className="explore">
-              Explore the first edition <ArrowDown size={19} />
+              Explore the piece <ArrowDown size={19} />
             </a>
             <button
               className="motion-toggle"
@@ -226,59 +253,43 @@ function App() {
         </div>
         <section className="edition" id="edition">
           <div className="section-heading">
-            <span className="eyebrow">The first edition</span>
-            <span className="eyebrow">001 — The Toucan Edition</span>
+            <span className="eyebrow">
+              <FullStops>{page.editionLabel}</FullStops>
+            </span>
+            <span className="eyebrow">
+              <FullStops>{`${catalog.number} — ${catalog.name}`}</FullStops>
+            </span>
           </div>
           <div className="edition-grid">
             <div
-              className={`product-stage ${view === "front" ? "front-view" : ""}`}
+              className={`product-stage ${view === "0" ? "front-view" : ""}`}
             >
               <span className="stage-number">01 / 01</span>
               <button
                 className="product-zoom"
-                onClick={() =>
-                  setZoom(
-                    view === "front"
-                      ? "/images/shirt-front.webp"
-                      : view === "back"
-                        ? "/images/approved-mockup.webp"
-                        : "/images/front-left.webp",
-                  )
-                }
+                onClick={() => setZoom(activeImage.image)}
                 aria-label="Enlarge shirt image"
               >
                 <img
-                  src={
-                    view === "front"
-                      ? "/images/shirt-front.webp"
-                      : view === "back"
-                        ? "/images/approved-mockup.webp"
-                        : "/images/front-left.webp"
-                  }
-                  alt={
-                    view === "front"
-                      ? "After Hours — front view"
-                      : view === "back"
-                        ? "Approved shirt mockup — front and back"
-                        : "Detail of the printed artwork"
-                  }
+                  src={activeImage.image}
+                  alt={`${catalog.name} — ${activeImage.label}`}
                   loading="lazy"
                 />
               </button>
               <div className="view-tabs" role="group" aria-label="Shirt views">
-                {[
-                  ["front", "Front"],
-                  ["back", "Both sides"],
-                  ["detail", "The detail"],
-                ].map(([value, label]) => (
-                  <button
-                    key={value}
-                    aria-pressed={view === value}
-                    onClick={() => setView(value)}
-                  >
-                    <FullStops>{label}</FullStops>
-                  </button>
-                ))}
+                {views.map((image, index) => {
+                  const value = String(index),
+                    label = image.label;
+                  return (
+                    <button
+                      key={value}
+                      aria-pressed={view === value}
+                      onClick={() => setView(value)}
+                    >
+                      <FullStops>{label}</FullStops>
+                    </button>
+                  );
+                })}
               </div>
               <span className="zoom-hint">
                 <Plus size={14} /> Look closer
@@ -290,21 +301,26 @@ function App() {
                 <FullStops>{statusText}</FullStops>
               </span>
               <h2 className="piece-title">
-                <PieceTitle name="After Hours" />
+                <PieceTitle name={catalog.name} />
               </h2>
-              <p className="product-sub">The Toucan Edition</p>
               <p className="price">
-                CHF 339 <span>Opening bid</span>
+                CHF{" "}
+                {new Intl.NumberFormat("de-CH").format(
+                  catalog.openingBid / 100,
+                )}{" "}
+                <span>Opening bid</span>
               </p>
               <div className="product-facts">
-                <span>Material at reveal</span>
+                <span>
+                  <FullStops>
+                    {catalog.material || "Material at reveal"}
+                  </FullStops>
+                </span>
                 <span>Artist signed</span>
                 <span>Never repeated</span>
               </div>
               <p className="product-description">
-                <FullStops>
-                  {"A very good night. A very bad morning."}
-                </FullStops>
+                <FullStops>{catalog.subtitle || "Edition of one."}</FullStops>
               </p>
               <div className="size-line">
                 <span>
@@ -320,7 +336,10 @@ function App() {
                   </FullStops>
                 </span>
               </div>
-              <a className="button button-dark" href="/pieces/after-hours">
+              <a
+                className="button button-dark"
+                href={`/pieces/${catalog.slug}`}
+              >
                 Explore the piece <ArrowUpRight size={22} />
               </a>
               <p className="under-button">
@@ -332,9 +351,8 @@ function App() {
                 </summary>
                 <p>
                   <FullStops>
-                    {
-                      "A men’s shirt, made as a single unique work and signed by its artist. No second run. No identical shirt in another size."
-                    }
+                    {catalog.description ||
+                      "One unique garment. Artist signed."}
                   </FullStops>
                 </p>
               </details>
@@ -344,87 +362,83 @@ function App() {
                 </summary>
                 <p>
                   <FullStops>
-                    {
-                      "A short-sleeved, open-collar silhouette. A whole night out unfolds across its illustrated panels. The images shown are the approved design mockup; final measurements and artist details will be published before release."
-                    }
+                    {catalog.imageNote ||
+                      catalog.measurements ||
+                      "Details at release."}
                   </FullStops>
                 </p>
               </details>
             </div>
           </div>
         </section>
-        <section className="artwork" id="artwork">
-          <div className="artwork-heading reveal">
-            <div>
-              <span className="eyebrow">The artwork</span>
-              <h2>
-                LOOK
-                <br />
-                <span>
-                  <FullStops>{"CLOSER."}</FullStops>
-                </span>
-              </h2>
-            </div>
-            <span className="small-copy">
-              After Hours
-              <br />
-              <FullStops>{"Three details."}</FullStops>
-            </span>
-          </div>
-          <div className="art-grid">
-            {[
-              { src: "front-right", label: "The invitation" },
-              { src: "front-left", label: "After dark" },
-              { src: "back", label: "The morning after" },
-            ].map((art, i) => (
-              <button
-                className={`art-card art-card-${i} reveal`}
-                key={art.src}
-                onClick={() => setZoom(`/images/${art.src}.webp`)}
-              >
-                <div className="art-image">
-                  <img
-                    src={`/images/${art.src}.webp`}
-                    alt={art.label + " — original toucan artwork"}
-                    loading="lazy"
-                  />
-                  <span className="art-expand">
-                    <MoveUpRight size={22} />
+        {gallery.length > 0 && (
+          <section className="artwork" id="artwork">
+            <div className="artwork-heading reveal">
+              <div>
+                <span className="eyebrow">The artwork</span>
+                <h2>
+                  LOOK
+                  <br />
+                  <span>
+                    <FullStops>{"CLOSER."}</FullStops>
                   </span>
-                </div>
-                <span className="art-caption">
-                  <FullStops>{art.label}</FullStops>
-                  <Plus size={16} />
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
+                </h2>
+              </div>
+              <span className="small-copy">
+                <FullStops>{catalog.name}</FullStops>
+                <br />
+                <FullStops>{`${gallery.length} views.`}</FullStops>
+              </span>
+            </div>
+            <div className="art-grid">
+              {gallery.map((art, i) => (
+                <button
+                  className={`art-card art-card-${i} reveal`}
+                  key={art.image}
+                  onClick={() => setZoom(art.image)}
+                >
+                  <div className="art-image">
+                    <img
+                      src={art.image}
+                      alt={`${catalog.name} — ${art.label}`}
+                      loading="lazy"
+                    />
+                    <span className="art-expand">
+                      <MoveUpRight size={22} />
+                    </span>
+                  </div>
+                  <span className="art-caption">
+                    <FullStops>{art.label}</FullStops>
+                    <Plus size={16} />
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
         <section className="manifesto" id="the-idea">
           <div className="manifesto-top">
             <span className="eyebrow">The Hewge way</span>
             <span className="eyebrow">Always 1 / 1</span>
           </div>
           <h2 className="reveal">
-            <FullStops>{"NO COPIES."}</FullStops>
-            <br />
-            <FullStops>{"NO ENCORES."}</FullStops>
+            <span className="cms-lines">
+              <FullStops>{page.manifestoTitle}</FullStops>
+            </span>
           </h2>
           <div className="manifesto-bottom">
             <span className="big-star" aria-hidden="true">
               ✳
             </span>
             <p>
-              <FullStops>{"An original shirt."}</FullStops>
-              <br />
-              <FullStops>{"Signed by its artist."}</FullStops>
-              <br />
-              <FullStops>{"Made once."}</FullStops>
+              <span className="cms-lines">
+                <FullStops>{page.manifestoText}</FullStops>
+              </span>
             </p>
             <span className="manifesto-signature">
               <Wordmark />
               <small>
-                <FullStops>{"Art, out in the world."}</FullStops>
+                <FullStops>{page.manifestoSignature}</FullStops>
               </small>
             </span>
           </div>
@@ -432,8 +446,8 @@ function App() {
         <section className="guest-list" id="first-access">
           <div className="guest-art">
             <img
-              src="/images/night.webp"
-              alt="A toucan with champagne beside a toucan nursing a coffee"
+              src={page.guestImage}
+              alt={page.guestImageAlt}
               loading="lazy"
             />
             <span className="guest-sticker">
@@ -446,14 +460,12 @@ function App() {
           <div className="guest-content reveal">
             <span className="eyebrow">Membership</span>
             <h2>
-              NEXT
-              <br />
-              <FullStops>{"DROP."}</FullStops>
+              <span className="cms-lines">
+                <FullStops>{page.guestTitle}</FullStops>
+              </span>
             </h2>
             <p>
-              <FullStops>
-                {"Verify your email for membership and release access."}
-              </FullStops>
+              <FullStops>{page.guestText}</FullStops>
             </p>
             <Signup />
           </div>

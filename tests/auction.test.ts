@@ -71,6 +71,8 @@ describe("auction rules", () => {
 describe("public privacy and mystery reveals", () => {
   const a = {
     ...preview,
+    name: "After Hours",
+    image: "/images/shirt-front.webp",
     status: "scheduled",
     opensAt: 1000,
     closesAt: 2000,

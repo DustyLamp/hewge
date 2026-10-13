@@ -19,7 +19,11 @@ export type AuditMeta = {
   actor: string;
   details?: Record<string, unknown>;
 };
-export type Commit = (changes: Changes, meta: AuditMeta) => Promise<void>;
+export type Commit = (
+  changes: Changes,
+  meta: AuditMeta,
+  options?: { notAfter?: number },
+) => Promise<void>;
 export function canonical(value: any): string {
   if (Array.isArray(value))
     return `[${value.map((v) => canonical(v ?? null)).join(",")}]`;
@@ -97,7 +101,7 @@ export function auditLedger(
       }),
     );
   }
-  const commit: Commit = async (changes, meta) => {
+  const commit: Commit = async (changes, meta, options) => {
     if (!table || !bucket) throw Error("Audit storage is not configured");
     const pk = `ENTITY#${meta.entity}`;
     const head = await get(pk, "HEAD");
@@ -118,6 +122,13 @@ export function auditLedger(
     // A durable immutable intent exists before a business mutation is attempted.
     // Only committed.json or the transactional ledger proves that it committed.
     await locked(`events/${id}/intent.json`, event);
+    // Recheck after potentially slow archive I/O, immediately before submitting
+    // the conditional transaction. Wall time is a deadline check, not an order.
+    if (options?.notAfter !== undefined && Date.now() >= options.notAfter)
+      throw Object.assign(
+        Error("This auction closed before the bid could be recorded."),
+        { status: 409 },
+      );
     await db.send(
       new TransactWriteCommand({
         ClientRequestToken: id,

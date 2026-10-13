@@ -106,6 +106,7 @@ const auction = {
   slug: "after-hours",
   image: "/images/shirt-front.webp",
   status: "scheduled",
+  published: true,
   opensAt: now - 60000,
   closesAt: now + 3600000,
   openingBid: 33900,
@@ -172,6 +173,11 @@ beforeEach(() => {
           shipping: { address: { country: "CH" } },
         },
       };
+    if (
+      cmd.constructor.name === "GetCommand" &&
+      cmd.input.Key.sk.startsWith("BID#")
+    )
+      return {};
     if (cmd.constructor.name === "GetCommand")
       return { Item: cmd.input.Key.pk.startsWith("USER#") ? profile : current };
     if (cmd.constructor.name === "QueryCommand")
@@ -248,6 +254,7 @@ describe("platform access and bidding", () => {
     vi.stubEnv("CHECKOUT_ENABLED", "true");
     const body = {
       id: auction.id,
+      requestId: "11111111-1111-4111-8111-111111111111",
       amount: 33900,
       termsVersion: TERMS_VERSION,
       mandateVersion: CARD_MANDATE_VERSION,
@@ -270,6 +277,7 @@ describe("platform access and bidding", () => {
     const r = await handler(
       event("/bid", {
         id: auction.id,
+        requestId: "11111111-1111-4111-8111-111111111111",
         amount: 33900,
         termsVersion: TERMS_VERSION,
         mandateVersion: CARD_MANDATE_VERSION,
@@ -306,6 +314,7 @@ describe("platform access and bidding", () => {
         (await handler(
           event("/bid", {
             id: auction.id,
+            requestId: "11111111-1111-4111-8111-111111111111",
             amount: 33900,
             termsVersion: TERMS_VERSION,
             mandateVersion: CARD_MANDATE_VERSION,
@@ -316,13 +325,63 @@ describe("platform access and bidding", () => {
       ).statusCode,
     ).toBe(409);
   });
+  it("recovers an accepted bid after a lost response without submitting another write", async () => {
+    vi.stubEnv("CHECKOUT_ENABLED", "true");
+    current.closesAt = now - 1000;
+    const original = mock.send.getMockImplementation()!;
+    mock.send.mockImplementation(async (c) =>
+      c.constructor.name === "GetCommand" &&
+      c.input.Key.sk === "BID#11111111-1111-4111-8111-111111111111"
+        ? {
+            Item: {
+              bidId: "11111111-1111-4111-8111-111111111111",
+              bidderId: "collector",
+              amount: 33900,
+              createdAt: now - 2000,
+              sequence: 1,
+            },
+          }
+        : original(c),
+    );
+    const body = {
+      id: auction.id,
+      requestId: "11111111-1111-4111-8111-111111111111",
+      amount: 33900,
+    };
+    const r: any = await handler(event("/bid", body));
+    expect(r.statusCode).toBe(200);
+    expect(JSON.parse(r.body)).toMatchObject({ amount: 33900, sequence: 1 });
+    expect(
+      mock.send.mock.calls.filter(
+        ([c]) => c.constructor.name === "TransactWriteCommand",
+      ),
+    ).toHaveLength(0);
+    expect(
+      ((await handler(event("/bid", { ...body, amount: 34900 }))) as any)
+        .statusCode,
+    ).toBe(409);
+    mock.verify.mockResolvedValue({
+      sub: "another-collector",
+      email: "another@example.invalid",
+      email_verified: true,
+    });
+    expect(
+      JSON.parse(((await handler(event("/bid/receipt", body))) as any).body)
+        .receipt,
+    ).toBeNull();
+  });
   it("rejects ownership claims until payment is confirmed and claimant matches", async () => {
     current.status = "awaiting-payment";
     current.ownerId = "collector";
     expect(
       (
         (await handler(
-          event("/owner", { id: auction.id, anonymous: false, name: "Me" }),
+          event("/owner", {
+            id: auction.id,
+            requestId: "11111111-1111-4111-8111-111111111111",
+            anonymous: false,
+            name: "Me",
+          }),
         )) as any
       ).statusCode,
     ).toBe(403);
@@ -357,7 +416,11 @@ describe("money, deadlines and ownership", () => {
     expect(
       (
         (await handler(
-          event("/winner/checkout", { id: auction.id, amount: 1 }),
+          event("/winner/checkout", {
+            id: auction.id,
+            requestId: "11111111-1111-4111-8111-111111111111",
+            amount: 1,
+          }),
         )) as any
       ).statusCode,
     ).toBe(200);
@@ -516,6 +579,7 @@ describe("money, deadlines and ownership", () => {
         (await handler(
           event("/admin/next-bidder", {
             id: auction.id,
+            requestId: "11111111-1111-4111-8111-111111111111",
             confirmed: true,
             reviewReference: "Notice and lawful termination QA reference",
           }),

@@ -4,7 +4,7 @@ Live: **https://hewge.design** · Source: **https://github.com/DustyLamp/hewge**
 
 One original garment. One owner. Artist-led releases, each with a journal page, an auction, and a place in the archive. Brand colour `#00FEEF`; sparse copy and prominent artwork. Every size is a distinct one-of-one garment, never stock variants of an identical shirt.
 
-The first public design study is **After Hours / The Toucan Edition**, with a proposed opening bid of **CHF 339**. The editorial name/story are draft creative copy. Final artist, material, size and garment photography are still required. There is **no fixed release schedule**: the owner chooses each reveal/opening and closing, with one auction open at a time. Free bidding; highest valid bid wins. No lottery, paid entries, follower weighting or buyer's premium.
+The first public design study is **After Hours**, with a proposed opening bid of **CHF 339**. The editorial name/story are draft creative copy. Final artist, material, size and garment photography are still required. There is **no fixed release schedule**: the owner chooses each reveal/opening and closing, with one auction open at a time. Free bidding; highest valid bid wins. No lottery, paid entries, follower weighting or buyer's premium.
 
 ## Run, verify and deploy
 
@@ -42,6 +42,8 @@ Register and verify the supplied owner email at `/account`, then visit `/dashboa
 The application accepts membership requests; unverified addresses are excluded from size-demand totals and release mailings. Verification mail waits for SES production access and sends only while its 48-hour link is valid. The form reports pending delivery honestly. **Payments, bidding and release/winner emails are disabled**. Do not present draft terms or mocked tests as legal approval or a completed payment launch.
 
 ## Architecture and running costs
+
+The dashboard is also the CMS. **Releases** controls each piece’s canonical name, story, gallery, prices and dates; **Pages** controls the homepage and editorial pages at `/pages/<slug>`. Drafts, publication records and live text are in DynamoDB; images and revision snapshots are in private encrypted S3. Page publishing does not require a build. Bidding and CMS mutations run in stateless Lambda functions. See `docs/cms-and-auction-architecture.txt` for the publication workflow, bid receipts, ordering/clock limits, DSQL tradeoffs and one-time content migration. Accepted legal versions remain controlled application releases.
 
 Static React/Vite on Amplify; HTTP API Gateway; ARM Node 22 Lambda; DynamoDB on demand; Cognito identity; SES email. A minute-by-minute EventBridge worker settles auctions and drains the email outbox when enabled. No server, VPC, NAT gateway, Shopify subscription or advertising trackers. All three tables have 35-day point-in-time recovery, daily protected backups and deletion protection. Private media is encrypted and versioned; provenance is separately archived under compliance retention and indefinite legal hold. Logs retain seven days; customer emails and tokens are not deliberately logged.
 
