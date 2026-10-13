@@ -1,66 +1,90 @@
 # HEWGE
 
-Live: **https://hewge.design** · Repository: **https://github.com/DustyLamp/hewge**
+Live: **https://hewge.design** · Source: **https://github.com/DustyLamp/hewge**
 
-An art-led React storefront for one-of-a-kind, artist-signed silk shirts. Brand colour: `#00FEEF`. First piece: **After Hours / The Toucan Edition — CHF 339**. The editorial piece name is proposed copy; change it in `shared/catalog.ts` and the presentation in `src/main.tsx`.
+One original garment. One owner. Artist-led releases, each with a journal page, an auction, and a place in the archive. Brand colour `#00FEEF`; sparse copy and prominent artwork. Every size is a distinct one-of-one garment, never stock variants of an identical shirt.
 
-## Run and ship
+The first public design study is **After Hours / The Toucan Edition**, with a proposed opening bid of **CHF 339**. The editorial name/story are draft creative copy. Final artist, material, size and garment photography are still required. There is **no fixed release schedule**: the owner chooses each reveal/opening and closing, with one auction open at a time. Free bidding; highest valid bid wins. No lottery, paid entries, follower weighting or buyer's premium.
+
+## Run, verify and deploy
 
 ```sh
 npm ci --registry=https://registry.npmjs.org
 npm run dev
 npm test
-AWS_PROFILE=hewge node scripts/smoke.mjs
 npm run build
 AWS_PROFILE=hewge npm run synth
 AWS_PROFILE=hewge npm run deploy:infra
+AWS_PROFILE=hewge node scripts/smoke.mjs
+AWS_PROFILE=hewge node scripts/smoke-auth.mjs
+AWS_PROFILE=hewge node scripts/smoke-ownership.mjs
 AWS_PROFILE=hewge npm run deploy
 ```
 
-Use Node 22 for CI and deployment (Node 20.19+ also builds locally). The AWS profile is in the normal shared AWS credentials/config files; never add keys to this repository. The GitHub remote uses HTTPS with the installed `gh` credential helper.
+Use Node 22. Deployment is restricted to AWS account `082229154968`, region `eu-north-1`, profile `hewge`. Credentials stay in the normal AWS credential provider, never the repository. The GitHub workflow runs tests/builds and stores the bundle; it does not deploy. The organisation SCP prohibits creating GitHub OIDC providers and remains intact. Deploy using the existing profile.
 
-Hosting is **AWS Amplify**, account `082229154968`, region `eu-north-1`. CDK manages the static application, production branch, HTTPS API Gateway HTTP API, ARM Lambda, DynamoDB on-demand table, seven-day function logs, and an error alarm. No VPC, NAT gateway, always-on machine, paid storefront subscription, or tracking scripts. CloudFormation protects and retains the table on deletion. Only the app bundle goes to Amplify; original print artwork stays in Git.
+`npm run deploy` builds locally and manually publishes to Amplify. The job ID is retained in ignored `output/latest-deployment.json`; if it times out, resume/check that job before creating another. ZIPs, build output, secrets, customer data and runtime records are ignored and must never be committed.
 
-`npm run deploy` builds locally, then uploads a fresh ZIP through Amplify's manual deployment API. It writes public API configuration into the bundle and records the job ID in ignored `output/latest-deployment.json`. If publishing times out, inspect that existing job before starting another. The GitHub workflow verifies tests and production builds but does **not** auto-deploy: the AWS organisation SCP explicitly denies creating OIDC providers. It was left intact. Deployment uses the existing, authorised `hewge` profile.
+## What is live-ready
 
-## First launch
+- Landing page, email-only **Get the next drop**, optional size interests, editorial piece pages, archive and social sharing.
+- Verified-email collector accounts; size/country preferences and optional Instagram, self-reported followers, phone and biography. Social details inform the studio, never the auction outcome.
+- Private studio at `/dashboard`: audience/size demand, release drafts, reveal settings, fulfilment, transfer review and email status.
+- Openings/closings chosen individually in Swiss time. The server enforces bid amounts, eligibility, consent, closing time and concurrent bids. The draft defaults are CHF 10 increments and a 48-hour payment window; review before launch.
+- Artist and material reveal together now, at opening, after close, or manually. Design teasers can withhold name, story and main image before opening. Unpublished drafts are excluded from the public API.
+- Paid owners default to `anonymous bidder` and may choose a public name. Artist-signed certificate and congratulations-card print templates are available for paid pieces.
+- Ownership requests, recipient acceptance, manual Hewge evidence review, atomic approval and privacy-preserving public provenance at `/registry/<piece-id>`.
 
-The public site is deliberately in **coming-soon mode**, with real guest-list storage. No Stripe account existed at build time, so it cannot yet take payments. Prices and the single-piece story are visible. The original approved design mockup remains available in the product gallery; the transparent front cutout is a presentation asset derived with imagegen. Final product photography, size, measurements, and artist credit are still to be supplied.
+Register and verify the supplied owner email at `/account`, then visit `/dashboard`. Additional administrators must be granted the Cognito `admins` group by an authorised operator; users cannot grant it to themselves. No owner password or account is created in Git. Cognito currently uses its default verification-email service with a small daily quota; configure SES-backed Cognito email before a larger campaign.
 
-The frontend uses semantic HTML, native modal dialogs, keyboard access, mobile layouts, reduced-motion support, and a motion pause button. Assets and fonts are self-hosted. Source files and image provenance are in `assets/`.
+The application collects subscriptions but **payments, bidding and release/winner emails are disabled**. Do not present draft terms or mocked tests as legal approval or a completed payment launch.
 
-## Guest list and privacy
+## Architecture and running costs
 
-`POST /waitlist` saves a normalised email, consent version/date, and a 180-day expiry. Keys contain a SHA-256 digest, not a raw email. `POST /waitlist/remove` deletes the entry without disclosing whether it existed. Raw email data is only in DynamoDB; it is not logged. A honeypot, API throttling, allowed-origin checks, and a per-hour IP hash rate limit deter basic abuse. The public privacy dialog explains retention and removal. DynamoDB TTL deletion is asynchronous, so expired records may remain briefly until AWS purges them; any future export must filter `expiresAt > now`.
+Static React/Vite on Amplify; HTTP API Gateway; ARM Node 22 Lambda; DynamoDB on demand; Cognito identity; SES email. A minute-by-minute EventBridge worker settles auctions and drains the email outbox when enabled. No server, VPC, NAT gateway, Shopify subscription or advertising trackers. Auction data has point-in-time recovery and deletion protection. Logs retain seven days; customer emails and tokens are not deliberately logged.
 
-No mail is sent automatically. To notify people later, use a consent-respecting mail service and include an unsubscribe link. A business contact and full controller identity should be added before any mail campaign. The origin allowlist initially includes `https://hewge.design` and `https://www.hewge.design`; the default Amplify hostname is a visual fallback, not a signup origin.
+Tables: `hewge-production` stores expiring subscriptions; `hewge-auctions` stores profiles, releases, bids, transfers, provenance and operational records. `services/platform.ts` is the API/worker entry; `services/ownership.ts` handles the transfer lifecycle; `shared/auction.ts` owns public redaction and auction calculations. The old direct-purchase reservation service has been removed.
 
-## Enable sales when ready
+At published rates checked 13 October 2026, [Stripe Switzerland](https://stripe.com/en-ch/pricing) domestic cards cost **2.9% + CHF 0.30** (CHF 10.13 on CHF 339); [TWINT through Stripe](https://stripe.com/en-ch/pricing/local-payment-methods) costs **1.9% + CHF 0.30** (CHF 6.74), subject to activation. International cards, currency conversion and optional services can cost more. No Shopify fee is needed.
 
-1. Open/verify a Swiss Stripe account and add the payout bank account. This requires the owner’s business/identity details. Activate card payments, TWINT (subject to approval), and receipts in Stripe. No Shopify subscription is needed.
-2. Supply the first shirt’s actual size/measurements and artist credit. Confirm seller name/address/contact, delivery destinations, shipping cost/time, tax treatment, and returns terms. Publish these details and a real `/terms` page before enabling checkout. The checkout implementation starts with Switzerland-only delivery and no additional shipping fee; review those defaults against the agreed offer.
-3. Store one JSON secret in AWS Secrets Manager in `eu-north-1`, with `secretKey` and `webhookSecret`. Use the console or a secure local stdin workflow, never Git or browser configuration. The frontend does not use payment secrets.
-4. Register the stack’s `WebhookUrl` in Stripe for `checkout.session.completed`, `checkout.session.async_payment_succeeded`, and `checkout.session.expired`; put its signing secret in the same AWS secret. Test the exact deployed endpoint in Stripe test mode.
-5. Seed exactly one table item: `pk: PIECE#toucan-001`, `status: available`, `size: <actual size>`. Do not use a database TTL on stock. Do not create additional size variants unless they are truly different one-of-one pieces.
-6. Run test-mode end-to-end purchases, abandoned-session expiry, and competing checkout attempts. Unit tests cover those state transitions with mocked AWS/Stripe; they do not replace real Stripe sandbox tests.
-7. Deploy infrastructure with `-c stripeSecretArn=<complete ARN> -c checkoutEnabled=true -c termsUrl=https://hewge.design/terms` after the previous steps, and switch to live Stripe credentials only after sandbox verification. Keep these context values in an untracked local context/config, not secrets in source. Leave checkout disabled if any launch data is missing.
+[Amplify hosting](https://aws.amazon.com/amplify/pricing/) lists USD 0.15/GB served and USD 0.023/GB-month stored outside applicable free allowances. Local builds avoid Amplify build minutes. At 1,000 visits loading 2 MB each, bandwidth is roughly USD 0.30; 10,000 such visits roughly USD 3. Other images, API/database use, backups, authentication, email, the alarm and Route 53 add charges. Expect low costs at launch, not guaranteed free hosting or a cost cap. Domain renewal is separate. No email budget alert has been configured.
 
-The price is owned by the server (`shared/catalog.ts`, 33,900 CHF centimes). Checkout first atomically changes `available → reserved`; only the winner receives a Stripe session. One piece per checkout. A verified paid webhook changes `reserved → sold`. Signed expiry releases only the matching reservation. Duplicate and stale events cannot release a newer reservation or sell a sold piece. Inventory never unlocks just because a local timer has elapsed.
+## Launch gates
 
-**Ambiguous Stripe failures:** the reservation remains locked to prevent overselling. Inspect the inventory row and Stripe logs for its `reservation` (also the Stripe idempotency key and client reference). Retrieve or replay the same session creation with the identical idempotency key/parameters within Stripe’s idempotency window; expire any unpaid session through Stripe and allow the signed expiry webhook to release it. If there is any chance payment completed, reconcile payment status first. Never blindly set an old reservation back to `available`. Stripe sessions expire after 31 minutes; keep webhook delivery working. Orders, delivery address, and receipts are managed in the Stripe dashboard.
+1. Supply the legal seller name, postal address and customer-service contact; final tax, duties, shipping/returns/defects terms; and the actual artist, rights/provenance, material composition, size, measurements and final garment photos. The admin email is not assumed to be the legal support contact.
+2. Review the auction contract with Swiss counsel, including cross-border consumer obligations, formation of the sale, bid validity, unpaid winners, notices/grace periods, next-bidder offers and mandatory product disclosures. Mystery marketing cannot override required material/label disclosures. Publish final `/terms` and `/privacy` content and replace `TERMS_VERSION` in `shared/auction.ts`.
+3. Onboard a Swiss Stripe account with cards/TWINT as appropriate. Store `{ "secretKey": "…", "webhookSecret": "…" }` only in AWS Secrets Manager in the authorised region. Register the stack's `WebhookUrl` for `checkout.session.completed` and `checkout.session.async_payment_succeeded`. No secrets belong in frontend configuration.
+4. Complete real Stripe sandbox tests, including competing bids, winner checkout, asynchronous payment, session expiry, duplicate/stale webhooks, ambiguous creation and next-bidder handover. Mocked unit tests do not replace this. Establish refund/dispute and stolen-object handling; those are operator procedures, not automated by this version.
+5. Obtain SES production access and configure complaint/bounce/suppression monitoring before marketing. Domain identity/DKIM are verified; production access is not enabled. Review seller/controller disclosures before sending campaigns. Upgrade Cognito email for the expected signup volume.
+6. Activate only after the preceding steps: `AWS_PROFILE=hewge npm run deploy:infra -- -c stripeSecretArn=<ARN> -c checkoutEnabled=true -c emailEnabled=true -c sellerTermsApproved=true -c termsUrl=https://hewge.design/terms`. Retain these non-secret deployment choices locally on later deploys; omitted flags default to disabled. Do not store credentials as CDK context.
+7. Configure the release in the studio, explicitly review shipping charges and insurable country allowlist, then schedule actual opening/closing dates. Country codes are not an automatic sanctions check. Future releases can be spaced however the studio chooses.
 
-## Costs (checked 13 October 2026)
+See `docs/launch-readiness.txt` for legal sources and operational details. The UI's draft terms must be replaced before enabling bids; a deployment flag is an operator assertion, not a legal review.
 
-No Shopify fee. [Stripe Switzerland](https://stripe.com/en-ch/pricing) lists domestic cards at **2.9% + CHF 0.30**, approximately **CHF 10.13** per CHF 339 sale; international cards and currency conversion can cost more. Checkout is included with standard Payments. [TWINT via Stripe](https://stripe.com/en-ch/pricing/local-payment-methods) is **1.9% + CHF 0.30**, approximately **CHF 6.74** on CHF 339, once approved/enabled. The integration permits cards and TWINT and filters out other methods. Optional Stripe services may add fees.
+## Payment and delivery integrity
 
-[Amplify published usage rates](https://aws.amazon.com/amplify/pricing/) include **USD 0.15/GB served** and **USD 0.023/GB-month stored** outside applicable free allowances. Builds run locally, so there are no Amplify build minutes for this deployment workflow. At 1,000 visits loading 2 MB each, bandwidth is about **USD 0.30**; at 10,000 such visits, about **USD 3**, before other usage/free allowances. Actual traffic and image exploration matter. Lambda, HTTP API, DynamoDB, the error alarm, and the existing Route 53 zone add small usage/fixed charges; domain registration and Stripe processing are separate. A low-traffic launch should be in the low single-digit USD/month range, not a guaranteed free service or a cost cap. No budget notification email is configured because no recipient was supplied.
+Bids and updates to the auction head are written in one conditional DynamoDB transaction. At closing, the highest accepted bidder receives a time-limited offer. Only that bidder can pay its server-calculated CHF amount plus the stated shipping charge. A signed, validated Stripe paid event creates anonymous ownership and a certificate ID. Browser redirects do not prove payment. Dispatch requires a signed certificate, ownership card, seal ID, insurance and tracking.
 
-## Custom domain
+If checkout creation is ambiguous, the offer stays locked. Reconcile its `offerId`, `checkoutAttempt`, `checkoutStartedAt` and Stripe idempotency key before retrying/reassigning. Never blindly clear a lock or mark a paid piece available. A new bidder is selected only after the deadline, operator confirmation under the final terms, and resolution/expiry of any prior Stripe session. They receive an offer at their own highest bid. Delayed payment success blocks reassignment until resolved.
 
-`hewge.design` uses existing Route 53 zone `Z08500773SUN2ORMGDEA4`. After the initial site is published, deploy with `-c customDomain=true` to add apex and `www` Amplify domain associations. Keep the flag enabled on future deploys. Amplify automatically created the certificate-validation and routing records in the existing Route 53 zone. CDK retains the domain association; Amplify owns its DNS records. Both apex and www are connected. Confirm DNS and HTTPS after future domain changes.
+The outbox claims each message before sending. Failed or ambiguous sends require inspection rather than automatic duplicate delivery. Release notifications respect consent and size interest; profile preferences override older guest-list preferences. Email TTL is 30 days. Subscriptions expire after 180 days and expired entries are excluded from the dashboard and campaigns. Guest-list removal and profile preferences are available at `/privacy` and `/account`. Transaction/provenance retention must follow the final policy.
 
-## Verification
+## Ownership and physical authentication
 
-`npm test` runs the commerce integration tests (mocked SDKs), including consent, removal, abuse limits, price tampering, reservation contention, ambiguous Stripe errors, signature checks, duplicate paid events, and stale expiry events. `npm run build` typechecks all application/backend/CDK/test code and builds the static app. The initial release is also checked visually in Chrome at desktop and mobile sizes, with live API and guest-list smoke tests after deployment.
+A dispatched paid owner's request names the recipient's email. The recipient signs in with that verified email, accepts within seven days and confirms possession with matching garment seal and certificate numbers. No invitation email is sent in this flow; the owner shares the account link. Both participants can cancel before approval. Hewge must separately inspect the original/certificate and entitlement evidence, record its private review reference, and approve. The owner change, transfer result and provenance event commit together. Approval defaults to the recipient's chosen anonymous setting. Former owners lose editing access. Expired requests can be cancelled and recreated; records have no automatic deletion TTL.
 
-Fonts: Ultra (Apache 2.0), Archivo Black (SIL OFL), license files in `public/fonts/`. Artwork: supplied for Hewge; font licenses do not license the shirt artwork. Do not reuse the artwork outside Hewge without the owner’s permission.
+The public register shows the current opted-in name or `anonymous bidder`, original registration and approved transfer dates. It excludes private emails, account identifiers and evidence. A registry entry is a Hewge record, not a government title registry, copyright transfer, escrow service or automatic proof of possession. Legal title disputes require review outside this workflow.
+
+`docs/authentication.txt` describes the recommended secure NFC tag, numbered hologram and artist-signed certificate, with primary sources. **Hardware provisioning and cryptographic NFC verification are not implemented or claimed live**; they depend on selecting and testing a real washable tag/attachment and secure key provisioning. Printed QR/serial numbers are copyable. Do not sell a garment as NFC-authenticated until that integration is complete.
+
+## Mystery, artwork and source assets
+
+The API redacts unrevealed artist/material fields. Teaser pages omit the design spread. Nevertheless, `public/images`, client bundles and committed files are public publication surfaces: a reveal setting cannot retract artwork already published. Keep genuinely secret future designs out of the public bundle/repository; use private storage and release-time publishing before introducing those assets. The provided After Hours design has already been shown publicly. The homepage currently showcases that first design study.
+
+Original supplied assets and image provenance live in `assets/`; optimised WebP presentation assets are in `public/images/`. The transparent shirt cutout was derived with imagegen; it is a presentation mockup, not final photography. Fonts are self-hosted Ultra (Apache 2.0) and Archivo Black (SIL OFL), with licenses in `public/fonts/`. These licenses do not cover the Hewge artwork. Instagram launch drafts are in `docs/instagram-launch.txt`; no social posts have been published by the implementation.
+
+## Domain and verification
+
+Both `hewge.design` and `www.hewge.design` use Amplify application `dc6vls283p578`, branch `main`, in stack `hewge-production`. Keep `customDomain=true` in `cdk.json`. The existing Route 53 zone is retained. CDK explicitly preserves the known apex CloudFront alias after an earlier rollback removed it; if replacing the Amplify app, update that target and verify both DNS/HTTPS routes.
+
+Unit tests cover auction timing, Swiss DST, reveals, atomic bids/payment offers, access control and ownership transitions. Live smoke scripts use disposable `example.invalid` identities and remove their records; verification emails are suppressed. The transfer smoke test does not charge money or publish a sale. Production builds typecheck frontend, backend, tests and CDK. Browser QA covers the public desktop/mobile experience. Payment sandbox and physical NFC QA remain launch prerequisites.

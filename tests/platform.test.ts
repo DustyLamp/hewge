@@ -1,0 +1,452 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+const mock = vi.hoisted(() => ({
+  send: vi.fn(),
+  verify: vi.fn(),
+  create: vi.fn(),
+  retrieve: vi.fn(),
+  expire: vi.fn(),
+  construct: vi.fn(),
+}));
+vi.mock("@aws-sdk/lib-dynamodb", async () => {
+  const actual = await vi.importActual<any>("@aws-sdk/lib-dynamodb");
+  return {
+    ...actual,
+    DynamoDBDocumentClient: { from: () => ({ send: mock.send }) },
+  };
+});
+vi.mock("aws-jwt-verify", () => ({
+  CognitoJwtVerifier: { create: () => ({ verify: mock.verify }) },
+}));
+vi.mock("@aws-sdk/client-secrets-manager", () => ({
+  SecretsManagerClient: class {
+    send() {
+      return Promise.resolve({
+        SecretString: JSON.stringify({
+          secretKey: "test",
+          webhookSecret: "test",
+        }),
+      });
+    }
+  },
+  GetSecretValueCommand: class {},
+}));
+vi.mock("stripe", () => ({
+  default: class {
+    checkout = {
+      sessions: {
+        create: mock.create,
+        retrieve: mock.retrieve,
+        expire: mock.expire,
+      },
+    };
+    webhooks = { constructEvent: mock.construct };
+  },
+}));
+vi.stubEnv("USER_POOL_ID", "eu-north-1_test");
+vi.stubEnv("USER_POOL_CLIENT_ID", "client");
+vi.stubEnv("AUCTION_TABLE", "auctions");
+vi.stubEnv("TABLE_NAME", "legacy");
+vi.stubEnv("ALLOWED_ORIGINS", "https://hewge.design");
+vi.stubEnv("OWNER_EMAIL", "jez@hewge.design");
+vi.stubEnv("SITE_URL", "https://hewge.design");
+const { handler } = await import("../services/platform");
+const event = (path: string, body: any = {}, method = "POST") => ({
+  rawPath: path,
+  body: JSON.stringify(body),
+  headers: { origin: "https://hewge.design", authorization: "Bearer token" },
+  requestContext: { http: { method, sourceIp: "192.0.2.1" } },
+});
+const now = Date.now();
+const auction = {
+  pk: "AUCTION#toucan-001",
+  sk: "HEAD",
+  id: "toucan-001",
+  name: "After Hours",
+  number: "001",
+  slug: "after-hours",
+  image: "/images/shirt-front.webp",
+  status: "scheduled",
+  opensAt: now - 60000,
+  closesAt: now + 3600000,
+  openingBid: 33900,
+  highestBid: null,
+  bidCount: 0,
+  minimumIncrement: 1000,
+  size: "M",
+  countries: ["CH"],
+  termsVersion: "test-terms",
+  revision: 1,
+  paymentHours: 48,
+  shippingFee: 1500,
+};
+let current: any;
+let profile: any;
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.stubEnv("CHECKOUT_ENABLED", "false");
+  vi.stubEnv("EMAIL_ENABLED", "false");
+  vi.stubEnv("STRIPE_SECRET_ARN", "test");
+  current = { ...auction };
+  profile = { sizes: ["M"], country: "CH" };
+  mock.verify.mockResolvedValue({
+    sub: "collector",
+    email: "collector@example.invalid",
+    email_verified: true,
+  });
+  mock.send.mockImplementation(async (cmd: any) => {
+    if (cmd.constructor.name === "GetCommand")
+      return { Item: cmd.input.Key.pk.startsWith("USER#") ? profile : current };
+    if (cmd.constructor.name === "QueryCommand")
+      return { Items: cmd.input.IndexName === "directory" ? [current] : [] };
+    return {};
+  });
+});
+describe("platform access and bidding", () => {
+  it("protects the dashboard from ordinary collectors", async () => {
+    expect(
+      ((await handler(event("/admin", {}, "GET"))) as any).statusCode,
+    ).toBe(403);
+  });
+  it("rejects unverified users even with the owner email", async () => {
+    mock.verify.mockResolvedValue({
+      sub: "owner",
+      email: "jez@hewge.design",
+      email_verified: false,
+    });
+    expect(
+      ((await handler(event("/admin", {}, "GET"))) as any).statusCode,
+    ).toBe(403);
+  });
+  it("rejects forged tokens and disallowed origins", async () => {
+    mock.verify.mockRejectedValue(Error("bad"));
+    expect(((await handler(event("/me", {}, "GET"))) as any).statusCode).toBe(
+      401,
+    );
+    const e = event("/waitlist");
+    e.headers.origin = "https://evil.invalid";
+    expect(((await handler(e)) as any).statusCode).toBe(403);
+  });
+  it("does not allow direct checkout or bids before activation", async () => {
+    expect(((await handler(event("/checkout"))) as any).statusCode).toBe(409);
+    expect(((await handler(event("/bid"))) as any).statusCode).toBe(409);
+  });
+  it("requires explicit subscriber consent and preserves size interest", async () => {
+    expect(
+      (
+        (await handler(
+          event("/waitlist", { email: "hello@example.invalid" }),
+        )) as any
+      ).statusCode,
+    ).toBe(400);
+    expect(
+      (
+        (await handler(
+          event("/waitlist", {
+            email: "HELLO@example.invalid",
+            consent: true,
+            sizes: ["M", "M", "banana"],
+          }),
+        )) as any
+      ).statusCode,
+    ).toBe(200);
+    const put = mock.send.mock.calls
+      .map((c) => c[0])
+      .find((c) => c.constructor.name === "PutCommand");
+    expect(put.input.Item.sizes).toEqual(["M"]);
+    expect(put.input.Item.email).toBe("hello@example.invalid");
+  });
+  it("prevents the seller bidding on their own piece", async () => {
+    vi.stubEnv("CHECKOUT_ENABLED", "true");
+    mock.verify.mockResolvedValue({
+      sub: "owner",
+      email: "jez@hewge.design",
+      email_verified: true,
+    });
+    expect(((await handler(event("/bid"))) as any).statusCode).toBe(403);
+  });
+  it("requires matching size, eligible country and accepted terms", async () => {
+    vi.stubEnv("CHECKOUT_ENABLED", "true");
+    const body = {
+      id: auction.id,
+      amount: 33900,
+      termsVersion: "test-terms",
+      accepted: true,
+      adult: true,
+    };
+    profile.country = "XX";
+    expect(((await handler(event("/bid", body))) as any).statusCode).toBe(409);
+    profile.country = "CH";
+    profile.sizes = ["L"];
+    expect(((await handler(event("/bid", body))) as any).statusCode).toBe(409);
+    profile.sizes = ["M"];
+    expect(
+      ((await handler(event("/bid", { ...body, accepted: false }))) as any)
+        .statusCode,
+    ).toBe(400);
+  });
+  it("commits the bid, terms acceptance and head update atomically", async () => {
+    vi.stubEnv("CHECKOUT_ENABLED", "true");
+    const r = await handler(
+      event("/bid", {
+        id: auction.id,
+        amount: 33900,
+        termsVersion: "test-terms",
+        accepted: true,
+        adult: true,
+      }),
+    );
+    expect((r as any).statusCode).toBe(200);
+    const tx = mock.send.mock.calls
+      .map((c) => c[0])
+      .find((c) => c.constructor.name === "TransactWriteCommand")
+      .input.TransactItems;
+    expect(tx).toHaveLength(3);
+    expect(tx[0].Update.ConditionExpression).toContain("revision=:v");
+    expect(tx[0].Update.ConditionExpression).toContain("closesAt>:now");
+    expect(tx[1].Put.Item).toMatchObject({
+      amount: 33900,
+      bidderId: "collector",
+      termsVersion: "test-terms",
+      accepted: true,
+    });
+  });
+  it("reports a competing bid rather than accepting a stale amount", async () => {
+    vi.stubEnv("CHECKOUT_ENABLED", "true");
+    const original = mock.send.getMockImplementation()!;
+    mock.send.mockImplementation(async (c) => {
+      if (c.constructor.name === "TransactWriteCommand")
+        throw Object.assign(Error(), { name: "TransactionCanceledException" });
+      return original(c);
+    });
+    expect(
+      (
+        (await handler(
+          event("/bid", {
+            id: auction.id,
+            amount: 33900,
+            termsVersion: "test-terms",
+            accepted: true,
+            adult: true,
+          }),
+        )) as any
+      ).statusCode,
+    ).toBe(409);
+  });
+  it("rejects ownership claims until payment is confirmed and claimant matches", async () => {
+    current.status = "awaiting-payment";
+    current.ownerId = "collector";
+    expect(
+      (
+        (await handler(
+          event("/owner", { id: auction.id, anonymous: false, name: "Me" }),
+        )) as any
+      ).statusCode,
+    ).toBe(403);
+    current.status = "sold";
+    current.ownerId = "someone-else";
+    expect(
+      ((await handler(event("/owner", { id: auction.id }))) as any).statusCode,
+    ).toBe(403);
+  });
+});
+describe("money, deadlines and ownership", () => {
+  beforeEach(() => {
+    vi.stubEnv("CHECKOUT_ENABLED", "true");
+    current = {
+      ...auction,
+      status: "awaiting-payment",
+      winnerId: "collector",
+      winnerEmail: "collector@example.invalid",
+      offerAmount: 45000,
+      offerId: "offer-1",
+      paymentDueAt: Date.now() + 48 * 3600000,
+      checkoutStartedAt: Date.now() - 1000,
+      checkoutExpiresAt: Math.floor(Date.now() / 1000) + 3600,
+      checkoutAttempt: 1,
+    };
+  });
+  it("uses the stored winning amount, shipping and stable checkout parameters", async () => {
+    mock.create.mockResolvedValue({
+      id: "cs_test",
+      url: "https://checkout.stripe.com/test",
+    });
+    expect(
+      (
+        (await handler(
+          event("/winner/checkout", { id: auction.id, amount: 1 }),
+        )) as any
+      ).statusCode,
+    ).toBe(200);
+    const [params, options] = mock.create.mock.calls[0];
+    expect(params.line_items[0].price_data.unit_amount).toBe(45000);
+    expect(
+      params.shipping_options[0].shipping_rate_data.fixed_amount.amount,
+    ).toBe(1500);
+    expect(params.expires_at).toBe(current.checkoutExpiresAt);
+    expect(options.idempotencyKey).toBe("auction-toucan-001-offer-1-1");
+  });
+  it("will not let a nonwinner pay", async () => {
+    current.winnerId = "other";
+    expect(
+      ((await handler(event("/winner/checkout", { id: auction.id }))) as any)
+        .statusCode,
+    ).toBe(409);
+    expect(mock.create).not.toHaveBeenCalled();
+  });
+  it("rejects unsigned webhooks and ignores unpaid completion", async () => {
+    mock.construct.mockImplementationOnce(() => {
+      throw Error();
+    });
+    expect(((await handler(event("/stripe/webhook"))) as any).statusCode).toBe(
+      400,
+    );
+    mock.construct.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          metadata: { auctionId: auction.id },
+          payment_status: "unpaid",
+        },
+      },
+    });
+    expect(((await handler(event("/stripe/webhook"))) as any).statusCode).toBe(
+      200,
+    );
+    expect(
+      mock.send.mock.calls.some(
+        (c) => c[0].constructor.name === "TransactWriteCommand",
+      ),
+    ).toBe(false);
+  });
+  it("never records ownership for a mismatched amount", async () => {
+    mock.construct.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_test",
+          metadata: { auctionId: auction.id, offerId: "offer-1" },
+          payment_status: "paid",
+          client_reference_id: "collector",
+          currency: "chf",
+          amount_total: 1,
+        },
+      },
+    });
+    expect(((await handler(event("/stripe/webhook"))) as any).statusCode).toBe(
+      503,
+    );
+    expect(
+      mock.send.mock.calls.some(
+        (c) => c[0].constructor.name === "TransactWriteCommand",
+      ),
+    ).toBe(false);
+  });
+  it("makes paid ownership anonymous by default and issues a unique certificate", async () => {
+    mock.construct.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_test",
+          metadata: { auctionId: auction.id, offerId: "offer-1" },
+          payment_status: "paid",
+          client_reference_id: "collector",
+          currency: "chf",
+          amount_total: 46500,
+        },
+      },
+    });
+    expect(((await handler(event("/stripe/webhook"))) as any).statusCode).toBe(
+      200,
+    );
+    const tx = mock.send.mock.calls
+      .map((c) => c[0])
+      .find((c) => c.constructor.name === "TransactWriteCommand")
+      .input.TransactItems;
+    expect(tx[0].Put.Item.publicOwner).toEqual({ name: null, anonymous: true });
+    expect(tx[0].Put.Item.certificateId).toMatch(/^HEWGE-001-/);
+    expect(tx[1].Put.Item.status).toBe("pending");
+  });
+  it("does not reassign an uncertain Stripe checkout", async () => {
+    mock.verify.mockResolvedValue({
+      sub: "owner",
+      email: "jez@hewge.design",
+      email_verified: true,
+    });
+    current.paymentDueAt = Date.now() - 1000;
+    expect(
+      (
+        (await handler(
+          event("/admin/next-bidder", { id: auction.id, confirmed: true }),
+        )) as any
+      ).statusCode,
+    ).toBe(409);
+  });
+  it("settles only after close, preserving the highest bidder", async () => {
+    current = {
+      ...auction,
+      closesAt: Date.now() - 1,
+      highestBid: 45000,
+      highestBidder: "collector",
+      highestBidderEmail: "collector@example.invalid",
+    };
+    await handler({ source: "aws.events" });
+    const tx = mock.send.mock.calls
+      .map((c) => c[0])
+      .find((c) => c.constructor.name === "TransactWriteCommand")
+      .input.TransactItems;
+    expect(tx[0].Put.Item).toMatchObject({
+      status: "awaiting-payment",
+      winnerId: "collector",
+      offerAmount: 45000,
+    });
+    expect(tx[0].Put.ConditionExpression).toBe("revision=:v");
+  });
+});
+
+describe("public release privacy", () => {
+  it("does not publish an owner draft, even when its reveal setting is now", async () => {
+    current = {
+      ...auction,
+      id: "private-draft",
+      published: false,
+      revealMode: "now",
+      artistName: "Private artist",
+      material: "Unpublished material",
+    };
+    const r: any = await handler(event("/releases", {}, "GET"));
+    expect(r.statusCode).toBe(200);
+    expect(r.body).not.toContain("Private artist");
+    expect(r.body).not.toContain("private-draft");
+    expect(r.body).not.toContain("Unpublished material");
+  });
+  it("never returns private owner, bidder or checkout data in the registry", async () => {
+    current = {
+      ...auction,
+      status: "sold",
+      certificateId: "CERT",
+      soldAt: 1,
+      ownerId: "secret-account",
+      winnerEmail: "secret@example.invalid",
+      sessionId: "secret-checkout",
+      fulfillment: { hologramId: "private-seal" },
+      publicOwner: { name: null, anonymous: true },
+    };
+    const r: any = await handler(event("/registry/toucan-001", {}, "GET"));
+    expect(r.statusCode).toBe(200);
+    for (const secret of [
+      "secret-account",
+      "secret@example.invalid",
+      "secret-checkout",
+      "private-seal",
+    ])
+      expect(r.body).not.toContain(secret);
+    expect(JSON.parse(r.body).history).toEqual([{ at: 1, kind: "registered" }]);
+  });
+  it("does not issue a registry record before payment", async () => {
+    current.status = "awaiting-payment";
+    expect(
+      ((await handler(event("/registry/toucan-001", {}, "GET"))) as any)
+        .statusCode,
+    ).toBe(404);
+  });
+});

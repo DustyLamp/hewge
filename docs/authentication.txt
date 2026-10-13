@@ -1,0 +1,40 @@
+HEWGE / AUTHENTICITY & OWNERSHIP
+13 October 2026
+
+Recommended package
+1. A permanent garment identity label with piece number/name/artist, a tamper-evident serialised holographic feature, and a concealed secure NFC tag.
+2. An artist-signed certificate carrying the same immutable piece/certificate identifier, material/technique, actual measurements, creation date, distinguishing details and photographs/reference to a preserved photographic record.
+3. A matching premium ownership card and Hewge provenance record. Keep the original artist certificate with the garment when it transfers; update the registration/card without forging or reproducing the artist's handwritten signature.
+
+There is no single universal world art authentication certificate or hologram. Authentication depends on the issuer, artist/recognised expert, supporting evidence and provenance. ICOM Object ID is internationally recognised for describing and identifying cultural objects; it is not an authenticity accreditation or proof of legal ownership. Use its nine descriptive categories plus photographs, short description and securely retained documentation. Never display an ICOM endorsement or claim certification merely for following the checklist.
+
+What 'only Hewge can decrypt' should mean
+Use a secure cryptographic NFC chip, such as NXP NTAG 424 DNA, with unique per-tag AES keys. On tap, an NFC phone opens a URL containing authenticated dynamic data. A Hewge-controlled server verifies the message authentication code, checks the tag/counter and revocation state, and returns a scoped verification result. Keep keys outside Git, the frontend, QR codes and public endpoints; use controlled provisioning and AWS KMS-protected secret storage or a suitable secure key service. Restrict service roles and audit provisioning/replacement. The tag also holds its key; the real security claim is that the reader never receives it, not that no device except Hewge possesses a key.
+
+A public QR URL can open the registry and a hologram can help visual/tamper inspection. Neither can produce a fresh cryptographic proof. Encrypting a fixed printed string still permits copying that string. Do not build a custom cipher or treat a static NFC UID as secure authentication.
+
+Limits to test before manufacture
+- A genuine tag can be transplanted to a counterfeit; cryptographic tag verification alone cannot prove the surrounding garment authentic.
+- The chip's certification does not certify the garment, the completed label or art-world acceptance.
+- Challenge/counter handling must cover replay, repeated browser requests, replayed old links, forwarding and parallel scans without making false authenticity claims.
+- TagTamper detects its tamper loop; its usefulness depends on the actual sewn attachment/encapsulation. A chip datasheet is not a washable garment certification.
+- Obtain supplier samples, test NFC readability through the chosen fabric, repeated washing/dry cleaning/ironing as appropriate, flexing, seam removal and tag replacement. Do not apply a standard adhesive security sticker directly to delicate fabric and assume durability.
+- Record close-up photographs of seams, print alignment, signature, seal and unique garment features. Define lost certificate/tag, damaged label, theft/dispute and revocation procedures.
+- Back up/export provenance and preserve verification continuity if hosting or key infrastructure changes. Public exports must omit owner identities/evidence unless consented.
+
+Transfer implementation
+Verified current owner requests; verified intended recipient accepts and confirms physical possession; Hewge reviews the actual original/certificate and entitlement evidence; an atomic transaction changes the registered owner and appends provenance. Exact printed identifiers are supporting checks, not sufficient authentication. Public ownership remains opt-in, defaulting to 'anonymous bidder'. Registry history shows dates, not private contact details. This is a registration process, not an international legal-title adjudication system, a resale checkout, or a copyright assignment.
+
+Manufacturing and cryptographic verification remain to be implemented after the hardware choice. The current website explicitly labels its verification page as a registry record and does not claim that an NFC scan was verified.
+
+Primary references
+NXP NTAG 424 DNA / TagTamper product and security capabilities:
+https://www.nxp.com/products/NTAG424DNA
+NXP application note AN12196, secure dynamic messaging and configuration:
+https://www.nxp.com/docs/en/application-note/AN12196.pdf
+ICOM Object ID standard:
+https://icom.museum/en/resources/standards-guidelines/objectid/
+ICOM Object ID checklist:
+https://icom.museum/wp-content/uploads/2020/12/ObjectID_english.pdf
+Christie's authentication guidance, specialist examination and provenance:
+https://www.christies.com/en/help/auction-help-library/how-auction-houses-authenticate-artwork

@@ -1,0 +1,59 @@
+HEWGE — AUCTION LAUNCH READINESS
+13 October 2026
+
+Implemented and safe to use now
+- Public preview, dedicated journal page, subscription form and size interest.
+- Collector sign-up with email verification, private preferences and owner dashboard.
+- Owner account: jez@hewge.design, only after verified sign-up. Cognito admins group supports future authorised owners.
+- Individual release dates. No standing weekly or Tuesday schedule.
+- Highest valid bid wins. No paid entry, draw, random winner or follower weighting.
+- Server-side bid validation and atomic head + bid + terms recording.
+- Artist and material visibility controlled on the server, not merely hidden in HTML.
+- Recipient-accepted, owner-reviewed transfers and a public provenance register. Physical NFC authentication is a documented next step, not implemented.
+- Paid ownership defaults to anonymous. Buyer may choose a public name.
+- Payment deadline, controlled next-bidder workflow, certificates and insured fulfilment checklist.
+
+Required before accepting a binding bid
+1. Legal seller name, address and support contact. jez@hewge.design was supplied for admin access only; do not assume it is the published legal support address.
+2. Actual artist, provenance/rights, material/composition, size, measurements and final garment images.
+3. Specific opening and closing dates. No fabricated countdowns. Once open, auction data cannot be rewritten.
+4. Insurable destinations, shipping charge, duties/taxes, delivery promises and product safety/label requirements for target markets. Country codes are an explicit allowlist, not an automated sanctions check.
+5. Swiss counsel review of the complete auction terms: contract formation, bid binding period, default notices/grace, cancellation and next-bidder offer, refunds/defects, applicable mandatory cross-border consumer law, privacy/controller disclosures. Mystery material/artist must be reviewed specifically: marketing suspense does not remove required product disclosures.
+6. Swiss Stripe onboarding, TWINT/card activation and actual Stripe sandbox end-to-end tests, signed webhooks, asynchronous payment and expired-session recovery.
+7. SES production access. Domain identity/DKIM are deployed. Release/winner emails remain disabled in the SES sandbox. The existing Cognito default email service can verify accounts with its own low daily sending quota; upgrade account email to SES after approval for larger launch volumes.
+8. Publish final terms and replace the draft version in shared/auction.ts. Set deployment flags only after all checks above are complete.
+
+Payments
+A first place result is a payment offer, not a paid ownership claim. A signed Stripe paid event is required. Amount, currency, offer ID and winner identity must match. No shipment before payment. If a session creation fails ambiguously, the offer stays locked until Stripe reconciliation. Do not blindly remove checkoutStartedAt or assign a new winner. All amount fields are integer CHF centimes.
+
+A 48-hour payment window and CHF 10 minimum bid increase are proposed editable defaults, not user-confirmed commercial terms. The first opening bid is CHF 339. Shipping fee defaults to zero in a draft only and must be deliberately set before scheduling.
+
+Email and privacy operations
+Review failed or ambiguous outbox sends in the studio before retrying. Avoid automatic resend after an ambiguous SES result. Release notifications respect collector consent and size preferences; verified profile preferences override an older guest-list subscription. Transactional winner/receipt notices are independent of marketing consent. Guest-list data expires in 180 days; auction/account retention must be finalised with the seller's policy. Owner can use the AWS console for account deletion requests while retaining required transaction evidence.
+
+Mystery assets
+Identity fields are redacted from the public API until reveal. Files deliberately uploaded to public/images are PUBLIC: a teaser does not retract prior publication. Keep unreleased garment photography out of the public repo and bundle; add private storage and signed release-time delivery before using genuinely secret future artwork. Current provided After Hours artwork has already been approved for public preview.
+
+Primary legal references reviewed
+Swiss Federal Consumer Affairs Bureau, contract formation, T&C incorporation, default and defects:
+https://www.konsum.admin.ch/en/frequently-asked-questions-faq
+Swiss SECO, e-commerce obligations:
+https://www.seco.admin.ch/de/onlinehandel
+Swiss federal SME portal, Switzerland and EU online-trade requirements:
+https://www.kmu.admin.ch/de/die-gesetze-der-schweiz-und-der-eu
+Swiss FDPIC, transparent privacy notices and controller information:
+https://www.edoeb.admin.ch/de/datenschutzerklaerungen-im-internet
+Swiss Code of Obligations, authoritative consolidated source (including auction provisions):
+https://www.fedlex.admin.ch/eli/cc/27/317_321_377/en
+
+These references support a review checklist. This implementation is not a legal opinion or certification of compliance. Do not treat a generic online auction as automatically exempt from distance-sale consumer rules in every destination.
+
+Influence, honestly applied
+Reciprocity: share the actual artist process and story.
+Scarcity: one real garment; no invented timers or stock.
+Authority: artist identity, signature and provenance after reveal; never invented awards.
+Consistency: voluntary size preferences and saved interests; no forced marketing consent.
+Liking: the artist's real voice and work.
+Social proof: actual accepted bids and paid owners only.
+Unity: an open collector community, not fake independent hype.
+Source: https://www.influenceatwork.com/7-principles-of-persuasion/
