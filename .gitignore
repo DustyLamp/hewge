@@ -9,3 +9,14 @@ test-results/
 playwright-report/
 *.zip
 deployment-outputs.json
+apps/mobile/.expo/
+apps/mobile/ios/
+apps/mobile/android/
+*.apk
+*.aab
+*.ipa
+*.p12
+*.mobileprovision
+*.keystore
+*.jks
+*.tar.gz

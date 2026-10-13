@@ -1,0 +1,1 @@
+{"extends":"expo/tsconfig.base","compilerOptions":{"strict":true,"noEmit":true,"skipLibCheck":true,"lib":["ES2022","DOM","DOM.Iterable"],"types":["react","node"]},"include":["**/*.ts","**/*.tsx"]}

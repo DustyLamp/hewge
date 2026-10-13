@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Hewge", "slug": "hewge", "version": "0.1.0", "scheme": "hewge",
+    "orientation": "portrait", "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "ios": { "bundleIdentifier": "design.hewge.app", "supportsTablet": true },
+    "android": {
+      "package": "design.hewge.app",
+      "adaptiveIcon": { "foregroundImage": "./assets/adaptive-icon.png", "backgroundColor": "#00FEEF" },
+      "blockedPermissions": ["android.permission.SYSTEM_ALERT_WINDOW", "android.permission.READ_EXTERNAL_STORAGE", "android.permission.WRITE_EXTERNAL_STORAGE", "com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE"]
+    },
+    "plugins": [["react-native-nfc-manager", {"nfcPermission":"Tap a Hewge garment to verify its secure authenticity tag."}], "expo-secure-store", "expo-font", "expo-web-browser"],
+    "platforms": ["ios", "android"]
+  }
+}
