@@ -1,0 +1,67 @@
+HEWGE — SMS PRODUCTION ACCESS REQUEST
+Submitted 14 October 2026 at 13:46 UTC through AWS Support Center.
+AWS case: 179198560800689
+Confirmed case status: Work in progress. Production approval is pending.
+Case link: https://console.aws.amazon.com/support/home#/case/?displayId=179198560800689&language=en
+
+Submitted under Service limit increase > AWS End User Messaging SMS (Pinpoint),
+EU (Stockholm) > General Limits > SMS Production Access, requested value 1.
+Contact method: Web, English; additional notifications: jez@hewge.design.
+Primary message type: One Time Password; future promotional alerts are disclosed below.
+The optional secondary sending-region list did not offer Stockholm and was left blank;
+the required quota region and description both explicitly identify eu-north-1.
+AWS generated the case title "Quota Increase: AWS End User Messaging SMS (Pinpoint)".
+This requests production access only; the monthly SMS spend limit remains USD 1.
+No new SMS was sent, and no campaign, payment or spending gate was changed.
+
+Submitted use-case description
+
+Request: SMS Production Access = 1 (leave the SMS sandbox)
+AWS account: 082229154968
+Sending region: eu-north-1 (Europe / Stockholm)
+Initial destination country: Switzerland (+41) only
+Existing sender ID: HEWGE (Swiss dynamic alphanumeric sender)
+Monthly SMS spending limit: retain USD 1; no increase requested
+
+Use case
+Hewge is a Swiss artist-garment project operated by Lewis. Each garment is one of one. The website will host free-entry, timed highest-bid auctions for physical garments; there is no paid-entry lottery or random prize draw. Bidding and payments remain disabled until launch prerequisites are complete.
+
+Website: https://hewge.design
+Membership: https://hewge.design/membership
+Collector account: https://hewge.design/account
+Privacy: https://hewge.design/privacy
+Auction terms and public seller contact: https://hewge.design/terms
+Public support email: jez@hewge.design
+Seller: Lewis, Unterdorfstrasse 2, 8165 Schöfflisdorf, Switzerland
+
+Messages and recipients
+The immediate use is user-requested phone-verification codes, sent as TRANSACTIONAL / one-time passwords. Subsequently we plan separately opted-in garment-release announcements, sent as PROMOTIONAL. We do not classify release announcements as transactional. There are no purchased, scraped or imported contact lists, cold messages, affiliate lists or third-party marketing.
+
+People enter their own email first and must verify it before saving text preferences. They then enter their own international phone number and explicitly check an SMS-consent box; a contact-only phone field does not subscribe anyone. A six-digit SMS code must be confirmed before the number is eligible for release alerts. Codes expire after ten minutes and five attempts. Phone proof expires after 180 days. Unverified, expired and opted-out numbers are excluded from campaigns.
+
+Consent text: "Send me Hewge release alerts by SMS when available. I can switch this off anytime."
+
+The opt-in controls appear under "By text" after verified membership access or in the verified collector profile. Public membership email delivery is awaiting a separate SES review; verified collector access is supported by Cognito. We do not claim that the SES request approves SMS.
+
+SMS opt-out is independent of email. Members can disable texts in their preferences, and each promotional text includes its own unguessable unsubscribe link. Opening the link displays a confirmation screen; pressing "Stop text alerts" suppresses the number without requiring sign-in. We retain the phone-number hash and opt-out time so old consent cannot revive messaging. The alphanumeric Swiss sender cannot receive STOP replies, so we do not tell users to reply STOP. They can also contact jez@hewge.design. Consent is rechecked immediately before provider handoff.
+
+Sample verification message (placeholder, not a real code):
+HEWGE code: {code}. Valid for 10 minutes. Do not share it.
+
+Sample future promotional message (placeholder unsubscribe token):
+HEWGE: A new piece is open. hewge.design/latest
+Leave: https://hewge.design/sms#leave={single-use-token}
+
+Each actual message is restricted to one GSM-7 part. Promotional text plus sender name and generated unsubscribe URL must fit 160 characters. Release dates are individually chosen; there is no promised recurring schedule. A release alert is sent only for an actual release and only to verified, opted-in recipients.
+
+Volume and cost controls
+This is a very small initial pilot. The application currently permits at most five SMS sends in total per UTC calendar month, shared between codes and announcements, and at most four globally per day. Each send has MaxPrice USD 0.15. The AWS monthly SMS spend limit remains USD 1. We request production eligibility only, not a spending-quota increase, phone-number lease, dedicated route or broader country coverage. We will review budgets and country requirements deliberately before any larger launch. These application ceilings do not include earlier AWS console verification messages or other AWS services.
+
+Abuse controls include a one-minute resend cooldown, three codes per account per hour, three per number per day, five per source IP per day, atomic attempt limits, origin checks and API throttling. Automatic SMS SDK retries are disabled. Ambiguous sends are held for review rather than automatically repeated. Campaign recipients are deduplicated by phone number; queued announcements expire after one hour.
+
+Testing and monitoring
+We tested the real application phone-verification flow on 14 October 2026 using an authorised AWS-verified Swiss destination. The first send had a provider DELIVERED receipt but was not found on the handset; we record that discrepancy rather than treating the receipt as proof. The owner explicitly authorised one new test. The second message was received, its new code was submitted to our application endpoint, and the endpoint returned verified=true. Both provider reports recorded one part at USD 0.05124 per message. Test contact/session records were removed afterward; rate/spend counters were retained. No real phone number or verification code is included in this request.
+
+The hewge-texts configuration set sends TEXT_ALL events to a private CloudWatch log group with seven-day retention. We inspect status, message parts and price and distinguish provider acceptance/receipts from confirmed user verification. Unit tests and production smoke checks also cover expired/incorrect codes, replay, consent withdrawal and unsubscribe handling. Those tests do not establish delivery to other carriers or countries.
+
+Public release campaigns remain disabled. Their real promotional template and unsubscribe delivery will be commissioned before activation, alongside provider approval and a deliberate budget review. Production access alone will not enable campaigns or payments. Please grant SMS Production Access for eu-north-1 while retaining the existing USD 1 monthly spending limit, or let us know what additional information is needed.

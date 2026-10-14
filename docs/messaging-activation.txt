@@ -24,6 +24,8 @@ The CDK stack prepares the HEWGE sender ID for Swiss destinations in eu-north-1.
 
 The owner's destination passed AWS sandbox verification on 14 October. This proves receipt of AWS's verification message, not completion of the application's OTP flow or public SMS activation. The phone number and codes do not belong in this repository.
 
+SMS production access was submitted on 14 October at 13:46 UTC through AWS Support Center: case 179198560800689, confirmed status Work in progress. The request is for EU (Stockholm), General Limits, SMS Production Access = 1, initially for Swiss destinations only. It declares verification codes as OTP/transactional and future separately consented release alerts as promotional, with the real test result, consent and unsubscribe workflows, message examples and pilot limits. The monthly SMS spend limit was checked and remains USD 1; no increase was requested. Approval is pending, public alerts remain disabled and no additional test text was sent. Do not submit a duplicate. Full submitted description and case link: docs/sms-production-request.txt.
+
 Implemented application flow
 - services/sms.ts owns one SMS preference record per verified email, shared across membership links and collector accounts. Contact-only phone fields do not grant SMS consent. Existing unverified preferences can be migrated by explicitly saving the new text settings.
 - POST /membership/sms/{preferences,save,request,verify} requires a live verified membership session. POST /me/sms/{preferences,save,request,verify} requires a verified Cognito account. UI: By text in both places; the studio shows SMS consent and number-verification status.
@@ -37,7 +39,7 @@ Implemented application flow
 
 Still required before public SMS alerts
 - Complete real delivery-event and promotional-template commissioning before public activation. The implementation now supports SMS drafts, verified/consented audience previews, scheduled promotional dispatch, per-message single-use unsubscribe links and a shared outbox. SMS campaign scheduling/sending requires both smsProductionApproved=true and AWS PRODUCTION tier; neither is currently enabled. Tests use mocked provider delivery and do not establish real carrier delivery.
-- Request production SMS access after integration testing. Release announcements must be declared promotional, verification codes transactional/OTP. The Swiss sender cannot accept STOP replies; use a working unsubscribe link in each eventual release text.
+- Obtain AWS approval for submitted SMS production-access case 179198560800689 and verify the account reaches PRODUCTION. Release announcements must remain promotional, verification codes transactional/OTP. The Swiss sender cannot accept STOP replies; use a working unsubscribe link in each eventual release text.
 - Review destination-specific registrations and routes before adding countries. Deliberately review application budgets before a public launch. Do not raise the AWS account limit as part of routine deployment.
 
 Deployment: AWS_PROFILE=hewge npm run deploy:infra -- -c smsVerificationEnabled=true
