@@ -1,0 +1,33 @@
+HEWGE — IDENTITY EXPLORATION
+14 October 2026
+
+Status: exploration, not an approved identity. Do not publish these marks as the
+website, app or physical authentication seal without choosing and refining one.
+The owner rejected the proposed 1/1 edition mark as "boring and too literal".
+Retain HEWGE's existing wordmark. Explore a less literal companion symbol.
+
+abstract-directions.png contains three starting points: FOLD, CUT and TRACE.
+Generated with the built-in image-generation tool. Prompt: concept-prompt.txt.
+These are raster concepts, not production artwork or trademark clearance.
+Once a direction is selected, redraw as a clean vector and verify its silhouette
+at 16/24/32 pixels, in a circular crop, and in a single-colour physical stamp.
+Use exact brand teal #00FEEF in production; generated concept colours are approximate.
+
+Google favicon findings
+The live homepage supplies only /favicon.svg, a generic serif H on teal. The file
+returns HTTP 200 and image/svg+xml on both apex and www hosts. robots.txt allows
+crawling. HTTP redirects to HTTPS. No definitive Search Console diagnosis was made.
+Google's current documentation lists BMP, GIF, ICO, PNG, JPEG, PPM and TIFF as
+supported favicon formats; the current SVG-only setup lacks a listed format.
+After the mark is selected, supply a stable /favicon.png above 48px (96px square),
+/favicon.ico fallbacks and /apple-touch-icon.png, with homepage link elements.
+The reusable npm run assets:brand command prepares those files plus a 512px icon
+from public/favicon.svg. Replace the placeholder source with the selected vector
+before running it. No new mark or favicon links have been deployed in this exploration.
+Keep SVG for modern browser rendering. Verify actual image bodies, MIME types,
+square dimensions and accessible URLs on the deployed site. Google recrawling can
+take days to weeks, and display is not guaranteed. The old indexed title/snippet
+in the owner's screenshot is also older than the current live HTML.
+
+Primary source checked 14 October 2026:
+https://developers.google.com/search/docs/appearance/favicon-in-search

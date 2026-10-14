@@ -15,7 +15,8 @@
     "synth": "npm run cdk -- synth",
     "deploy:infra": "npm run cdk -- deploy --all --require-approval never",
     "deploy": "npm run build && node scripts/publish.mjs",
-    "assets": "node scripts/prepare-assets.mjs"
+    "assets": "node scripts/prepare-assets.mjs",
+    "assets:brand": "node scripts/prepare-brand.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
