@@ -1,48 +1,55 @@
-HEWGE — IDENTITY EXPLORATION
+HEWGE — BRAND LETTERING AND ICONS
 14 October 2026
 
-Status: exploration, not an approved identity. The current direction is the name
-HEWGE as an imposing editorial masthead. The owner described the brand as
-newsworthy, punchy, huge, powerful and important, with the front page of a
-newspaper and "read all about it" as references. The name itself should carry
-that force through scale, distinctive lettering and confident editorial layout.
+Current decision: retain the website's existing Ultra HEWGE wordmark. The owner
+preferred it over the new masthead proposals and confirmed this direction on
+14 October. The existing header and hero lettering are unchanged. Archivo Black
+remains the heading face; Georgia italic remains the contrasting story/title face.
 
-masthead-direction.png is the current generated concept: a large, tightly spaced
-heavy editorial serif wordmark, shown as a masthead, teal poster and garment label.
-Generated with the built-in image-generation tool; prompt: masthead-prompt.txt.
-The newspaper reference is about presence and authority, not reproducing an
-existing publication's logo. Keep the customer-facing voice understated; visual
-impact does not require claims about hype, exclusivity or importance.
+The small icon uses the H outlined directly from public/fonts/ultra-latin.woff2,
+with the homepage hero's 1.15 vertical scale. It is the same letterform as the
+wordmark, not a new custom font. Brand teal is exactly #00FEEF; ink is #111311.
+Sentence full stops remain solid #00FEED.
 
-The owner rejected the proposed 1/1 edition mark as "boring and too literal",
-then rejected the FOLD / CUT / TRACE abstract symbols. Those are superseded
-explorations, not directions to apply to the live site.
+Icon assets
+- public/favicon.svg: standalone path artwork, no external font dependency.
+- public/favicon.png: 96px square for crawlers and browser fallback.
+- public/favicon.ico: 16/32/48px embedded PNG images for conventional fallback.
+- public/apple-touch-icon.png: 180px square.
+- public/hewge-icon.png: reusable 512px square artwork.
+Regenerate PNG/ICO outputs with npm run assets:brand after changing the SVG.
+These additions do not reconfigure the native apps or change any launch gate.
 
-abstract-directions.png records the earlier FOLD, CUT and TRACE explorations.
-Generated with the built-in image-generation tool. Prompt: concept-prompt.txt.
-These are raster concepts, not production artwork or trademark clearance.
-Once the wordmark is settled, redraw as a clean vector, refine spacing and derive
-a small-size icon from that identity. Verify the icon at 16/24/32 pixels, in a
-circular crop, and in a single-colour physical stamp. Do not default to a random H.
-Use exact brand teal #00FEEF in production; generated concept colours are approximate.
-Sentence full stops remain solid #00FEED in production. These raster mockups are
-directional and have not replaced the website, app icons or production assets.
+Outline provenance
+Source: Ultra Regular, copyright (c) 2010 Brian J. Bonislawsky DBA Astigmatic
+(AOETI), Apache 2.0. Keep public/fonts/Ultra-LICENSE.txt with the font and artwork.
+The H was extracted with FontTools SVGPathPen. Source bounds: (41, 0, 1892, 1473).
+The 64px canvas centres a 44px-wide glyph, scales its height by the same 1.15
+factor as the hero and leaves padding for circular search-result crops.
+
+Superseded explorations
+The owner rejected the 1/1 mark as "boring and too literal", then rejected the
+FOLD / CUT / TRACE symbols. abstract-directions.png and masthead-direction.png
+are retained only as exploration history. Both were generated with the built-in
+image-generation tool; their prompts remain beside them. Do not apply them to
+the site. The chosen identity is the existing website lettering.
 
 Google favicon findings
-The live homepage supplies only /favicon.svg, a generic serif H on teal. The file
+Before this update, the homepage supplied only /favicon.svg, a generic serif H on teal. The file
 returns HTTP 200 and image/svg+xml on both apex and www hosts. robots.txt allows
 crawling. HTTP redirects to HTTPS. No definitive Search Console diagnosis was made.
 Google's current documentation lists BMP, GIF, ICO, PNG, JPEG, PPM and TIFF as
-supported favicon formats; the current SVG-only setup lacks a listed format.
-After the mark is selected, supply a stable /favicon.png above 48px (96px square),
-/favicon.ico fallbacks and /apple-touch-icon.png, with homepage link elements.
-The reusable npm run assets:brand command prepares those files plus a 512px icon
-from public/favicon.svg. Replace the placeholder source with the selected vector
-before running it. No new mark or favicon links have been deployed in this exploration.
-Keep SVG for modern browser rendering. Verify actual image bodies, MIME types,
-square dimensions and accessible URLs on the deployed site. Google recrawling can
+supported favicon formats; the old SVG-only setup lacked a listed format.
+The homepage now links the PNG, ICO, SVG and Apple assets at stable URLs.
+Verify actual image bodies, MIME types, square dimensions and accessible URLs
+after deployment. Google recrawling can
 take days to weeks, and display is not guaranteed. The old indexed title/snippet
 in the owner's screenshot is also older than the current live HTML.
+
+Published 14 October 2026 through Amplify main deployment 18 (SUCCEED), account
+082229154968, eu-north-1. Production build and image/ICO structure checks passed.
+The outline reference sheet is current-identity.svg. The full site wordmark and
+typographic styles were preserved.
 
 Primary source checked 14 October 2026:
 https://developers.google.com/search/docs/appearance/favicon-in-search

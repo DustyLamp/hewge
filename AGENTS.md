@@ -2,6 +2,8 @@
 
 Brand colour: `#00FEEF`. Keep customer-facing copy sparse and imagery prominent. Every saleable garment is one of one, including each size. Never introduce a quantity selector or generic size stock that implies duplicated pieces.
 
+Keep the existing Ultra HEWGE wordmark. The owner chose the website's existing lettering over the alternate logo concepts on 14 October 2026. Small brand icons use the H outlined from Ultra, matching the homepage's vertical proportion; do not revive the rejected 1/1 or abstract symbols. See docs/branding/concept-brief.txt.
+
 Sentence full stops use solid `#00FEED`, with no muted tint. Reuse the front page’s bold/italic title treatment on story pages. Membership starts with email verification and progressively asks for preferences; no discounts or retail promotion language.
 
 Voice: understated and specific. Let the work, withheld details and real dates suggest what comes next. Never narrate the marketing strategy, announce suspense or hype, promise a story is worth waiting for, or tell the reader how to feel. Keep auction obligations and reveal timing explicit.

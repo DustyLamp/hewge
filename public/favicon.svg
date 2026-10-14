@@ -1,1 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#00feef"/><text x="32" y="48" text-anchor="middle" font-family="Georgia,serif" font-weight="900" font-size="48">H</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <title>HEWGE</title>
+  <!-- H outlined from Ultra, matching the homepage wordmark's 1.15 vertical scale.
+       Font copyright (c) 2010 Brian J. Bonislawsky DBA Astigmatic (AOETI).
+       Apache 2.0; see /fonts/Ultra-LICENSE.txt. Outlined and composed for Hewge. -->
+  <rect width="64" height="64" fill="#00FEEF"/>
+  <path fill="#111311" transform="matrix(0.023770935 0 0 -0.027336575 9.025391680 52.133387358)" d="M1139 657H795V471Q795 418 824.5 394.5Q854 371 930 371V0H41V371Q129 371 167.0 394.5Q205 418 205 483V989Q205 1055 167.0 1078.5Q129 1102 41 1102V1473H930V1102Q854 1102 824.5 1078.5Q795 1055 795 1001V840H1139V1001Q1139 1055 1109.0 1078.5Q1079 1102 1004 1102V1473H1892V1102Q1804 1102 1766.5 1078.5Q1729 1055 1729 989V483Q1729 418 1766.5 394.5Q1804 371 1892 371V0H1004V371Q1079 371 1109.0 394.5Q1139 418 1139 471Z"/>
+</svg>
