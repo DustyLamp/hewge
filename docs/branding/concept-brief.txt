@@ -1,17 +1,32 @@
 HEWGE — IDENTITY EXPLORATION
 14 October 2026
 
-Status: exploration, not an approved identity. Do not publish these marks as the
-website, app or physical authentication seal without choosing and refining one.
-The owner rejected the proposed 1/1 edition mark as "boring and too literal".
-Retain HEWGE's existing wordmark. Explore a less literal companion symbol.
+Status: exploration, not an approved identity. The current direction is the name
+HEWGE as an imposing editorial masthead. The owner described the brand as
+newsworthy, punchy, huge, powerful and important, with the front page of a
+newspaper and "read all about it" as references. The name itself should carry
+that force through scale, distinctive lettering and confident editorial layout.
 
-abstract-directions.png contains three starting points: FOLD, CUT and TRACE.
+masthead-direction.png is the current generated concept: a large, tightly spaced
+heavy editorial serif wordmark, shown as a masthead, teal poster and garment label.
+Generated with the built-in image-generation tool; prompt: masthead-prompt.txt.
+The newspaper reference is about presence and authority, not reproducing an
+existing publication's logo. Keep the customer-facing voice understated; visual
+impact does not require claims about hype, exclusivity or importance.
+
+The owner rejected the proposed 1/1 edition mark as "boring and too literal",
+then rejected the FOLD / CUT / TRACE abstract symbols. Those are superseded
+explorations, not directions to apply to the live site.
+
+abstract-directions.png records the earlier FOLD, CUT and TRACE explorations.
 Generated with the built-in image-generation tool. Prompt: concept-prompt.txt.
 These are raster concepts, not production artwork or trademark clearance.
-Once a direction is selected, redraw as a clean vector and verify its silhouette
-at 16/24/32 pixels, in a circular crop, and in a single-colour physical stamp.
+Once the wordmark is settled, redraw as a clean vector, refine spacing and derive
+a small-size icon from that identity. Verify the icon at 16/24/32 pixels, in a
+circular crop, and in a single-colour physical stamp. Do not default to a random H.
 Use exact brand teal #00FEEF in production; generated concept colours are approximate.
+Sentence full stops remain solid #00FEED in production. These raster mockups are
+directional and have not replaced the website, app icons or production assets.
 
 Google favicon findings
 The live homepage supplies only /favicon.svg, a generic serif H on teal. The file
