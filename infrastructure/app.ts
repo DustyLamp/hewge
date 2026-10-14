@@ -8,6 +8,12 @@ import {
   type StackProps,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
+import * as appsync from "aws-cdk-lib/aws-appsync";
+import * as sqs from "aws-cdk-lib/aws-sqs";
+import {
+  DynamoEventSource,
+  SqsDlq,
+} from "aws-cdk-lib/aws-lambda-event-sources";
 import * as amplify from "aws-cdk-lib/aws-amplify";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as lambda from "aws-cdk-lib/aws-lambda";
@@ -66,6 +72,7 @@ class HewgeStack extends Stack {
     });
     const auctionTable = new dynamodb.Table(this, "AuctionData", {
       tableName: "hewge-auctions",
+      stream: dynamodb.StreamViewType.NEW_IMAGE,
       partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "sk", type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -404,6 +411,116 @@ class HewgeStack extends Stack {
         "StripeSecret",
         secretArn,
       ).grantRead(commerce);
+    const liveAuthorizer = new NodejsFunction(this, "LiveAuthorizer", {
+      entry: "services/live-authorizer.ts",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 256,
+      timeout: Duration.seconds(8),
+      bundling: { minify: true, externalModules: [] },
+      logGroup: new logs.LogGroup(this, "LiveAuthLogs", {
+        retention: logs.RetentionDays.ONE_WEEK,
+        removalPolicy: RemovalPolicy.DESTROY,
+      }),
+      environment: { AUCTION_TABLE: auctionTable.tableName },
+    });
+    auctionTable.grantReadData(liveAuthorizer);
+    const liveApi = new appsync.CfnApi(this, "LiveEvents", {
+      name: "hewge-live-auctions",
+      eventConfig: {
+        authProviders: [
+          { authType: "AWS_IAM" },
+          {
+            authType: "AWS_LAMBDA",
+            lambdaAuthorizerConfig: {
+              authorizerUri: liveAuthorizer.functionArn,
+              authorizerResultTtlInSeconds: 0,
+              identityValidationExpression:
+                "^(public:[a-z0-9-]{1,80}|studio:[a-f0-9]{64})$",
+            },
+          },
+        ],
+        connectionAuthModes: [{ authType: "AWS_LAMBDA" }],
+        defaultPublishAuthModes: [{ authType: "AWS_IAM" }],
+        defaultSubscribeAuthModes: [{ authType: "AWS_LAMBDA" }],
+      },
+    });
+    liveAuthorizer.addPermission("AppSync", {
+      principal: new iam.ServicePrincipal("appsync.amazonaws.com"),
+      sourceArn: liveApi.attrApiArn,
+    });
+    const liveNamespaces = ["auction", "rehearsal"].map(
+      (name) =>
+        new appsync.CfnChannelNamespace(this, `LiveNamespace${name}`, {
+          apiId: liveApi.attrApiId,
+          name,
+        }),
+    );
+    commerce.addEnvironment("LIVE_HTTP", liveApi.attrDnsHttp);
+    commerce.addEnvironment("LIVE_REALTIME", liveApi.attrDnsRealtime);
+    const liveFailures = new sqs.Queue(this, "LiveFailures", {
+      encryption: sqs.QueueEncryption.SQS_MANAGED,
+      retentionPeriod: Duration.days(14),
+    });
+    const publisher = new NodejsFunction(this, "LivePublisher", {
+      entry: "services/live-publisher.ts",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 256,
+      timeout: Duration.seconds(20),
+      bundling: { minify: true, externalModules: [] },
+      logGroup: new logs.LogGroup(this, "LivePublishLogs", {
+        retention: logs.RetentionDays.ONE_WEEK,
+        removalPolicy: RemovalPolicy.DESTROY,
+      }),
+      environment: { LIVE_HTTP: liveApi.attrDnsHttp },
+    });
+    publisher.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["appsync:EventPublish"],
+        resources: liveNamespaces.map((n) => n.attrChannelNamespaceArn),
+      }),
+    );
+    publisher.addEventSource(
+      new DynamoEventSource(auctionTable, {
+        startingPosition: lambda.StartingPosition.LATEST,
+        batchSize: 100,
+        maxBatchingWindow: Duration.seconds(1),
+        retryAttempts: 10,
+        maxRecordAge: Duration.hours(2),
+        bisectBatchOnError: true,
+        reportBatchItemFailures: true,
+        onFailure: new SqsDlq(liveFailures),
+        filters: [
+          lambda.FilterCriteria.filter({
+            eventName: ["INSERT", "MODIFY"],
+            dynamodb: {
+              NewImage: {
+                sk: { S: ["HEAD"] },
+                pk: { S: [{ prefix: "AUCTION#" }, { prefix: "REHEARSAL#" }] },
+              },
+            },
+          }),
+        ],
+      }),
+    );
+    new cloudwatch.Alarm(this, "LiveLag", {
+      metric: publisher.metric("IteratorAge", {
+        statistic: "Maximum",
+        period: Duration.minutes(1),
+      }),
+      threshold: 10000,
+      evaluationPeriods: 2,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+    });
+    new cloudwatch.Alarm(this, "LiveFailedNotifications", {
+      metric: liveFailures.metricApproximateNumberOfMessagesVisible(),
+      threshold: 1,
+      evaluationPeriods: 1,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+    });
+    new CfnOutput(this, "LiveHttp", { value: liveApi.attrDnsHttp });
+    new CfnOutput(this, "LiveRealtime", { value: liveApi.attrDnsRealtime });
     const api = new apigw.HttpApi(this, "Api", {
       apiName: "hewge-api",
       corsPreflight: {
@@ -417,11 +534,17 @@ class HewgeStack extends Stack {
     const integration = new HttpLambdaIntegration(
       "CommerceIntegration",
       commerce,
+      { scopePermissionToRoute: false },
     );
     for (const path of [
       "/catalog",
       "/content/{id}",
       "/releases",
+      "/auction/{id}",
+      "/live/{id}",
+      "/bid/state/{id}",
+      "/admin/rehearsals",
+      "/admin/rehearsal/{id}",
       "/registry/{id}",
       "/me",
       "/admin",
@@ -434,6 +557,8 @@ class HewgeStack extends Stack {
       "/verify/nfc",
       "/admin/tag",
       "/admin/content",
+      "/admin/rehearsal",
+      "/admin/rehearsal/ticket",
       "/admin/media/upload",
       "/admin/media/read",
       "/admin/media/complete",
@@ -475,10 +600,10 @@ class HewgeStack extends Stack {
     (
       api.defaultStage!.node.defaultChild as apigw.CfnStage
     ).defaultRouteSettings = {
-      throttlingRateLimit: 5,
-      throttlingBurstLimit: 10,
+      throttlingRateLimit: 1000,
+      throttlingBurstLimit: 2000,
     };
-    app.customHeaders = `customHeaders:\n  - pattern: '**'\n    headers:\n      - key: X-Content-Type-Options\n        value: nosniff\n      - key: Referrer-Policy\n        value: strict-origin-when-cross-origin\n      - key: X-Frame-Options\n        value: DENY\n      - key: Strict-Transport-Security\n        value: max-age=31536000; includeSubDomains\n      - key: Permissions-Policy\n        value: camera=(), microphone=(), geolocation=()\n      - key: Content-Security-Policy\n        value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: ${api.apiEndpoint} https://${mediaBucket.bucketRegionalDomainName}; font-src 'self'; connect-src 'self' ${api.apiEndpoint} https://${mediaBucket.bucketRegionalDomainName} https://cognito-idp.eu-north-1.amazonaws.com; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"\n  - pattern: '/config.json'\n    headers:\n      - key: Cache-Control\n        value: no-store\n  - pattern: '/images/**'\n    headers:\n      - key: Cache-Control\n        value: public, max-age=86400\n  - pattern: '/assets/**'\n    headers:\n      - key: Cache-Control\n        value: public, max-age=31536000, immutable\n`;
+    app.customHeaders = `customHeaders:\n  - pattern: '**'\n    headers:\n      - key: X-Content-Type-Options\n        value: nosniff\n      - key: Referrer-Policy\n        value: strict-origin-when-cross-origin\n      - key: X-Frame-Options\n        value: DENY\n      - key: Strict-Transport-Security\n        value: max-age=31536000; includeSubDomains\n      - key: Permissions-Policy\n        value: camera=(), microphone=(), geolocation=()\n      - key: Content-Security-Policy\n        value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: ${api.apiEndpoint} https://${mediaBucket.bucketRegionalDomainName}; font-src 'self'; connect-src 'self' wss://${liveApi.attrDnsRealtime} ${api.apiEndpoint} https://${mediaBucket.bucketRegionalDomainName} https://cognito-idp.eu-north-1.amazonaws.com; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"\n  - pattern: '/config.json'\n    headers:\n      - key: Cache-Control\n        value: no-store\n  - pattern: '/images/**'\n    headers:\n      - key: Cache-Control\n        value: public, max-age=86400\n  - pattern: '/assets/**'\n    headers:\n      - key: Cache-Control\n        value: public, max-age=31536000, immutable\n`;
     new CfnOutput(this, "AuditTableName", { value: auditTable.tableName });
     new CfnOutput(this, "AuditBucketName", { value: auditBucket.bucketName });
     new CfnOutput(this, "MediaBucketName", { value: mediaBucket.bucketName });

@@ -290,7 +290,7 @@ describe("platform access and bidding", () => {
       .map((c) => c[0])
       .find((c) => c.constructor.name === "TransactWriteCommand")
       .input.TransactItems;
-    expect(tx).toHaveLength(7); // business mutation + transactional audit head, event and outbox
+    expect(tx).toHaveLength(8); // business mutation + transactional audit head, event and outbox
     expect(tx[0].Update.ConditionExpression).toContain("revision=:v");
     expect(tx[0].Update.ConditionExpression).toContain("closesAt>:now");
     expect(tx[1].Put.Item).toMatchObject({
@@ -761,5 +761,76 @@ describe("release audience consent", () => {
       "member@example.invalid",
       "rejoined@example.invalid",
     ]);
+  });
+});
+
+describe("live auction routes", () => {
+  it("redacts single-piece snapshots and keeps private drafts out of live tickets", async () => {
+    const r: any = await handler(event(`/auction/${auction.id}`, {}, "GET"));
+    expect(r.statusCode).toBe(200);
+    const data = JSON.parse(r.body);
+    expect(data.release).not.toHaveProperty("highestBidderEmail");
+    expect(data.release).not.toHaveProperty("highestBidder");
+    expect(data.release.revision).toBe(current.revision);
+    current.published = false;
+    expect(
+      ((await handler(event(`/auction/${auction.id}`, {}, "GET"))) as any)
+        .statusCode,
+    ).toBe(404);
+    expect(
+      ((await handler(event(`/live/${auction.id}`, {}, "GET"))) as any)
+        .statusCode,
+    ).toBe(404);
+  });
+  it("requires studio authorization for every rehearsal route", async () => {
+    for (const path of [
+      "/admin/rehearsals",
+      "/admin/rehearsal/11111111-1111-4111-8111-111111111111",
+    ])
+      expect(((await handler(event(path, {}, "GET"))) as any).statusCode).toBe(
+        403,
+      );
+    for (const path of ["/admin/rehearsal", "/admin/rehearsal/ticket"])
+      expect(
+        (
+          (await handler(
+            event(path, { action: "create", pieceId: auction.id }),
+          )) as any
+        ).statusCode,
+      ).toBe(403);
+  });
+  it("also enforces creator isolation on rehearsal audit queries", async () => {
+    mock.verify.mockResolvedValue({
+      sub: "other-admin",
+      email: "jez@hewge.design",
+      email_verified: true,
+    });
+    const original = mock.send.getMockImplementation()!;
+    mock.send.mockImplementation(async (c) => {
+      if (
+        c.constructor.name === "GetCommand" &&
+        c.input.Key.pk.startsWith("ADMIN_SESSION#")
+      )
+        return {
+          Item: {
+            userId: "other-admin",
+            tokenHash: digest("token"),
+            expiresAt: Math.floor(Date.now() / 1000) + 100,
+          },
+        };
+      if (
+        c.constructor.name === "GetCommand" &&
+        c.input.Key.pk.startsWith("REHEARSAL#")
+      )
+        return { Item: { simulation: true, createdBy: "owner" } };
+      return original(c);
+    });
+    const r: any = await handler(
+      event("/admin/audit", {
+        entity: "rehearsal:11111111-1111-4111-8111-111111111111",
+        verify: true,
+      }),
+    );
+    expect(r.statusCode).toBe(404);
   });
 });

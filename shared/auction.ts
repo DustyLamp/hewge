@@ -1,6 +1,8 @@
 import { TERMS_VERSION, PAYMENT_RECOVERY_HOURS } from "./legal";
 export { TERMS_VERSION } from "./legal";
 export type Release = {
+  revision?: number;
+  recentBids?: { amount: number; sequence: number; receivedAt: number }[];
   id: string;
   slug: string;
   name: string;
@@ -151,6 +153,7 @@ export function publicRelease(
   now = Date.now(),
 ): Release {
   const keys = [
+    "revision",
     "designRevealMode",
     "material",
     "revealMode",
@@ -213,6 +216,13 @@ export function publicRelease(
       "material",
     ] as const)
       output[k] = "";
+  output.recentBids = (item.recentBids || [])
+    .slice(0, 10)
+    .map((b: any) => ({
+      amount: b.amount,
+      sequence: b.sequence,
+      receivedAt: b.receivedAt,
+    }));
   output.identityRevealed = Boolean(visible);
   if (
     item.designRevealMode === "at-opening" &&

@@ -1,3 +1,4 @@
+import { useLiveAuction } from "./live-auction";
 import { ContentPanel, EditorialPage } from "./content";
 import { WithdrawalPage, WithdrawalPanel } from "./withdrawal";
 import { CardCheck } from "./card-check";
@@ -125,7 +126,7 @@ function Footer() {
     </footer>
   );
 }
-function useReleases() {
+function useReleases(poll = true) {
   const [data, setData] = useState<{
     releases: Release[];
     biddingEnabled: boolean;
@@ -149,7 +150,7 @@ function useReleases() {
           if (alive) setLoading(false);
         });
     refresh();
-    const id = setInterval(refresh, 20000);
+    const id = poll ? setInterval(refresh, 20000) : undefined;
     return () => {
       alive = false;
       clearInterval(id);
@@ -265,7 +266,11 @@ function BidBox({
   release,
   enabled,
   onBid,
+  live,
+  simulation = false,
 }: {
+  live?: ReturnType<typeof useLiveAuction>;
+  simulation?: boolean;
   release: Release;
   enabled: boolean;
   onBid: () => void;
@@ -276,6 +281,10 @@ function BidBox({
   const [confirm, setConfirm] = useState(false);
   const [cardVerified, setCardVerified] = useState(false);
   const pending = useRef<{ requestId: string; amount: number } | null>(null);
+  const request = (action: "bid" | "receipt", body: any) =>
+    simulation
+      ? api("/admin/rehearsal", { ...body, action, bidder: "you" })
+      : api(action === "bid" ? "/bid" : "/bid/receipt", body);
   const receiptKey = `hewge-bid-${release.id}`;
   useEffect(() => {
     try {
@@ -285,8 +294,10 @@ function BidBox({
     } catch {
       pending.current = null;
     }
-    if (pending.current)
-      api("/bid/receipt", {
+    if (pending.current) {
+      setAmount(String(pending.current.amount / 100));
+      setMessage("Checking your saved bid reference…");
+      request("receipt", {
         id: release.id,
         requestId: pending.current.requestId,
       })
@@ -295,11 +306,15 @@ function BidBox({
             setMessage(
               `Bid recorded: ${money(r.receipt.amount)}. Receipt ${r.receipt.bidId}.`,
             );
+            onBid();
             sessionStorage.removeItem(receiptKey);
             pending.current = null;
           }
         })
-        .catch(() => {});
+        .catch(() =>
+          setMessage("Bid confirmation unavailable. Retry the saved amount."),
+        );
+    }
   }, [release.id]);
   async function bid(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -312,17 +327,23 @@ function BidBox({
     try {
       const cents = Math.round(Number(amount) * 100);
       if (pending.current && pending.current.amount !== cents) {
-        const check = await api("/bid/receipt", {
+        const check = await request("receipt", {
           id: release.id,
           requestId: pending.current.requestId,
         });
+        if (!check.receipt) {
+          setAmount(String(pending.current.amount / 100));
+          throw Error(
+            "Retry the pending amount before placing a different bid.",
+          );
+        }
         if (check.receipt)
           setMessage(`Previous bid recorded: ${money(check.receipt.amount)}.`);
         pending.current = null;
       }
       pending.current ??= { requestId: crypto.randomUUID(), amount: cents };
       sessionStorage.setItem(receiptKey, JSON.stringify(pending.current));
-      const receipt = await api("/bid", {
+      const receipt = await request("bid", {
         requestId: pending.current.requestId,
         id: release.id,
         amount: Math.round(Number(amount) * 100),
@@ -343,7 +364,7 @@ function BidBox({
       setMessage(errorText(e));
       if (pending.current) {
         try {
-          const check = await api("/bid/receipt", {
+          const check = await request("receipt", {
             id: release.id,
             requestId: pending.current.requestId,
           });
@@ -374,6 +395,30 @@ function BidBox({
   }
   return (
     <aside className="bid-box">
+      {live && (
+        <div
+          className={`live-status ${live.fresh ? "" : "is-stale"}`}
+          role="status"
+        >
+          <span className="live-dot" />
+          <FullStops>
+            {!live.fresh
+              ? "Updating auction…"
+              : live.connection === "live"
+                ? "Live updates"
+                : live.connection === "paused"
+                  ? "Updates paused"
+                  : "Checking for updates"}
+          </FullStops>
+        </div>
+      )}
+      {live?.error && (
+        <p className="form-message" role="alert">
+          <FullStops>
+            {live.error + " Bidding waits for a fresh update."}
+          </FullStops>
+        </p>
+      )}
       <span className="eyebrow">
         <FullStops>
           {release.status === "sold"
@@ -410,6 +455,23 @@ function BidBox({
         </span>
         <span>1 / 1</span>
       </div>
+      {live?.personal &&
+        live.personal.revision >= (release.revision || 0) &&
+        live.personal.hasBid && (
+          <p className="bid-position" role="status">
+            <FullStops>
+              {simulation
+                ? live.leader
+                  ? `Simulated leader: ${live.leader}.`
+                  : "No simulated bids."
+                : live.personal.leading
+                  ? release.status === "open"
+                    ? "You have the highest accepted bid."
+                    : "Your bid is highest. Check your account for the result."
+                  : "Another collector has the highest bid."}
+            </FullStops>
+          </p>
+        )}
       <p className="mystery-note">
         <FullStops>{release.material || "Material undisclosed."}</FullStops>
         <FullStops>{!release.artistName && " Artist undisclosed."} </FullStops>
@@ -435,12 +497,15 @@ function BidBox({
       ) : enabled && release.status === "open" ? (
         getToken() ? (
           <>
-            <CardCheck release={release} onVerified={setCardVerified} />
+            {!simulation && (
+              <CardCheck release={release} onVerified={setCardVerified} />
+            )}
             <form className="stack-form" onSubmit={bid}>
               <label>
                 Your bid · CHF
                 <input
                   type="number"
+                  disabled={busy || !!pending.current}
                   min={
                     minimumBid(
                       release.openingBid,
@@ -464,64 +529,88 @@ function BidBox({
                   )}
                 />
               </label>
-              <p className="fine-print">
-                Insured shipping:{" "}
-                <FullStops>{money(release.shippingFee)}</FullStops>
-                <FullStops>{". " + release.taxDetails}</FullStops>
-                <FullStops>{" " + release.deliveryDetails}</FullStops>
-              </p>
+              {!simulation && (
+                <p className="fine-print">
+                  Insured shipping:{" "}
+                  <FullStops>{money(release.shippingFee)}</FullStops>
+                  <FullStops>{". " + release.taxDetails}</FullStops>
+                  <FullStops>{" " + release.deliveryDetails}</FullStops>
+                </p>
+              )}
               <label className="check-label">
                 <input type="checkbox" required />
                 <span>
-                  {" "}
-                  I am 18 or over and accept the{" "}
-                  <a
-                    href={`/legal/${release.termsVersion}.txt`}
-                    target="_blank"
-                    rel="noopener"
-                  >
-                    auction terms
-                  </a>
-                  <FullStops>
-                    {
-                      ". If I win, charge my verified card my winning bid plus the shown shipping immediately at closing."
-                    }
-                  </FullStops>
+                  {simulation ? (
+                    <FullStops>
+                      {
+                        "This is a simulated bid. No payment or ownership change."
+                      }
+                    </FullStops>
+                  ) : (
+                    <>
+                      {" "}
+                      I am 18 or over and accept the{" "}
+                      <a
+                        href={`/legal/${release.termsVersion}.txt`}
+                        target="_blank"
+                        rel="noopener"
+                      >
+                        auction terms
+                      </a>
+                      <FullStops>
+                        {
+                          ". If I win, charge my verified card my winning bid plus the shown shipping immediately at closing."
+                        }
+                      </FullStops>
+                    </>
+                  )}
                 </span>
               </label>
               {confirm && (
                 <p className="confirm-bid">
-                  Confirm{" "}
+                  {simulation ? "Simulate " : "Confirm "}
                   <FullStops>
                     {money(Math.round(Number(amount) * 100))}
                   </FullStops>{" "}
-                  + <FullStops>{money(release.shippingFee)}</FullStops>
-                  <FullStops>{" shipping. Total: "}</FullStops>
+                  {!simulation && (
+                    <>
+                      + <FullStops>{money(release.shippingFee)}</FullStops>
+                      <FullStops>{" shipping. Total: "}</FullStops>
+                      <FullStops>
+                        {money(
+                          Math.round(Number(amount) * 100) +
+                            release.shippingFee,
+                        )}
+                      </FullStops>
+                      <FullStops>
+                        {
+                          ". Due immediately at closing if you win. Your verified card will be charged."
+                        }
+                      </FullStops>{" "}
+                    </>
+                  )}
                   <FullStops>
-                    {money(
-                      Math.round(Number(amount) * 100) + release.shippingFee,
-                    )}
-                  </FullStops>
-                  <FullStops>
-                    {
-                      ". Due immediately at closing if you win. Your verified card will be charged."
-                    }
-                  </FullStops>{" "}
-                  <FullStops>
-                    {!release.identityRevealed &&
+                    {!simulation &&
+                      !release.identityRevealed &&
                       "Artist and material are undisclosed."}
                   </FullStops>
                 </p>
               )}
               <button
                 className="button button-dark"
-                disabled={busy || !cardVerified}
+                disabled={
+                  busy ||
+                  (!simulation && !cardVerified) ||
+                  (live && !live.fresh)
+                }
               >
                 <FullStops>
                   {busy
                     ? "Submitting…"
                     : confirm
-                      ? "Place bid — pay if I win"
+                      ? simulation
+                        ? "Place simulated bid"
+                        : "Place bid — pay if I win"
                       : "Review bid"}
                 </FullStops>
                 <ArrowRight size={18} />
@@ -542,6 +631,18 @@ function BidBox({
             Sign in to bid <ArrowUpRight size={18} />
           </a>
         )
+      ) : simulation ? (
+        <p className="confirm-bid">
+          <FullStops>{`Rehearsal closed. ${live?.leader ? `Simulated winner: ${live.leader}.` : "No bids recorded."} No card charged.`}</FullStops>
+        </p>
+      ) : release.status === "closed" ? (
+        <p className="confirm-bid">
+          <FullStops>
+            {release.bidCount
+              ? "Bidding closed. Accepted bids are being finalised."
+              : "Bidding closed. No bids were accepted."}
+          </FullStops>
+        </p>
       ) : release.status === "awaiting-payment" ? (
         <a className="button button-dark" href="/account">
           Check your collector account <ArrowUpRight size={18} />
@@ -549,20 +650,272 @@ function BidBox({
       ) : (
         <Subscribe />
       )}
+      {pending.current && (
+        <button
+          type="button"
+          className="quiet-button"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              const saved = await request("receipt", {
+                id: release.id,
+                requestId: pending.current!.requestId,
+              });
+              if (saved.receipt) {
+                setMessage(
+                  `Bid recorded: ${money(saved.receipt.amount)}. Receipt ${saved.receipt.bidId}.`,
+                );
+                pending.current = null;
+                sessionStorage.removeItem(receiptKey);
+                setAmount("");
+                onBid();
+              } else
+                setMessage(
+                  "No accepted receipt found yet. Keep this reference and check again, or retry the saved bid while the auction is open.",
+                );
+            } catch (e) {
+              setMessage(errorText(e));
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          Check saved bid receipt
+        </button>
+      )}
       <p role="status" className="form-message">
         <FullStops>{message}</FullStops>
       </p>
       <p className="fine-print">
         <FullStops>{"Bidding is free. Highest valid bid wins."}</FullStops>
       </p>
-      <Share release={release} />
+      {!!release.recentBids?.length && (
+        <div className="bid-history">
+          <h3>Accepted bids</h3>
+          <ol>
+            {release.recentBids.map((b) => (
+              <li key={b.sequence}>
+                <span>#{b.sequence}</span>
+                <strong>{money(b.amount)}</strong>
+                <time dateTime={new Date(b.receivedAt).toISOString()}>
+                  {new Date(b.receivedAt).toLocaleTimeString("en-GB", {
+                    timeZone: "Europe/Zurich",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  })}
+                </time>
+              </li>
+            ))}
+          </ol>
+          <p className="fine-print">
+            Latest ten · Swiss time · sequence determines order
+          </p>
+        </div>
+      )}
+      {!simulation && <Share release={release} />}
     </aside>
   );
 }
+function RehearsalPanel({ auctions }: { auctions: any[] }) {
+  const [pieceId, setPieceId] = useState(
+    auctions.find((a) => a.slug === "after-hours")?.id || auctions[0]?.id || "",
+  );
+  const [id, setId] = useState("");
+  const [sessions, setSessions] = useState<
+    { id: string; name: string; createdAt: number }[]
+  >([]);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const opponent = useRef<any>(null);
+  const live = useLiveAuction(id || undefined, true);
+  const load = () =>
+    api("/admin/rehearsals")
+      .then((d) => setSessions(d.rehearsals))
+      .catch((e) => setMessage(errorText(e)));
+  useEffect(() => {
+    void load();
+  }, []);
+  async function act(action: "create" | "close" | "bid") {
+    setBusy(true);
+    setMessage("");
+    try {
+      let body: any = { action, id, pieceId };
+      if (action === "bid" && live.release) {
+        opponent.current ??= {
+          action,
+          id,
+          bidder: "collector-a",
+          requestId: crypto.randomUUID(),
+          amount: minimumBid(
+            live.release.openingBid,
+            live.release.highestBid,
+            live.release.minimumIncrement,
+          ),
+        };
+        body = opponent.current;
+      }
+      const result = await api("/admin/rehearsal", body);
+      if (action === "create") {
+        setId(result.release.id);
+        opponent.current = null;
+        await load();
+      } else {
+        opponent.current = null;
+        await live.refresh();
+      }
+      setMessage(
+        action === "bid"
+          ? `Simulated bid accepted. Receipt ${result.bidId}.`
+          : action === "create"
+            ? "Five-minute rehearsal started."
+            : "Rehearsal closed. The audit record is retained.",
+      );
+    } catch (e) {
+      if ([400, 403, 409].includes((e as any).status)) opponent.current = null;
+      setMessage(errorText(e));
+      await live.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="rehearsal-panel">
+      <div className="rehearsal-banner">
+        <span className="eyebrow">PRIVATE / SIMULATION</span>
+        <h2>
+          <FullStops>{"Rehearse the first bid."}</FullStops>
+        </h2>
+        <p>
+          <FullStops>
+            {
+              "Only your studio account can open these sessions. Simulated bids, no payments, no ownership changes. The public piece stays as it is."
+            }
+          </FullStops>
+        </p>
+      </div>
+      <div className="rehearsal-layout">
+        <div className="rehearsal-controls">
+          <form
+            className="stack-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void act("create");
+            }}
+          >
+            <label>
+              Piece
+              <select
+                value={pieceId}
+                onChange={(e) => setPieceId(e.target.value)}
+              >
+                {auctions.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name || a.id}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button className="button button-dark" disabled={busy || !pieceId}>
+              Start a new rehearsal <ArrowRight size={18} />
+            </button>
+          </form>
+          {!!sessions.length && (
+            <label className="rehearsal-session">
+              Recent rehearsals
+              <select
+                value={id}
+                onChange={(e) => {
+                  setId(e.target.value);
+                  opponent.current = null;
+                }}
+              >
+                <option value="">Choose a session</option>
+                {sessions.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} · {new Date(s.createdAt).toLocaleString("en-GB")}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {live.release && (
+            <>
+              <img
+                className="rehearsal-image"
+                src={live.release.image}
+                alt={live.release.name}
+              />
+              <h2 className="piece-title">
+                <PieceTitle name={live.release.name} />
+              </h2>
+              <p className="fine-print">
+                <FullStops>
+                  {
+                    "Rehearsal lasts five minutes. Use your bid form, then simulate another collector. Open this session in a second signed-in tab to watch live updates."
+                  }
+                </FullStops>
+              </p>
+              <div className="rehearsal-actions">
+                <button
+                  type="button"
+                  className="button button-dark"
+                  disabled={
+                    busy || !live.fresh || live.release.status !== "open"
+                  }
+                  onClick={() => act("bid")}
+                >
+                  {opponent.current
+                    ? "Retry simulated bid"
+                    : "Simulate another collector"}
+                </button>
+                <button
+                  type="button"
+                  className="quiet-button"
+                  disabled={busy || live.release.status !== "open"}
+                  onClick={() => act("close")}
+                >
+                  Close rehearsal now
+                </button>
+              </div>
+              <p className="fine-print">Audit record: rehearsal:{id}</p>
+            </>
+          )}
+          <p className="form-message" role="status">
+            <FullStops>{message}</FullStops>
+          </p>
+        </div>
+        {live.release ? (
+          <BidBox
+            key={id}
+            release={live.release}
+            enabled={true}
+            onBid={live.refresh}
+            live={live}
+            simulation
+          />
+        ) : (
+          <div className="rehearsal-empty">
+            <p>
+              <FullStops>
+                {id
+                  ? live.error || "Loading rehearsal…"
+                  : "Start a private session to try bidding, being outbid and closing."}
+              </FullStops>
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
 function PiecePage() {
-  const { releases, biddingEnabled, error, loading, refresh } = useReleases();
+  const { releases, error, loading } = useReleases(false);
   const slug = location.pathname.split("/")[2];
-  const release = releases.find((r) => r.slug === slug);
+  const initial = releases.find((r) => r.slug === slug);
+  const live = useLiveAuction(initial?.id);
+  const release = live.release || initial;
   useEffect(() => {
     if (release) document.title = `${release.name} — HEWGE`;
   }, [release?.name]);
@@ -628,7 +981,12 @@ function PiecePage() {
             <FullStops>{"THE ONLY ONE."}</FullStops>
           </span>
         </div>
-        <BidBox release={release} enabled={biddingEnabled} onBid={refresh} />
+        <BidBox
+          release={release}
+          enabled={live.enabled}
+          onBid={live.refresh}
+          live={live}
+        />
       </div>
 
       {error && (
@@ -1872,6 +2230,7 @@ function Dashboard() {
         {[
           "collectors",
           "releases",
+          "rehearsal",
           "pages",
           "media",
           "engagement",
@@ -1891,7 +2250,9 @@ function Dashboard() {
       <p role="status" className="form-message">
         <FullStops>{error}</FullStops>
       </p>
-      {tab === "pages" ? (
+      {tab === "rehearsal" ? (
+        <RehearsalPanel auctions={data.auctions} />
+      ) : tab === "pages" ? (
         <ContentPanel
           pages={data.pages || []}
           auctions={data.auctions}

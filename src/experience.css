@@ -1749,3 +1749,133 @@
   font-size: 17px;
   line-height: 1.8;
 }
+
+/* Live bidding and private studio rehearsals */
+.live-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0 0 24px;
+}
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #168664;
+  flex: none;
+}
+.live-status.is-stale .live-dot {
+  background: #9b651f;
+}
+.bid-position {
+  padding: 14px;
+  background: var(--cyan, #00feef);
+  color: #111;
+  font-size: 14px;
+}
+.bid-history {
+  border-top: 1px solid #cccfc5;
+  margin-top: 24px;
+  padding-top: 18px;
+}
+.bid-history h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.bid-history ol {
+  padding: 0;
+  list-style: none;
+  margin: 12px 0;
+}
+.bid-history li {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 8px;
+  font-size: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #dedfd8;
+  font-variant-numeric: tabular-nums;
+}
+.bid-box .form-message {
+  overflow-wrap: anywhere;
+}
+.rehearsal-banner {
+  padding: 28px;
+  background: #00feef;
+  margin-bottom: 28px;
+}
+.rehearsal-banner h2 {
+  margin: 10px 0;
+  font-size: clamp(28px, 4vw, 50px);
+  letter-spacing: -0.04em;
+}
+.rehearsal-banner p {
+  max-width: 640px;
+  line-height: 1.5;
+  margin: 0;
+}
+.rehearsal-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 420px);
+  gap: 40px;
+  align-items: start;
+}
+.rehearsal-layout .bid-box {
+  position: static;
+}
+.rehearsal-controls {
+  min-width: 0;
+}
+.rehearsal-controls select {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid #bfc2b9;
+  font: inherit;
+}
+.rehearsal-session {
+  display: grid;
+  gap: 8px;
+  margin: 24px 0;
+  font-size: 13px;
+}
+.rehearsal-image {
+  width: 100%;
+  height: 380px;
+  object-fit: contain;
+  background: #e5e7df;
+  margin-top: 24px;
+}
+.rehearsal-controls h2 {
+  font-size: 36px;
+  letter-spacing: -0.04em;
+}
+.rehearsal-actions {
+  display: grid;
+  gap: 16px;
+  margin: 24px 0;
+}
+.rehearsal-empty {
+  padding: 40px;
+  border: 1px solid #c9ccc2;
+  line-height: 1.6;
+}
+.rehearsal-controls .fine-print {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .rehearsal-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .rehearsal-image {
+    height: 240px;
+  }
+  .rehearsal-banner {
+    padding: 20px;
+  }
+}

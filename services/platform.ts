@@ -1,3 +1,6 @@
+import { bidMutation } from "./bid-engine";
+import { rehearsalService } from "./rehearsal";
+import { liveAccess } from "./live-access";
 import { withdrawalService } from "./withdrawals";
 import { contentService } from "./content";
 import { suppressionWrite, suppressionKey } from "./consent";
@@ -62,6 +65,8 @@ const ledger = auditLedger(
   process.env.AUDIT_TABLE!,
   process.env.AUDIT_BUCKET!,
 );
+const rehearsal = rehearsalService(db, TableName, ledger.commit);
+const live = liveAccess(db, TableName);
 const registry = ownershipRegistry(db, TableName, ledger.commit);
 const media = mediaLibrary(
   db,
@@ -884,6 +889,52 @@ export async function handler(event: any) {
         body: "",
       };
     }
+    if (
+      method === "GET" &&
+      (path.startsWith("/auction/") || path.startsWith("/live/"))
+    ) {
+      const id = path.split("/")[2];
+      if (!/^[a-z0-9-]{1,80}$/.test(id || ""))
+        return response(404, { message: "Piece not found." });
+      const a = await get(`AUCTION#${id}`, "HEAD");
+      if (a?.published !== true)
+        return response(404, { message: "Piece not found." });
+      return response(
+        200,
+        path.startsWith("/live/")
+          ? await live.ticket(id)
+          : {
+              release: publicRelease(a),
+              biddingEnabled: process.env.CHECKOUT_ENABLED === "true",
+            },
+      );
+    }
+    // Authenticated snapshots must not consume the mutation rate budget.
+    if (method === "GET" && path.startsWith("/admin/rehearsal")) {
+      const user = await auth(event, true);
+      return response(
+        200,
+        path === "/admin/rehearsals"
+          ? await rehearsal.list(user)
+          : await rehearsal.snapshot(path.split("/")[3], user),
+      );
+    }
+    if (method === "GET" && path.startsWith("/bid/state/")) {
+      const user = await auth(event);
+      const id = path.split("/")[3];
+      if (!/^[a-z0-9-]{1,80}$/.test(id || ""))
+        return response(404, { message: "Piece not found." });
+      const bid = await get(`AUCTION#${id}`, `BIDDER#${user.id}`);
+      const a = await get(`AUCTION#${id}`, "HEAD");
+      if (a?.published !== true)
+        return response(404, { message: "Piece not found." });
+      return response(200, {
+        revision: a.revision,
+        leading: a.highestBidder === user.id,
+        hasBid: !!bid || a.highestBidder === user.id,
+        lastAmount: bid?.amount || null,
+      });
+    }
     if (method === "GET" && path === "/releases") {
       // The GSI discovers IDs only. Re-read the authority so an old index image
       // cannot publish a withdrawn draft or stale bid head.
@@ -1030,6 +1081,12 @@ export async function handler(event: any) {
         message: "This piece is available only to its winning bidder.",
       });
     const user = await auth(event, path.startsWith("/admin"));
+    if (path === "/admin/rehearsal/ticket") {
+      await rehearsal.owned(body.id, user);
+      return response(200, await live.ticket(body.id, true));
+    }
+    if (path === "/admin/rehearsal")
+      return response(200, await rehearsal.handle(body, user));
     if (path === "/admin/content")
       return response(200, await content.save(body, user));
     if (path === "/admin/withdrawal")
@@ -1054,7 +1111,9 @@ export async function handler(event: any) {
         200,
         await fees.checkout(clean(body.transferId, 80), user),
       );
-    if (path === "/admin/audit")
+    if (path === "/admin/audit") {
+      if (String(body.entity || "").startsWith("rehearsal:"))
+        await rehearsal.owned(String(body.entity).slice(10), user);
       return response(
         200,
         await ledger.history(
@@ -1063,6 +1122,7 @@ export async function handler(event: any) {
           body.verify === true,
         ),
       );
+    }
     if (path === "/admin/campaign")
       return response(200, await campaigns.handle(body, user));
     if (
@@ -1274,7 +1334,7 @@ export async function handler(event: any) {
         });
       }
       const a = await get(`AUCTION#${clean(body.id, 80)}`, "HEAD");
-      if (!a || auctionPhase(a as any) !== "open")
+      if (!a || a.published !== true || auctionPhase(a as any) !== "open")
         return response(409, { message: "This auction is not open." });
       const amount = validateBid(body.amount, a as any);
       const profile = await get(`USER#${user.id}`, "PROFILE");
@@ -1297,57 +1357,28 @@ export async function handler(event: any) {
           message: "Confirm you are 18 or over and accept the auction terms.",
         });
       const card = await cards.requireCard(a, user, profile);
-      const now = Date.now();
-      const bidId = body.requestId;
-      const sequence = a.bidCount + 1;
+      const mutation = bidMutation(
+        TableName,
+        { ...a, pk: `AUCTION#${a.id}` },
+        user,
+        amount,
+        body.requestId,
+        {
+          termsVersion: a.termsVersion,
+          termsHash: hash(termsText),
+          privacyVersion: PRIVACY_VERSION,
+          mandateVersion: CARD_MANDATE_VERSION,
+          mandateHash: hash(cardMandate),
+          cardAttempt: card.attempt,
+          accepted: true,
+          country: profile.country,
+          size: a.size,
+        },
+      );
+      const { bidId, sequence, receivedAt: now } = mutation.receipt;
       await ledger.commit(
         [
-          {
-            Update: {
-              TableName,
-              Key: key(a.id),
-              UpdateExpression:
-                "SET highestBid=:amount, highestBidder=:bidder, highestBidderEmail=:email ADD revision :one, bidCount :one",
-              ConditionExpression:
-                "revision=:v AND opensAt<=:now AND closesAt>:now AND (#s=:scheduled OR #s=:open)",
-              ExpressionAttributeNames: { "#s": "status" },
-              ExpressionAttributeValues: {
-                ":amount": amount,
-                ":bidder": user.id,
-                ":email": user.email,
-                ":one": 1,
-                ":v": a.revision,
-                ":now": now,
-                ":scheduled": "scheduled",
-                ":open": "open",
-              },
-            },
-          },
-          {
-            Put: {
-              TableName,
-              Item: {
-                pk: `AUCTION#${a.id}`,
-                sk: `BID#${bidId}`,
-                bidId,
-                sequence,
-                bidderId: user.id,
-                email: user.email,
-                amount,
-                createdAt: now,
-                termsVersion: a.termsVersion,
-                termsHash: hash(termsText),
-                privacyVersion: PRIVACY_VERSION,
-                mandateVersion: CARD_MANDATE_VERSION,
-                mandateHash: hash(cardMandate),
-                cardAttempt: card.attempt,
-                accepted: true,
-                country: profile.country,
-                size: a.size,
-              },
-              ConditionExpression: "attribute_not_exists(pk)",
-            },
-          },
+          ...mutation.changes,
           {
             Put: {
               TableName,
