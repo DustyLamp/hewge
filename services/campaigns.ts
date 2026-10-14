@@ -8,6 +8,7 @@ import {
   UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { digest, type Commit } from "./audit";
+import type { smsService } from "./sms";
 const fail = (m: string): never => {
   throw Object.assign(Error(m), { status: 400 });
 };
@@ -17,11 +18,12 @@ export function campaignService(
   members: string,
   commit: Commit,
   index: (kind: string) => Promise<any[]>,
+  sms?: ReturnType<typeof smsService>,
 ) {
   const read = async (TableName: string, Key: any) =>
     (await db.send(new GetCommand({ TableName, Key, ConsistentRead: true })))
       .Item;
-  async function audience(segment: any = {}) {
+  async function audience(segment: any = {}, channel = "email") {
     const candidates = new Map<string, any>();
     for (const p of await index("COLLECTORS"))
       candidates.set(p.email, { email: p.email, profileKey: p.pk });
@@ -30,20 +32,27 @@ export function campaignService(
       const page: any = await db.send(
         new ScanCommand({
           TableName: members,
-          FilterExpression: "begins_with(pk,:p)",
-          ExpressionAttributeValues: { ":p": "EMAIL#" },
+          FilterExpression:
+            channel === "sms"
+              ? "begins_with(pk,:p) OR begins_with(pk,:s)"
+              : "begins_with(pk,:p)",
+          ExpressionAttributeValues: {
+            ":p": "EMAIL#",
+            ...(channel === "sms" ? { ":s": "SMS_MEMBER#" } : {}),
+          },
           ExclusiveStartKey: cursor,
         }),
       );
-      for (const g of page.Items || [])
+      for (const g of (page.Items || []).filter((g: any) => g.email))
         candidates.set(g.email, {
           ...candidates.get(g.email),
           email: g.email,
-          memberKey: g.pk,
+          memberKey: `EMAIL#${digest(g.email.toLowerCase())}`,
         });
       cursor = page.LastEvaluatedKey;
     } while (cursor);
     const result = [];
+    const phones = new Set<string>();
     for (const c of candidates.values()) {
       const p = c.profileKey
         ? await read(table, { pk: c.profileKey, sk: "PROFILE" })
@@ -58,9 +67,22 @@ export function campaignService(
           ? Date.parse(x.consentAt)
           : x?.consentAt || 0;
       const latest = valid && stamp(valid) >= stamp(p) ? valid : p;
-      if (!latest?.releaseConsent) continue;
+      const texts = channel === "sms" ? await sms?.get(c.email) : null;
+      if (
+        channel === "sms"
+          ? !texts?.consent ||
+            !texts.verified ||
+            !/^\+417[5-9]\d{7}$/.test(texts.phone)
+          : !latest?.releaseConsent
+      )
+        continue;
       const suppression = await read(members, suppressionKey(c.email));
-      if (suppression && suppression.consentAt >= stamp(latest)) continue;
+      if (
+        channel === "email" &&
+        suppression &&
+        suppression.consentAt >= stamp(latest)
+      )
+        continue;
       const updated = (x: any) =>
         typeof x?.updatedAt === "string"
           ? Date.parse(x.updatedAt)
@@ -70,6 +92,10 @@ export function campaignService(
       if (segment.size && !(merged.sizes || []).includes(segment.size))
         continue;
       if (segment.country && merged.country !== segment.country) continue;
+      if (texts) {
+        if (phones.has(texts.phone)) continue;
+        phones.add(texts.phone);
+      }
       result.push({ ...c, memberKey: g?.pk, sizes: merged.sizes });
     }
     return result;
@@ -82,6 +108,13 @@ export function campaignService(
         sk: "HEAD",
       });
       if (!c || !["scheduled", "queued"].includes(c.status)) return false;
+      if ((c.channel || "email") !== (mail.channel || "email")) return false;
+    }
+    if (mail.channel === "sms") {
+      const texts = await sms?.get(mail.email);
+      return (
+        texts?.consent === true && texts.verified && texts.phone === mail.phone
+      );
     }
     const p = mail.profileKey
       ? await read(table, { pk: mail.profileKey, sk: "PROFILE" })
@@ -103,6 +136,13 @@ export function campaignService(
     );
   }
   async function handle(body: any, user: { id: string }) {
+    const channel = body.channel || "email";
+    if (!["email", "sms"].includes(channel))
+      return fail("Choose email or SMS.");
+    const enabled =
+      channel === "sms"
+        ? (await sms?.campaignEnabled()) === true
+        : process.env.EMAIL_ENABLED === "true";
     const segment = {
       size: String(body.size || ""),
       country: String(body.country || "").toUpperCase(),
@@ -115,8 +155,8 @@ export function campaignService(
       return fail("Choose a valid audience segment.");
     if (body.action === "preview")
       return {
-        recipients: (await audience(segment)).length,
-        enabled: process.env.EMAIL_ENABLED === "true",
+        recipients: (await audience(segment, channel)).length,
+        enabled,
       };
     const id = body.id || randomUUID();
     if (!/^[a-f\d-]{36}$/.test(id)) return fail("Invalid campaign ID.");
@@ -161,16 +201,21 @@ export function campaignService(
       text.length > 4000
     )
       return fail("Add a subject and message (10–4,000 characters).");
+    if (
+      channel === "sms" &&
+      (text.length > 70 || !/^[A-Za-z0-9 .,!?':;()/+\-#=_\n]+$/.test(text))
+    )
+      return fail(
+        "Use up to 70 plain-text characters for SMS. Hewge adds the sender name and unsubscribe link.",
+      );
     const schedule = body.action === "schedule",
       sendAt = Number(body.sendAt);
     if (
       schedule &&
-      (process.env.EMAIL_ENABLED !== "true" ||
-        !Number.isSafeInteger(sendAt) ||
-        sendAt <= Date.now())
+      (!enabled || !Number.isSafeInteger(sendAt) || sendAt <= Date.now())
     )
       return fail(
-        "Email must be activated and the send time must be in the future.",
+        "The selected channel must be activated and the send time must be in the future.",
       );
     const item = {
       pk: `CAMPAIGN#${id}`,
@@ -180,6 +225,7 @@ export function campaignService(
       id,
       subject,
       text,
+      channel,
       segment,
       sendAt: schedule ? sendAt : null,
       status: schedule ? "scheduled" : "draft",
@@ -208,6 +254,7 @@ export function campaignService(
         action: schedule ? "campaign-scheduled" : "campaign-drafted",
         details: {
           contentHash: digest({ subject, text }),
+          channel,
           segment,
           sendAt: item.sendAt,
         },
@@ -216,11 +263,20 @@ export function campaignService(
     return { ok: true, id };
   }
   async function queue() {
-    if (process.env.EMAIL_ENABLED !== "true") return;
     for (const c of await index("CAMPAIGNS")) {
       if (c.status !== "scheduled" || c.sendAt > Date.now()) continue;
-      const recipients = await audience(c.segment);
+      if (
+        c.channel === "sms"
+          ? !(await sms?.campaignEnabled())
+          : process.env.EMAIL_ENABLED !== "true"
+      )
+        continue;
+      const recipients = await audience(c.segment, c.channel || "email");
       for (const p of recipients) {
+        if (c.channel === "sms") {
+          await sms!.enqueue(c, p);
+          continue;
+        }
         const id = `${c.id}-${digest(p.email.toLowerCase())}`;
         try {
           await db.send(

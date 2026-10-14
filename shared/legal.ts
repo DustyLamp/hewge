@@ -1,7 +1,7 @@
 import { sellerContactText } from "./seller";
 
 export const TERMS_VERSION = "auction-2026-10-14";
-export const PRIVACY_VERSION = "privacy-2026-10-14";
+export const PRIVACY_VERSION = "privacy-2026-10-14-sms";
 export const CARD_MANDATE_VERSION = "winning-card-2026-10-14";
 export const PAYMENT_RECOVERY_HOURS = 24;
 export const cardMandate =
@@ -114,7 +114,7 @@ export const privacySections: LegalSection[] = [
     title: "Cards and service providers",
     paragraphs: [
       "Stripe handles the full card number, security code and bank authentication. Hewge stores Stripe references, setup status, limited card details such as brand and last four digits, and delivery details. A successful card setup is not an identity check or proof of ownership. Stripe also processes data for its own regulated and fraud-prevention purposes under its privacy notice.",
-      "Authorised Hewge staff have access according to their duties. AWS provides hosting, identity, encrypted storage and email; Stripe provides payments when activated. Delivery carriers receive information necessary to deliver and insure parcels. Professional advisers, insurers and competent authorities receive data where necessary and lawful. We do not sell personal data or disclose customer lists to artists for their own marketing.",
+      "Authorised Hewge staff have access according to their duties. AWS provides hosting, identity, encrypted storage, email and SMS delivery; telecommunications providers process numbers and messages to deliver texts. Stripe provides payments when activated. Delivery carriers receive information necessary to deliver and insure parcels. Professional advisers, insurers and competent authorities receive data where necessary and lawful. We do not sell personal data or disclose customer lists to artists for their own marketing.",
       "Core application storage is in AWS Stockholm, Sweden. Global site delivery and providers’ support, subprocessors or legal obligations may involve processing in other countries, including the United States. European storage alone does not exclude international transfers. Where required we use applicable adequacy decisions or contractual safeguards, including standard contractual clauses and Swiss adaptations, with supplementary measures as needed. Contact us for provider and safeguard information or a copy of relevant safeguards, subject to legitimate redactions.",
     ],
   },
@@ -130,6 +130,7 @@ export const privacySections: LegalSection[] = [
     title: "Retention and browser storage",
     paragraphs: [
       "Unconfirmed membership requests and verification links expire after 48 hours; verified membership records expire after 180 days. Preference sessions expire after one hour. Account profiles remain while needed for an active account. Essential sign-in information is held in this tab’s session storage until sign-out or expiry; administrative sessions last 15 minutes. There are no advertising trackers. Service and security logs normally expire after seven days; protected audit events are handled separately as described above.",
+      "SMS preferences are shared across your membership and collector account and expire after 180 days without renewal. Phone verification expires after 180 days. Text verification codes expire after ten minutes, with no more than five attempts; temporary verification records are then eligible for automatic deletion. We retain a phone-number hash and opt-out time to respect withdrawn SMS consent after contact records expire. Saving a delivery phone number does not subscribe it to release texts.",
       "Necessary accounting records are retained for the applicable statutory period, generally ten years from the end of the relevant financial year under Swiss accounting rules. Active ownership links are retained while required to provide and protect registration; historical identity links, unsuccessful bids, card setup references and private evidence are periodically reviewed for deletion or restriction when contractual, fraud-prevention or claims needs end. A specific dispute or legal hold may require longer retention. The permanent object history does not justify keeping every profile, photograph or address indefinitely.",
       "A minimal address hash and opt-out timestamp are kept to prevent an older subscription from reviving marketing after you leave; that hash is still treated as personal data. Ordinary recovery backups cycle over 35 days. Deleted data may remain in those restricted backups until expiry, and a restore must reapply recorded deletions and opt-outs. Copies deliberately retained in the locked audit archive are subject to the separate limits above.",
     ],

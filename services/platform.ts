@@ -52,6 +52,8 @@ import {
 import { sizes } from "../shared/catalog";
 import { ownershipRegistry } from "./ownership";
 import { membershipService } from "./membership";
+import { smsService } from "./sms";
+import { PinpointSMSVoiceV2Client } from "@aws-sdk/client-pinpoint-sms-voice-v2";
 import { seller, sellerContactText } from "../shared/seller";
 
 const db = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
@@ -93,12 +95,19 @@ const cards = auctionCards(
   stripe,
   completeCardPayment,
 );
+const sms = smsService(
+  db,
+  new PinpointSMSVoiceV2Client({ maxAttempts: 1 }),
+  TableName,
+  process.env.TABLE_NAME!,
+);
 const campaigns = campaignService(
   db,
   TableName,
   process.env.TABLE_NAME!,
   ledger.commit,
   index,
+  sms,
 );
 const nfc = nfcVerifier(db, new KMSClient({}), TableName, ledger.commit);
 const recovery = recoveryService(db, TableName, ledger.commit, nfc.proof);
@@ -108,6 +117,7 @@ const membership = membershipService(
   TableName,
   process.env.TABLE_NAME!,
   process.env.SITE_URL!,
+  sms,
 );
 const verifier = process.env.USER_POOL_ID
   ? CognitoJwtVerifier.create({
@@ -375,6 +385,7 @@ async function tick() {
   await campaigns.queue();
   const queued = await index("MAIL");
   await membership.sendQueued(queued);
+  await sms.sendQueued(await index("SMS_OUTBOX"), campaigns.canSend);
   if (process.env.EMAIL_ENABLED !== "true") return;
   const ses = new SESv2Client({});
   for (const mail of queued.filter(
@@ -1038,6 +1049,13 @@ export async function handler(event: any) {
         });
       throw e;
     }
+    if (["/sms/link", "/sms/leave"].includes(path)) {
+      if (method !== "POST") return response(405, { message: "Use POST." });
+      return response(
+        200,
+        await sms.leave(path.split("/").at(-1)!, body.token),
+      );
+    }
     if (
       path === "/waitlist" ||
       path === "/waitlist/remove" ||
@@ -1134,6 +1152,18 @@ export async function handler(event: any) {
       ].includes(path)
     )
       return response(200, await registry.handle(path, body, user));
+    if (path.startsWith("/me/sms/")) {
+      if (method !== "POST") return response(405, { message: "Use POST." });
+      return response(
+        200,
+        await sms.handle(
+          path.split("/").at(-1)!,
+          user.email,
+          body,
+          event.requestContext.http.sourceIp,
+        ),
+      );
+    }
     if (path === "/me" && method === "GET") {
       const profile = await get(`USER#${user.id}`, "PROFILE");
       const member = (
@@ -1275,6 +1305,7 @@ export async function handler(event: any) {
               },
             },
             suppressionWrite(process.env.TABLE_NAME!, user.email, Date.now()),
+            ...(await sms.removalWrites(user.email)),
           ],
         }),
       );
@@ -1479,6 +1510,7 @@ export async function handler(event: any) {
         collectors,
         auctions,
         mail,
+        smsMail,
         settings,
         transfers,
         mediaItems,
@@ -1489,6 +1521,7 @@ export async function handler(event: any) {
         index("COLLECTORS"),
         index("AUCTIONS"),
         index("MAIL"),
+        index("SMS_OUTBOX"),
         get("SETTINGS", "RELEASES"),
         index("TRANSFERS"),
         index("MEDIA"),
@@ -1510,8 +1543,17 @@ export async function handler(event: any) {
         guestlist.push(...r.Items);
         cursor = r.LastEvaluatedKey;
       } while (cursor);
+      const audienceProfile = async (p: any) => {
+        const texts = await sms.get(p.email);
+        return {
+          ...(await effectiveConsent(p)),
+          smsPhone: texts.phone,
+          smsConsent: texts.consent,
+          phoneVerified: texts.verified,
+        };
+      };
       return response(200, {
-        collectors: await Promise.all(collectors.map(effectiveConsent)),
+        collectors: await Promise.all(collectors.map(audienceProfile)),
         auctions,
         transfers,
         media: mediaItems,
@@ -1530,20 +1572,24 @@ export async function handler(event: any) {
         guestlist: await Promise.all(
           guestlist
             .filter((g) => g.expiresAt > Date.now() / 1000)
-            .map(effectiveConsent),
+            .map(audienceProfile),
         ),
-        mail: mail.map((m) => ({
+        mail: [...mail, ...smsMail].map((m) => ({
           id: m.pk,
-          email: m.email,
-          subject: m.subject,
+          email:
+            m.channel === "sms"
+              ? `•••• ${String(m.phone || "").slice(-4)}`
+              : m.email,
+          subject: m.channel === "sms" ? `SMS · ${m.campaignId}` : m.subject,
           status: m.status,
+          messageId: m.messageId,
         })),
         settings: settings || { cadence: "individual" },
         pages: await content.list(),
         paymentsEnabled: process.env.CHECKOUT_ENABLED === "true",
         emailEnabled: process.env.EMAIL_ENABLED === "true",
         verificationEmailEnabled: await membership.deliveryEnabled(),
-        smsEnabled: false,
+        smsEnabled: await sms.campaignEnabled(),
       });
     }
     if (path === "/admin/settings") {

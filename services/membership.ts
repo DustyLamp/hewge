@@ -14,6 +14,7 @@ import {
 } from "@aws-sdk/client-sesv2";
 import { sizes } from "../shared/catalog";
 import { seller, sellerContactText } from "../shared/seller";
+import type { smsService } from "./sms";
 
 const digest = (value: string) =>
   createHash("sha256").update(value).digest("hex");
@@ -62,6 +63,7 @@ export function membershipService(
   table: string,
   membersTable: string,
   site: string,
+  sms?: ReturnType<typeof smsService>,
 ) {
   let deliveryCache: { enabled: boolean; until: number } | undefined;
   async function deliveryEnabled() {
@@ -374,7 +376,12 @@ export function membershipService(
                   : {}),
               },
             },
-            ...(leave ? [suppressionWrite(membersTable, m.email, now)] : []),
+            ...(leave
+              ? [
+                  suppressionWrite(membersTable, m.email, now),
+                  ...(sms ? [sms.stopWrite(m.email, now)] : []),
+                ]
+              : []),
             ...(!leave
               ? [{ Put: { TableName: table, Item: newSession } }]
               : []),
@@ -395,6 +402,11 @@ export function membershipService(
       const { m } = await session(body.session);
       return { profile: publicProfile(m), smsEnabled: false };
     }
+    if (path.startsWith("/membership/sms/")) {
+      const { m } = await session(body.session);
+      if (!sms) fail("Text preferences are unavailable.", 503);
+      return sms.handle(path.split("/").at(-1)!, m.email, body, sourceIp);
+    }
     if (path === "/membership/profile") {
       const { m, key } = await session(body.session);
       const country = clean(body.country, 2).toUpperCase();
@@ -405,13 +417,19 @@ export function membershipService(
             country)
       )
         fail("Choose your country.");
-      const phone = clean(body.phone, 30).replace(/[ ()-]/g, "");
+      const phone = clean(
+        body.phone === undefined ? m.phone : body.phone,
+        30,
+      ).replace(/[ ()-]/g, "");
+      const smsConsent =
+        body.smsConsent === undefined
+          ? m.smsConsent === true
+          : body.smsConsent === true;
       if (phone && !/^\+[1-9]\d{6,14}$/.test(phone))
         fail(
           "Use an international phone number, including + and the country code.",
         );
-      if (body.smsConsent === true && !phone)
-        fail("Add a phone number for SMS alerts.");
+      if (smsConsent && !phone) fail("Add a phone number for SMS alerts.");
       const instagram = clean(body.instagram, 30).replace(/^@/, "");
       if (instagram && !/^[a-zA-Z0-9._]{1,30}$/.test(instagram))
         fail("Enter your Instagram handle, without a link.");
@@ -433,15 +451,14 @@ export function membershipService(
         about: clean(body.about, 600),
         readiness,
         phone,
-        smsConsent: body.smsConsent === true,
-        smsConsentAt:
-          body.smsConsent === true
-            ? m.smsConsent && m.phone === phone
-              ? m.smsConsentAt
-              : now
-            : null,
-        smsConsentVersion: body.smsConsent === true ? "sms-release-v1" : null,
-        smsStatus: body.smsConsent === true ? "pending-activation" : "off",
+        smsConsent: smsConsent,
+        smsConsentAt: smsConsent
+          ? m.smsConsent && m.phone === phone
+            ? m.smsConsentAt
+            : now
+          : null,
+        smsConsentVersion: smsConsent ? "sms-release-v1" : null,
+        smsStatus: smsConsent ? "pending-activation" : "off",
         phoneVerified: false,
         releaseConsent: body.releaseConsent === true,
         consentAt:

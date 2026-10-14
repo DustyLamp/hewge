@@ -1,5 +1,5 @@
 HEWGE — MESSAGING ACTIVATION
-13 October 2026
+14 October 2026
 
 Public business identity
 Lewis
@@ -13,34 +13,38 @@ The business is an Einzelfirma; this descriptor is retained for administration, 
 The website and outbound email templates use shared/seller.ts as their contact source.
 
 Email
-SES production access was requested and declined on 13 October 2026. The current account remains in the SES sandbox. Public membership verification delivery is blocked; the form explains this. No claim is made that a queued request has received mail. Domain identity and DKIM are verified. Updating the public seller information does not itself reverse the denial.
+SES production access was requested on 13 October 2026. The API reports ReviewDetails.Status=DENIED and ProductionAccessEnabled=false. The actual AWS Support correspondence, read on 14 October, is an automated request for additional information before a final decision, not a stated final refusal. Public membership verification delivery remains blocked; the form explains this honestly. Domain identity and DKIM are verified.
 
-The AWS Support API is unavailable on the account's current support plan. Read the actual denial correspondence in AWS Support Center before replying. The following follow-up is prepared for review and has NOT been sent.
+On 14 October a follow-up was submitted through AWS Support Center in the existing SES case. It supplies the website/membership/privacy/terms URLs, email types, opt-in flow, bounce/complaint suppression and monitoring, an exact verification-email example with a placeholder token, and an initial planning estimate of fewer than 100 emails/day and approximately 1,000/month. These are planning estimates, not existing recipients. Await AWS's response; do not submit duplicate requests or imply approval. The Basic Support console works even though the Support API requires a paid support plan.
 
-SES follow-up draft
-Please reconsider production access in eu-north-1 for Hewge's user-requested membership verification emails.
-
-The operator is Lewis (Einzelfirma), Unterdorfstrasse 2, 8165 Schöfflisdorf, Switzerland. Our public customer-service contact is jez@hewge.design. The seller name, address and contact email are published at https://hewge.design/privacy and https://hewge.design/terms.
-
-Hewge presents one-of-one artist garments. Future sales use free, timed highest-bid auctions. There are no paid entries, random draws or lottery tickets. Bidding, payments and release campaigns remain disabled pending completion of our launch requirements. The immediate email use case is confirming ownership of an address submitted by its visitor, and managing that person's preferences.
-
-Our website takes an email address with a clear verification and release-announcement notice. Membership remains unverified until its recipient explicitly confirms a single-use link. Links expire in 48 hours. Requests are limited to four per address and twelve per IP per hour, with a honeypot and additional API throttling. We do not buy, scrape or import mailing lists. Unverified and expired membership addresses are excluded from release campaigns. Future announcements respect the most recent verified consent or opt-out and size preferences.
-
-Verified members can turn off announcements through a limited preferences session. The privacy page also offers an unsubscribe-only confirmation link and our public customer-service contact for requests.
-
-Mail comes from hello@hewge.design with replies directed to jez@hewge.design and the operator's postal address included in the footer. The domain and DKIM identity are verified. Configuration set hewge-delivery enables bounce and complaint suppression and publishes bounce, complaint, delivery and rejection metrics to CloudWatch. Operators will monitor these metrics and the SES suppression list. Failed or ambiguous sends are not automatically repeated. Initial use is low-volume individual verification requests, with no dedicated IP or bulk campaign sending requested.
-
-Please identify any further information required to assess this specific use case.
+The immediate request is for user-requested verification and preferences messages. Release campaigns, winner mail, bidding and payments remain disabled. The domain's hewge-delivery configuration set suppresses BOUNCE and COMPLAINT and publishes delivery metrics. No purchased, scraped or imported lists are used. There is no dedicated IP. Sender: hello@hewge.design; public reply-to: jez@hewge.design; the confirmed postal contact appears in each footer.
 
 SMS
-The CDK stack prepares the HEWGE sender ID for Swiss destinations in eu-north-1. This is a dynamic sender identity, not a government registration or a worldwide sender approval. It does not lease a phone number or enable sending from the application. The existing account is in the SMS sandbox with its USD 1 monthly text-message spend limit unchanged. AWS spend limits should not be treated as a hard real-time budget guarantee.
+The CDK stack prepares the HEWGE sender ID for Swiss destinations in eu-north-1. This is a dynamic sender identity, not a government registration or a worldwide sender approval. There is no leased phone number. The existing account is in the SMS sandbox with its USD 1 monthly text-message spend limit unchanged. AWS spend limits should not be treated as a hard real-time budget guarantee.
 
-Before public SMS delivery:
-- Verify a willing test recipient through AWS's sandbox flow and test actual delivery. One owner-authorised sandbox verification SMS was accepted by AWS on 13 October 2026; confirmation of the received code is still pending. No application SMS delivery is claimed.
-- Implement and test the application's phone-verification flow, code expiry/attempt limits, per-person and global send limits, consent withdrawal and delivery-event handling. Saving a phone number or SMS preference is not phone verification.
-- Provide an accessible unsubscribe link for one-way sender-ID messages; do not promise STOP replies where no reply channel exists.
-- Fully test the sandbox integration, then request SMS production access through AWS Support Center. Declare release announcements as promotional and verification codes as OTP, rather than disguising announcements as transactional messages.
-- Review each destination separately before enabling it. A Swiss sender identity does not cover countries that require other registrations or originating numbers. Shipping destinations and SMS-enabled destinations are separate decisions.
+The owner's destination passed AWS sandbox verification on 14 October. This proves receipt of AWS's verification message, not completion of the application's OTP flow or public SMS activation. The phone number and codes do not belong in this repository.
+
+Implemented application flow
+- services/sms.ts owns one SMS preference record per verified email, shared across membership links and collector accounts. Contact-only phone fields do not grant SMS consent. Existing unverified preferences can be migrated by explicitly saving the new text settings.
+- POST /membership/sms/{preferences,save,request,verify} requires a live verified membership session. POST /me/sms/{preferences,save,request,verify} requires a verified Cognito account. UI: By text in both places; the studio shows SMS consent and number-verification status.
+- Codes expire after ten minutes and five attempts. A random 256-bit client-held challenge binds the code hash; neither that raw challenge nor the code is stored in DynamoDB. Atomic revisions and attempt reservations prevent replay and lost updates. Changing or clearing a number invalidates old proof; phone proof expires after 180 days independently of preference renewal.
+- SMS opt-out is separate from email. A confirmed leave-all request also disables canonical SMS settings. Number hashes preserve opt-outs after contact expiry; stale consent cannot override them. Profile deletion removes canonical SMS contact data and retains suppression only.
+- Runtime flag smsVerificationEnabled enables OTP requests only. The backend checks AWS's account tier; in SANDBOX it sends only to AWS-verified destinations, and currently supports Swiss mobile numbers only. Public release alerts remain inactive.
+- SDK automatic retries are disabled. Ambiguous sends stay review-required and consume their budget. Limits: one-minute cooldown, three codes/account/hour, three/number/day, five/IP/day, four globally/day and five globally/calendar month. Each message has a USD 0.15 MaxPrice. These application ceilings do not include earlier console verification messages, taxes or other AWS services; they do not change AWS's USD 1 account spend limit.
+- The SMS campaign composer permits 70 plain GSM characters; the server adds HEWGE and a unique unsubscribe URL and enforces a single-part 160-character message. Phone numbers are deduplicated per campaign. Consent and cancellation are checked before queueing and twice around the send claim. Queued release texts expire after one hour. Accepted/uncertain messages are not retried automatically; acceptance is not proof of delivery.
+- The hewge-texts configuration set routes TEXT_ALL provider events to /hewge/sms-delivery with seven-day retention. These private operational events contain destination numbers and delivery metadata, not application OTPs or membership tokens. The IAM writer is restricted to this account/configuration set/log group. Inspect final event status, total parts and price for the provider message ID.
+- There is no phone number lease or paid verification service. Requests use the existing HEWGE sender, Lambda and DynamoDB. Never raise ceilings or expand countries silently.
+
+Still required before public SMS alerts
+- Exercise the application's real OTP flow with an authorised recipient and confirm the number through the app endpoint. Unit tests and AWS sandbox verification are separate evidence.
+- Complete real delivery-event and promotional-template commissioning before public activation. The implementation now supports SMS drafts, verified/consented audience previews, scheduled promotional dispatch, per-message single-use unsubscribe links and a shared outbox. SMS campaign scheduling/sending requires both smsProductionApproved=true and AWS PRODUCTION tier; neither is currently enabled. Tests use mocked provider delivery and do not establish real carrier delivery.
+- Request production SMS access after integration testing. Release announcements must be declared promotional, verification codes transactional/OTP. The Swiss sender cannot accept STOP replies; use a working unsubscribe link in each eventual release text.
+- Review destination-specific registrations and routes before adding countries. Deliberately review application budgets before a public launch. Do not raise the AWS account limit as part of routine deployment.
+
+Deployment: AWS_PROFILE=hewge npm run deploy:infra -- -c smsVerificationEnabled=true
+This does not activate campaigns, payments or public SMS. The separate smsProductionApproved flag stays false until real tests, provider approval and a deliberate budget review are complete. AWS account tier and destination checks remain authoritative. Retain the non-secret context choice on later deployments while commissioning, or omit it to disable OTP sending.
+
+Deployed 14 October: infrastructure update completed and Amplify main deployment 17 succeeded. The active Lambda has SMS_VERIFICATION_ENABLED=true, SMS_RELEASES_ENABLED=false, EMAIL_ENABLED=false and CHECKOUT_ENABLED=false. All 150 tests and the production build pass. Live smoke checks exercised membership verification, SMS preferences, seeded verification transactions, replay protection, scanner-safe unsubscribe inspection and explicit unsubscribe; no message was sent and disposable records were removed. A real SMS delivery test still requires the owner's approval and code.
 
 Primary references checked 13 October 2026
 AWS End User Messaging regional endpoints:
@@ -53,3 +57,8 @@ Sandbox restrictions and production request steps:
 https://docs.aws.amazon.com/sms-voice/latest/userguide/sandbox.html
 CloudFormation sender identity resource:
 https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-smsvoice-senderid.html
+
+Delivery-event references checked 14 October 2026
+https://docs.aws.amazon.com/sms-voice/latest/userguide/configuration-sets-cloud-watch-creating-role.html
+https://docs.aws.amazon.com/sms-voice/latest/userguide/configuration-sets-event-format.html
+https://docs.aws.amazon.com/pinpoint/latest/apireference_smsvoicev2/API_SendTextMessage.html

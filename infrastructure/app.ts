@@ -251,7 +251,7 @@ class HewgeStack extends Stack {
       ),
     });
     const emailEnabled = this.node.tryGetContext("emailEnabled") === "true";
-    // Swiss dynamic sender ID; no leased phone number or active SMS sending.
+    // Swiss dynamic sender ID; no leased phone number. Public sending stays gated.
     // Other destinations require their own country and registration review.
     const swissSmsSender = new smsvoice.CfnSenderId(this, "SwissSmsSender", {
       senderId: "HEWGE",
@@ -259,6 +259,54 @@ class HewgeStack extends Stack {
       deletionProtectionEnabled: true,
     });
     swissSmsSender.applyRemovalPolicy(RemovalPolicy.RETAIN);
+    const smsConfigurationName = "hewge-texts";
+    const smsConfigArn = `arn:${this.partition}:sms-voice:${this.region}:${this.account}:configuration-set/${smsConfigurationName}`;
+    const smsLogArn = `arn:${this.partition}:logs:${this.region}:${this.account}:log-group:/hewge/sms-delivery`;
+    const smsLogs = new logs.LogGroup(this, "SmsDeliveryLogs", {
+      logGroupName: "/hewge/sms-delivery",
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.RETAIN,
+    });
+    const smsEventsRole = new iam.Role(this, "SmsDeliveryRole", {
+      assumedBy: new iam.ServicePrincipal("sms-voice.amazonaws.com", {
+        conditions: {
+          StringEquals: { "aws:SourceAccount": this.account },
+          ArnEquals: { "aws:SourceArn": smsConfigArn },
+        },
+      }),
+    });
+    const smsEventsPolicy = new iam.Policy(this, "SmsDeliveryPolicy", {
+      statements: [
+        new iam.PolicyStatement({
+          actions: [
+            "logs:CreateLogStream",
+            "logs:DescribeLogStreams",
+            "logs:PutLogEvents",
+          ],
+          resources: [`${smsLogArn}:*`],
+        }),
+      ],
+    });
+    smsEventsRole.attachInlinePolicy(smsEventsPolicy);
+    const smsConfiguration = new smsvoice.CfnConfigurationSet(
+      this,
+      "SmsDelivery",
+      {
+        configurationSetName: smsConfigurationName,
+        eventDestinations: [
+          {
+            eventDestinationName: "DeliveryEvents",
+            enabled: true,
+            matchingEventTypes: ["TEXT_ALL"],
+            cloudWatchLogsDestination: {
+              iamRoleArn: smsEventsRole.roleArn,
+              logGroupArn: smsLogArn,
+            },
+          },
+        ],
+      },
+    );
+    smsConfiguration.node.addDependency(smsLogs, smsEventsPolicy);
     const emailConfig = new ses.ConfigurationSet(this, "EmailDelivery", {
       configurationSetName: "hewge-delivery",
       reputationMetrics: true,
@@ -327,6 +375,16 @@ class HewgeStack extends Stack {
         USER_POOL_CLIENT_ID: userClient.userPoolClientId,
         EMAIL_ENABLED: emailEnabled ? "true" : "false",
         EMAIL_CONFIGURATION_SET: emailConfig.configurationSetName,
+        SMS_VERIFICATION_ENABLED:
+          this.node.tryGetContext("smsVerificationEnabled") === "true"
+            ? "true"
+            : "false",
+        SMS_SENDER_ARN: swissSmsSender.attrArn,
+        SMS_CONFIGURATION_SET: smsConfigurationName,
+        SMS_RELEASES_ENABLED:
+          this.node.tryGetContext("smsProductionApproved") === "true"
+            ? "true"
+            : "false",
         TABLE_NAME: table.tableName,
         SITE_URL: `https://${domain}`,
         ALLOWED_ORIGINS: origins.join(","),
@@ -381,6 +439,21 @@ class HewgeStack extends Stack {
     mediaBucket.grantReadWrite(commerce);
     nfcKey.grantDecrypt(commerce);
     table.grantReadWriteData(commerce);
+    commerce.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          "sms-voice:DescribeAccountAttributes",
+          "sms-voice:DescribeVerifiedDestinationNumbers",
+        ],
+        resources: ["*"],
+      }),
+    );
+    commerce.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["sms-voice:SendTextMessage"],
+        resources: [swissSmsSender.attrArn, smsConfiguration.attrArn],
+      }),
+    );
     commerce.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["ses:GetAccount"],
@@ -573,6 +646,10 @@ class HewgeStack extends Stack {
       "/membership/verify",
       "/membership/session",
       "/membership/profile",
+      "/membership/sms/{action}",
+      "/me/sms/{action}",
+      "/sms/link",
+      "/sms/leave",
       "/checkout",
       "/stripe/webhook",
       "/me/profile",

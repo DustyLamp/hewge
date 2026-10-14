@@ -39,6 +39,7 @@ import {
 import "./experience.css";
 import { PieceTitle, FullStops } from "./typography";
 import { MembershipSignup, MembershipPage } from "./membership";
+import { SmsPreferences, SmsUnsubscribe } from "./sms";
 import { SellerDetails } from "./seller";
 import { seller } from "../shared/seller";
 import {
@@ -1593,115 +1594,129 @@ function Profile({ data, reload }: { data: any; reload: () => void }) {
     }
   }
   return (
-    <form className="stack-form profile-form" onSubmit={save}>
-      <h2>
-        <FullStops>{"Your collector profile."}</FullStops>
-      </h2>
-      <p>
-        <FullStops>
-          {
-            "Your preferences help us choose the next piece. Your follower count does not change who wins."
-          }
-        </FullStops>
-      </p>
-      <label>
-        Name or alias
-        <input name="displayName" defaultValue={p.displayName} maxLength={80} />
-      </label>
-      <fieldset>
-        <legend>Your sizes</legend>
-        <div className="size-options">
-          {sizes.map((s) => (
-            <label key={s}>
-              <input
-                type="checkbox"
-                name="sizes"
-                value={s}
-                defaultChecked={p.sizes?.includes(s)}
-              />
-              <span>
-                <FullStops>{s}</FullStops>
-              </span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
-      <label>
-        Country
-        <select name="country" defaultValue={p.country || "CH"}>
-          {countries.map((c) => (
-            <option value={c} key={c}>
-              {countryNames.of(c)}
-            </option>
-          ))}
-        </select>
-        <small>
+    <>
+      <form className="stack-form profile-form" onSubmit={save}>
+        <h2>
+          <FullStops>{"Your collector profile."}</FullStops>
+        </h2>
+        <p>
           <FullStops>
-            {"Shipping eligibility is confirmed on each release."}
+            {
+              "Your preferences help us choose the next piece. Your follower count does not change who wins."
+            }
           </FullStops>
-        </small>
-      </label>
-      <div className="two-fields">
+        </p>
         <label>
-          Instagram · optional
+          Name or alias
           <input
-            name="instagram"
-            defaultValue={p.instagram}
-            placeholder="@yourname"
-            maxLength={31}
+            name="displayName"
+            defaultValue={p.displayName}
+            maxLength={80}
           />
         </label>
+        <fieldset>
+          <legend>Your sizes</legend>
+          <div className="size-options">
+            {sizes.map((s) => (
+              <label key={s}>
+                <input
+                  type="checkbox"
+                  name="sizes"
+                  value={s}
+                  defaultChecked={p.sizes?.includes(s)}
+                />
+                <span>
+                  <FullStops>{s}</FullStops>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <label>
-          Followers · optional
-          <input
-            name="followers"
-            type="number"
-            min="0"
-            max="1000000000"
-            defaultValue={p.followers ?? ""}
-          />
+          Country
+          <select name="country" defaultValue={p.country || "CH"}>
+            {countries.map((c) => (
+              <option value={c} key={c}>
+                {countryNames.of(c)}
+              </option>
+            ))}
+          </select>
           <small>
-            <FullStops>{"Self-reported, never a bidding advantage."}</FullStops>
+            <FullStops>
+              {"Shipping eligibility is confirmed on each release."}
+            </FullStops>
           </small>
         </label>
-      </div>
-      <label>
-        Phone · optional
-        <input name="phone" type="tel" defaultValue={p.phone} maxLength={40} />
-        <small>
-          <FullStops>
-            {"Only for contacting you about a winning bid or delivery."}
-          </FullStops>
-        </small>
-      </label>
-      <label>
-        A little about your taste · optional
-        <textarea
-          name="about"
-          defaultValue={p.about}
-          maxLength={600}
-          rows={3}
-        />
-      </label>
-      <label className="check-label">
-        <input
-          type="checkbox"
-          name="releaseConsent"
-          defaultChecked={p.releaseConsent}
-        />
-        <span>
-          <FullStops>
-            {"Email me about new releases. I can switch this off anytime."}
-          </FullStops>
-        </span>
-      </label>
-      <button className="button button-dark">
-        Save preferences <Check size={18} />
-      </button>
-      <p role="status">
-        <FullStops>{message}</FullStops>
-      </p>
-    </form>
+        <div className="two-fields">
+          <label>
+            Instagram · optional
+            <input
+              name="instagram"
+              defaultValue={p.instagram}
+              placeholder="@yourname"
+              maxLength={31}
+            />
+          </label>
+          <label>
+            Followers · optional
+            <input
+              name="followers"
+              type="number"
+              min="0"
+              max="1000000000"
+              defaultValue={p.followers ?? ""}
+            />
+            <small>
+              <FullStops>
+                {"Self-reported, never a bidding advantage."}
+              </FullStops>
+            </small>
+          </label>
+        </div>
+        <label>
+          Phone · optional
+          <input
+            name="phone"
+            type="tel"
+            defaultValue={p.phone}
+            maxLength={40}
+          />
+          <small>
+            <FullStops>
+              {"Only for contacting you about a winning bid or delivery."}
+            </FullStops>
+          </small>
+        </label>
+        <label>
+          A little about your taste · optional
+          <textarea
+            name="about"
+            defaultValue={p.about}
+            maxLength={600}
+            rows={3}
+          />
+        </label>
+        <label className="check-label">
+          <input
+            type="checkbox"
+            name="releaseConsent"
+            defaultChecked={p.releaseConsent}
+          />
+          <span>
+            <FullStops>
+              {"Email me about new releases. I can switch this off anytime."}
+            </FullStops>
+          </span>
+        </label>
+        <button className="button button-dark">
+          Save preferences <Check size={18} />
+        </button>
+        <p role="status">
+          <FullStops>{message}</FullStops>
+        </p>
+      </form>
+      <SmsPreferences />
+    </>
   );
 }
 function WonPiece({ a, reload }: { a: any; reload: () => void }) {
@@ -2272,6 +2287,7 @@ function Dashboard() {
           call={call}
           busy={busy}
           enabled={data.emailEnabled}
+          smsEnabled={data.smsEnabled}
         />
       ) : tab === "security" ? (
         <SecurityPanel security={data.security || {}} />
@@ -2397,7 +2413,11 @@ function Dashboard() {
                       </small>
 
                       {c.smsConsent && (
-                        <small>SMS consent · pending activation</small>
+                        <small>
+                          Text alerts: {c.smsPhone} ·{" "}
+                          {c.phoneVerified ? "number verified" : "not verified"}{" "}
+                          · alerts inactive
+                        </small>
                       )}
                     </td>
                     <td>
@@ -2962,13 +2982,19 @@ function Dashboard() {
               </p>
             </div>
           )}
-          <h3>Transactional email queue</h3>
+          <h3>Message queue</h3>
+          <p>
+            Accepted means the provider accepted the message. SMS delivery
+            reports are in the Hewge AWS log group /hewge/sms-delivery. Review
+            uncertain sends before taking further action.
+          </p>
 
           {data.mail.map((m: any) => (
             <p key={m.id}>
               <FullStops>{m.subject}</FullStops> ·{" "}
               <FullStops>{m.email}</FullStops> ·{" "}
               <FullStops>{m.status}</FullStops>
+              {m.messageId && <small>Provider reference: {m.messageId}</small>}
             </p>
           ))}
 
@@ -3221,21 +3247,23 @@ export function Experience() {
   const route = location.pathname;
   useEffect(() => {
     document.title =
-      route === "/membership"
-        ? "Membership — HEWGE"
-        : route === "/archive"
-          ? "The Archive — HEWGE"
-          : route === "/account"
-            ? "Collector Access — HEWGE"
-            : route === "/dashboard"
-              ? "Studio — HEWGE"
-              : route === "/terms"
-                ? "Auction Terms — HEWGE"
-                : route === "/withdraw"
-                  ? "Withdraw from contract — HEWGE"
-                  : route === "/privacy"
-                    ? "Privacy — HEWGE"
-                    : "The Hewge Journal — HEWGE";
+      route === "/sms"
+        ? "Text preferences — HEWGE"
+        : route === "/membership"
+          ? "Membership — HEWGE"
+          : route === "/archive"
+            ? "The Archive — HEWGE"
+            : route === "/account"
+              ? "Collector Access — HEWGE"
+              : route === "/dashboard"
+                ? "Studio — HEWGE"
+                : route === "/terms"
+                  ? "Auction Terms — HEWGE"
+                  : route === "/withdraw"
+                    ? "Withdraw from contract — HEWGE"
+                    : route === "/privacy"
+                      ? "Privacy — HEWGE"
+                      : "The Hewge Journal — HEWGE";
     const canonical = document.querySelector('link[rel="canonical"]');
     canonical?.setAttribute("href", `https://hewge.design${route}`);
   }, [route]);
@@ -3244,6 +3272,8 @@ export function Experience() {
       <SiteHeader />
       {route === "/membership" ? (
         <MembershipPage />
+      ) : route === "/sms" ? (
+        <SmsUnsubscribe />
       ) : route === "/latest" ? (
         <LatestPage />
       ) : route === "/verify" ? (

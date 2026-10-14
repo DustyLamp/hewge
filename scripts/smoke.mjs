@@ -24,10 +24,30 @@ const o = Object.fromEntries(
 );
 const db = DynamoDBDocumentClient.from(new DynamoDBClient({ region }));
 const hash = (s) => createHash("sha256").update(s).digest("hex");
+const smsPhone = `+120255501${Math.floor(Math.random() * 100)
+  .toString()
+  .padStart(2, "0")}`;
+const existingSmsSuppression = await db.send(
+  new GetCommand({
+    TableName: o.DataTableName,
+    Key: { pk: `SMS_SUPPRESSION#${hash(smsPhone)}` },
+    ConsistentRead: true,
+  }),
+);
+assert.equal(
+  existingSmsSuppression.Item,
+  undefined,
+  "Synthetic SMS number already in use; rerun safely.",
+);
 const email = `hewge-smoke-${randomUUID()}@example.invalid`;
 const pk = `EMAIL#${hash(email)}`;
 const token = randomBytes(32).toString("base64url");
 const challengeKey = { pk: `MEMBER_VERIFY#${hash(token)}`, sk: "STATE" };
+const smsChallenge = randomBytes(32).toString("base64url");
+const smsLeave = randomBytes(32).toString("base64url");
+const smsOwner = `SMS_MEMBER#${hash(email)}`;
+const smsChallengeKey = { pk: `SMS_VERIFY#${hash(smsChallenge)}`, sk: "STATE" };
+const smsLeaveKey = { pk: `SMS_LEAVE#${hash(smsLeave)}`, sk: "STATE" };
 const read = async () =>
   (
     await db.send(
@@ -137,6 +157,127 @@ try {
   assert.equal(preferences.body.profile.smsConsent, false);
   assert.equal(preferences.body.profile.country, "CH");
   assert.equal(
+    (await post("/membership/sms/preferences", { session: token })).status,
+    401,
+  );
+  const smsSaved = await post("/membership/sms/save", {
+    session,
+    phone: smsPhone,
+    consent: true,
+  });
+  assert.equal(smsSaved.status, 200, "SMS preference save failed");
+  assert.equal(smsSaved.body.verified, false);
+  assert.equal(smsSaved.body.canVerify, false); // Unsupported destination: never send a text.
+  assert.equal(
+    (await post("/membership/sms/request", { session })).status,
+    503,
+  );
+  assert.equal(
+    (
+      await post("/membership/sms/verify", {
+        session,
+        challenge: "z".repeat(43),
+        code: "000000",
+      })
+    ).status,
+    400,
+  );
+  // Exercise real DynamoDB verification conditions with a disposable challenge.
+  // This fixture is not a delivery test and never contacts the synthetic phone.
+  const smsRecord = await db.send(
+    new GetCommand({
+      TableName: o.DataTableName,
+      Key: { pk: smsOwner },
+      ConsistentRead: true,
+    }),
+  );
+  await db.send(
+    new PutCommand({
+      TableName: o.DataTableName,
+      Item: { ...smsRecord.Item, pendingChallenge: smsChallengeKey.pk },
+      ConditionExpression: "revision=:revision",
+      ExpressionAttributeValues: { ":revision": smsRecord.Item.revision },
+    }),
+  );
+  await db.send(
+    new PutCommand({
+      TableName: o.AuctionTableName,
+      Item: {
+        ...smsChallengeKey,
+        owner: smsOwner,
+        phone: smsPhone,
+        proof: hash(`${smsChallenge}:000000`),
+        attempts: 0,
+        status: "sent",
+        expiresAt: Math.floor(Date.now() / 1000) + 600,
+      },
+      ConditionExpression: "attribute_not_exists(pk)",
+    }),
+  );
+  const smsVerified = await post("/membership/sms/verify", {
+    session,
+    challenge: smsChallenge,
+    code: "000000",
+  });
+  assert.equal(smsVerified.status, 200, JSON.stringify(smsVerified));
+  assert.equal(smsVerified.body.verified, true);
+  assert.equal(
+    (
+      await post("/membership/sms/verify", {
+        session,
+        challenge: smsChallenge,
+        code: "000000",
+      })
+    ).status,
+    400,
+  );
+  await db.send(
+    new PutCommand({
+      TableName: o.AuctionTableName,
+      Item: {
+        ...smsLeaveKey,
+        owner: smsOwner,
+        phoneHash: hash(smsPhone),
+        used: false,
+        expiresAt: Math.floor(Date.now() / 1000) + 600,
+      },
+      ConditionExpression: "attribute_not_exists(pk)",
+    }),
+  );
+  assert.equal(
+    (await post("/sms/link", { token: smsLeave })).body.unsubscribed,
+    false,
+  );
+  assert.equal(
+    (await post("/membership/sms/preferences", { session })).body.consent,
+    true,
+  );
+  assert.equal(
+    (await post("/sms/leave", { token: smsLeave })).body.unsubscribed,
+    true,
+  );
+  assert.equal(
+    (await post("/membership/sms/preferences", { session })).body.consent,
+    false,
+  );
+  assert.equal(
+    (await post("/sms/leave", { token: smsLeave })).body.unsubscribed,
+    true,
+  );
+  console.log(
+    "SMS preferences, verification transactions, replay protection and explicit unsubscribe pass; no text sent.",
+  );
+  assert.equal(
+    (
+      await post("/membership/sms/save", {
+        session,
+        phone: smsPhone,
+        consent: false,
+      })
+    ).body.consent,
+    false,
+  );
+  assert.equal(
     (
       await post(
         "/waitlist",
@@ -171,6 +312,15 @@ try {
     cursor = rows.LastEvaluatedKey;
   } while (cursor);
   await db.send(new DeleteCommand({ TableName: o.DataTableName, Key: { pk } }));
+  for (const Key of [smsChallengeKey, smsLeaveKey])
+    await db.send(new DeleteCommand({ TableName: o.AuctionTableName, Key }));
+  for (const smsPk of [
+    `SMS_MEMBER#${hash(email)}`,
+    `SMS_SUPPRESSION#${hash(smsPhone)}`,
+  ])
+    await db.send(
+      new DeleteCommand({ TableName: o.DataTableName, Key: { pk: smsPk } }),
+    );
   const hour = Math.floor(Date.now() / 3600000);
   for (const h of [hour - 1, hour])
     await db.send(

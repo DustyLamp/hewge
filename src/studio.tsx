@@ -467,14 +467,17 @@ export function EngagementPanel({
   call,
   busy,
   enabled,
+  smsEnabled,
 }: {
   campaigns: any[];
   call: (path: string, body: any) => Promise<void>;
   busy: boolean;
   enabled: boolean;
+  smsEnabled: boolean;
 }) {
   const [draft, setDraft] = useState<any>({}),
     [preview, setPreview] = useState("");
+  const [channel, setChannel] = useState("email");
   return (
     <section className="studio-panel">
       <h2>Member communications</h2>
@@ -488,10 +491,30 @@ export function EngagementPanel({
           : "Email delivery is awaiting activation. You can prepare drafts and preview audiences."}
       </p>
       <div className="release-selector">
-        <button onClick={() => setDraft({})}>New message</button>
+        <p>
+          {smsEnabled
+            ? "Scheduled texts are enabled."
+            : "SMS delivery awaits approval. Text drafts and audience previews are available."}
+        </p>
+        <button
+          onClick={() => {
+            setDraft({});
+            setChannel("email");
+            setPreview("");
+          }}
+        >
+          New message
+        </button>
         {campaigns.map((c) => (
-          <button key={c.id} onClick={() => setDraft(c)}>
-            {c.subject} / {c.status}
+          <button
+            key={c.id}
+            onClick={() => {
+              setDraft(c);
+              setChannel(c.channel || "email");
+              setPreview("");
+            }}
+          >
+            {c.subject} / {c.channel || "email"} / {c.status}
           </button>
         ))}
       </div>
@@ -508,6 +531,7 @@ export function EngagementPanel({
             const body = {
               id: draft.id,
               action,
+              channel,
               subject: f.get("subject"),
               text: f.get("text"),
               size: f.get("size"),
@@ -528,7 +552,27 @@ export function EngagementPanel({
         }}
       >
         <label>
-          Subject
+          Channel
+          <select
+            value={channel}
+            onChange={(e) => {
+              setChannel(e.target.value);
+              setPreview("");
+            }}
+          >
+            <option value="email">Email</option>
+            <option value="sms">SMS</option>
+          </select>
+        </label>
+        {channel === "sms" && (
+          <p>
+            Up to 70 plain-text characters. Hewge adds its name and an
+            unsubscribe link. Each text fits one SMS; the shared test budget
+            remains five messages per month.
+          </p>
+        )}
+        <label>
+          Subject / internal title
           <input
             name="subject"
             maxLength={120}
@@ -542,7 +586,7 @@ export function EngagementPanel({
             name="text"
             rows={7}
             minLength={10}
-            maxLength={4000}
+            maxLength={channel === "sms" ? 70 : 4000}
             defaultValue={draft.text}
             required
           />
@@ -576,6 +620,7 @@ export function EngagementPanel({
           <button
             type="submit"
             value="preview"
+            formNoValidate
             className="text-link"
             disabled={busy}
           >
@@ -587,7 +632,7 @@ export function EngagementPanel({
           <button
             value="schedule"
             className="button button-dark"
-            disabled={busy || !enabled}
+            disabled={busy || !(channel === "sms" ? smsEnabled : enabled)}
           >
             Schedule message
           </button>

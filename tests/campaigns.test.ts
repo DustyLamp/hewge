@@ -59,3 +59,88 @@ describe("durable engagement suppression", () => {
     ).toBe(false);
   });
 });
+
+describe("separate SMS campaign consent", () => {
+  it("does not require email marketing consent and deduplicates a shared verified number", async () => {
+    const profiles = [
+      {
+        pk: "USER#one",
+        email: "one@example.invalid",
+        sizes: ["M"],
+        country: "CH",
+        releaseConsent: false,
+      },
+      {
+        pk: "USER#two",
+        email: "two@example.invalid",
+        sizes: ["M"],
+        country: "CH",
+        releaseConsent: false,
+      },
+    ];
+    const service = campaignService(
+      {
+        send: vi.fn(async (c: any) =>
+          c.constructor.name === "ScanCommand"
+            ? { Items: [] }
+            : { Item: profiles.find((p) => p.pk === c.input.Key.pk) },
+        ),
+      } as any,
+      "accounts",
+      "members",
+      vi.fn(),
+      async () => profiles,
+      {
+        get: vi.fn(async () => ({
+          consent: true,
+          verified: true,
+          phone: "+41790000000",
+        })),
+        campaignEnabled: async () => false,
+      } as any,
+    );
+    expect(await service.audience({ size: "M" }, "sms")).toHaveLength(1);
+    expect(await service.audience({ size: "XL" }, "sms")).toHaveLength(0);
+    expect(await service.audience({}, "email")).toHaveLength(0);
+    expect(
+      await service.handle(
+        { action: "preview", channel: "sms" },
+        { id: "owner" },
+      ),
+    ).toMatchObject({ recipients: 1, enabled: false });
+    await expect(
+      service.handle(
+        {
+          action: "schedule",
+          channel: "sms",
+          subject: "Next original",
+          text: "The next original opens soon.",
+          sendAt: Date.now() + 60000,
+        },
+        { id: "owner" },
+      ),
+    ).rejects.toThrow(/activated/);
+  });
+  it("refuses multipart or non-GSM SMS content before scheduling", async () => {
+    const service = campaignService(
+      { send: vi.fn(async () => ({})) } as any,
+      "accounts",
+      "members",
+      vi.fn(),
+      async () => [],
+      { campaignEnabled: async () => false } as any,
+    );
+    await expect(
+      service.handle(
+        { channel: "sms", subject: "Release", text: "x".repeat(71) },
+        { id: "owner" },
+      ),
+    ).rejects.toThrow(/70/);
+    await expect(
+      service.handle(
+        { channel: "sms", subject: "Release", text: "A new original ✨" },
+        { id: "owner" },
+      ),
+    ).rejects.toThrow(/70/);
+  });
+});

@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { api, joinList } from "./api";
 import { sizes } from "../shared/catalog";
 import { FullStops } from "./typography";
+import { SmsPreferences } from "./sms";
 
 export function MembershipSignup({ compact = false }: { compact?: boolean }) {
   const [busy, setBusy] = useState(false);
@@ -171,7 +172,6 @@ export function MembershipPage() {
         ...Object.fromEntries(f),
         session,
         sizes: f.getAll("sizes"),
-        smsConsent: f.get("smsConsent") === "on",
         releaseConsent: f.get("releaseConsent") === "on",
       });
       setProfile(r.profile);
@@ -269,52 +269,6 @@ export function MembershipPage() {
                 <option value="ready">Ready to bid</option>
               </select>
             </label>
-            <section className="membership-sms">
-              <h2>
-                <FullStops>{"By text."}</FullStops>
-              </h2>
-              <p>
-                <FullStops>
-                  {"SMS alerts are coming. Save your preference now."}
-                </FullStops>
-              </p>
-              <label>
-                Phone · optional
-                <input
-                  name="phone"
-                  type="tel"
-                  autoComplete="tel"
-                  placeholder="+41 …"
-                  maxLength={30}
-                  defaultValue={profile.phone || ""}
-                />
-                <small>
-                  <FullStops>{"Include the country code."}</FullStops>
-                </small>
-              </label>
-              <label className="check-label">
-                <input
-                  name="smsConsent"
-                  type="checkbox"
-                  defaultChecked={profile.smsConsent === true}
-                />
-                <span>
-                  <FullStops>
-                    {
-                      "Send me Hewge release alerts by SMS when available. I can switch this off anytime."
-                    }
-                  </FullStops>
-                </span>
-              </label>
-
-              {profile.smsConsent && (
-                <small>
-                  <FullStops>
-                    {"Saved. SMS delivery is not active yet."}
-                  </FullStops>
-                </small>
-              )}
-            </section>
             <details className="membership-more">
               <summary>A little more · optional</summary>
               <label>
@@ -370,6 +324,7 @@ export function MembershipPage() {
               Collector account →
             </a>
           </form>
+          <SmsPreferences session={session} />
         </>
       ) : purpose ? (
         <div className="membership-confirm">
