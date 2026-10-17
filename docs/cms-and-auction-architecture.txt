@@ -4,12 +4,12 @@ Scope
 This guide owns infrastructure, content authority, publication and cost inputs. Creative release decisions belong to docs/administrator-playbook.md; activation and unsupported experiences are listed in docs/launch-readiness.txt. Bid acceptance, receipts, transport and timing are in docs/live-bidding.txt. Retention, archives and disaster recovery are in docs/permanent-provenance.txt.
 
 Stack and data responsibilities
-Static React/Vite on Amplify; HTTP API Gateway; ARM Node 22 Lambda; DynamoDB on demand; Cognito identity; SES email. A minute-by-minute EventBridge worker settles auctions and drains the email outbox when enabled. AppSync Events handles live notifications. Services are managed and usage-based, without a dedicated server, VPC, NAT gateway or advertising trackers. Logs retain seven days; customer emails and tokens are not deliberately logged. Restricted SMS delivery logs have the separate contents described in docs/messaging-activation.txt.
+React/Vite assets on Amplify, with piece HTML served through the existing Lambda; HTTP API Gateway; ARM Node 22 Lambda; DynamoDB on demand; Cognito identity; SES email. A minute-by-minute EventBridge worker settles auctions and drains the email outbox when enabled. AppSync Events handles live notifications. Services are managed and usage-based, without a dedicated server, VPC, NAT gateway or advertising trackers. Logs retain seven days; customer emails and tokens are not deliberately logged. Restricted SMS delivery logs have the separate contents described in docs/messaging-activation.txt.
 
 Tables: hewge-production stores expiring subscriptions; hewge-auctions stores profiles, releases, bids, transfers, provenance and operational records; hewge-audit is the non-expiring transactional ledger. services/platform.ts is the API/worker entry; services/membership.ts handles email verification and limited preference sessions; services/ownership.ts handles the transfer lifecycle; shared/auction.ts owns public redaction and auction calculations.
 
 CMS responsibilities
-- Dashboard > Releases owns the one canonical piece name, story, photos, pricing and dates.
+- Dashboard > Releases owns the one canonical piece name, story, photos, pricing, dates and presentation stage. Design studies are labelled publicly and cannot be scheduled for bidding. Select Finished piece only when the physical work and its disclosures are ready. Blank lines in the story create paragraphs; captions describe the actual image. Unpublished creator biographies are not filled with placeholder profiles.
 - Dashboard > Pages owns the homepage and editorial pages at /pages/<slug>.
 - Text, release records and publication pointers live in DynamoDB. Images and content snapshots live in private, encrypted, versioned S3. Lambda is stateless validation and transaction code, not persistent content storage.
 - Page publication takes effect on the next read without rebuilding the application. Private drafts do not replace published pages. Release drafts explicitly remove the piece from public view; publishing a piece page does not enable bidding.
@@ -21,6 +21,9 @@ Release pages share AUCTION#<id> / HEAD. The homepage stores its featured releas
 Release discovery uses a GSI, then strongly reads each canonical record; a newly created release may briefly be absent from discovery while the index catches up. Homepage lookup is direct and strongly consistent. Bidding and ownership decisions never trust the GSI.
 Artwork and page-image URLs are checked against the published record before a short-lived S3 URL is issued. Private evidence cannot be selected as public artwork. Keep unrevealed assets private; a published asset can be copied, and an issued signed URL remains usable for its 60-second lifetime.
 Plain text is rendered as text, never executable HTML. Accepted auction terms and privacy versions remain controlled, immutable documents rather than freely mutable CMS copy. Changing contractual rules still requires a versioned application release.
+
+Piece links and discovery
+Amplify proxies /pieces/<slug> to GET/HEAD /web/pieces/<slug>. The endpoint strongly reads the slug and published release, applies publicRelease redaction, and adds escaped title, description, canonical and Open Graph metadata to the deployed index.html shell. It also provides a text fallback before React loads. Images use the same guarded public media URLs as the site. Responses are not cached; missing, withdrawn or stale slugs return 404, and unavailable shells return 503. Editorial updates and reveal times do not require another frontend build. External social services can retain their own previews after fetching them. No separate rendering service or static copy of the CMS record is created.
 
 Reveal and media boundaries
 Artist/material share draft reveal settings; design has a separate teaser mode. The current binding-auction gate requires artist/material details by opening. Design teasers can withhold name, story and main image before opening. Unpublished drafts are excluded from the public API; unrevealed artist/material fields are redacted and teaser pages omit the design spread. This schema does not implement every administrator-designed sequence; review terms and implement/test unsupported flows before promising them.
@@ -39,6 +42,7 @@ https://aws.amazon.com/amplify/pricing/
 Include API/database use, bandwidth, backups, security services, authentication, messaging, monitoring, DNS and domain renewal. Running costs are usage-based; there is no hard spending cap or email budget alert. Email/SMS pricing and application send ceilings are in docs/messaging-activation.txt.
 
 AWS references
+https://docs.aws.amazon.com/amplify/latest/userguide/redirect-rewrite-examples.html
 https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html
 https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html
 https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-global-table-design.html

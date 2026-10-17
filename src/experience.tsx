@@ -76,7 +76,6 @@ export function SiteHeader() {
       </a>
       <nav aria-label="Main navigation">
         <a href="/latest">The latest</a>
-        <a href="/archive">Archive</a>
       </nav>
       <a className="header-cta" href="/#first-access">
         Join Hewge <ArrowUpRight size={17} />
@@ -90,9 +89,6 @@ function Subscribe() {
       <h3>
         <FullStops>{"Join Hewge."}</FullStops>
       </h3>
-      <p>
-        <FullStops>{"Verify your email for release access."}</FullStops>
-      </p>
       <MembershipSignup />
     </div>
   );
@@ -119,6 +115,8 @@ function Footer() {
         >
           Instagram ↗
         </a>
+        <a href="/archive">Archive</a>
+        <a href="mailto:jez@hewge.design">Contact</a>
         <a href="/terms">Auction terms</a>
         <a href="/privacy">Privacy</a>
         <a href="/withdraw">Withdraw from contract here</a>
@@ -240,7 +238,7 @@ export function Share({ release }: { release: Release }) {
       if (navigator.share)
         await navigator.share({
           title: `${release.name} — HEWGE`,
-          text: `One shirt. One of one. ${release.name} by ${release.artistName || "HEWGE"}.`,
+          text: release.subtitle || `${release.name} — HEWGE`,
           url,
         });
       else {
@@ -396,7 +394,7 @@ function BidBox({
   }
   return (
     <aside className="bid-box">
-      {live && (
+      {live && release.status === "open" && (
         <div
           className={`live-status ${live.fresh ? "" : "is-stale"}`}
           role="status"
@@ -426,7 +424,9 @@ function BidBox({
             ? "Collected"
             : release.status === "awaiting-payment"
               ? "Winner selected"
-              : "A single original"}
+              : release.presentation === "design-study"
+                ? "Design study"
+                : "A single original"}
         </FullStops>
       </span>
       {!["sold", "awaiting-payment", "closed"].includes(release.status) && (
@@ -450,10 +450,12 @@ function BidBox({
             {release.size ? `Size ${release.size}` : "Size at reveal"}
           </FullStops>
         </span>
-        <span>
-          {release.bidCount}{" "}
-          <FullStops>{release.bidCount === 1 ? "bid" : "bids"}</FullStops>
-        </span>
+        {(release.status === "open" || release.bidCount > 0) && (
+          <span>
+            {release.bidCount}{" "}
+            <FullStops>{release.bidCount === 1 ? "bid" : "bids"}</FullStops>
+          </span>
+        )}
         <span>1 / 1</span>
       </div>
       {live?.personal &&
@@ -487,8 +489,8 @@ function BidBox({
           <strong>
             <FullStops>
               {release.publicOwner?.anonymous
-                ? "anonymous bidder"
-                : release.publicOwner?.name || "anonymous bidder"}
+                ? "anonymous custodian"
+                : release.publicOwner?.name || "anonymous custodian"}
             </FullStops>
           </strong>
           <small>
@@ -941,7 +943,11 @@ function PiecePage() {
         <span>THE HEWGE JOURNAL</span>
         <span>
           <FullStops>
-            {release.opensAt ? weekLabel(release.opensAt) : "THE FIRST EDITION"}
+            {release.opensAt
+              ? weekLabel(release.opensAt)
+              : release.presentation === "design-study"
+                ? "DESIGN STUDY"
+                : "PREVIEW"}
           </FullStops>
         </span>
         <span>
@@ -964,9 +970,7 @@ function PiecePage() {
           </p>
           <span>
             <FullStops>
-              {release.artistName
-                ? `A work by ${release.artistName}`
-                : "Artist to be announced."}
+              {release.artistName ? `A work by ${release.artistName}` : ""}
             </FullStops>
           </span>
         </div>
@@ -979,7 +983,11 @@ function PiecePage() {
             fetchPriority="high"
           />
           <span>
-            <FullStops>{"THE ONLY ONE."}</FullStops>
+            <FullStops>
+              {release.presentation === "design-study"
+                ? "Design mockup"
+                : `Piece No. ${release.number}`}
+            </FullStops>
           </span>
         </div>
         <BidBox
@@ -1008,143 +1016,147 @@ function PiecePage() {
             </h2>
           </div>
           <div>
-            <p className="story-lead">
-              <FullStops>{release.story}</FullStops>
-            </p>
-            <p>
-              <FullStops>
-                {
-                  "A single garment. Its own name. Its artist’s signature. No second edition, in any size."
-                }
-              </FullStops>
-            </p>
-            {release.imageNote && (
-              <p className="image-note">
-                <FullStops>{release.imageNote}</FullStops>
-              </p>
-            )}
+            {release.story
+              .split(/\n\s*\n/)
+              .filter(Boolean)
+              .map((paragraph, index) => (
+                <p className={index === 0 ? "story-lead" : ""} key={index}>
+                  <FullStops>{paragraph}</FullStops>
+                </p>
+              ))}
           </div>
         </section>
       )}
 
-      {!release.designHidden &&
-        (release.gallery || []).map((g) => (
-          <figure className="wide-art" key={g.image}>
+      {release.imageNote && (
+        <p className="image-note">
+          <FullStops>{release.imageNote}</FullStops>
+        </p>
+      )}
+      <div className="story-gallery">
+        {!release.designHidden &&
+          (release.gallery || []).map((g) => (
+            <figure className="wide-art" key={g.image}>
+              <img
+                src={g.image}
+                alt={`${release.name} — ${g.label}`}
+                loading="lazy"
+              />
+              <figcaption>
+                <FullStops>{`${release.name} / ${g.label}`}</FullStops>
+              </figcaption>
+            </figure>
+          ))}
+      </div>
+      {release.artistName && (
+        <section className="artist-section" id="artist">
+          <div className="artist-art">
             <img
-              src={g.image}
-              alt={`${release.name} — ${g.label}`}
+              src={release.gallery?.[1]?.image || release.image}
+              alt={
+                release.designHidden
+                  ? `Preview of piece No. ${release.number}`
+                  : `A detail from ${release.name}`
+              }
               loading="lazy"
             />
-            <figcaption>
-              <FullStops>{`${release.name} / ${g.label}`}</FullStops>
-            </figcaption>
-          </figure>
-        ))}
-      <section className="artist-section" id="artist">
-        <div className="artist-art">
-          <img
-            src={release.gallery?.[1]?.image || release.image}
-            alt={
-              release.designHidden
-                ? `Preview of piece No. ${release.number}`
-                : `A detail from ${release.name}`
-            }
-            loading="lazy"
-          />
-          <span>
-            BEHIND
-            <br />
-            <FullStops>{"THE WORK."}</FullStops>
-          </span>
-        </div>
-        <div className="artist-copy">
-          <span className="eyebrow">The artist</span>
-          <h2>
-            <FullStops>{release.artistName || "To be announced."}</FullStops>
-          </h2>
-          {release.artistName ? (
-            <>
-              <p className="artist-byline">
+            <span>
+              BEHIND
+              <br />
+              <FullStops>{"THE WORK."}</FullStops>
+            </span>
+          </div>
+          <div className="artist-copy">
+            <span className="eyebrow">The artist</span>
+            <h2>
+              <FullStops>{release.artistName || "To be announced."}</FullStops>
+            </h2>
+            {release.artistName ? (
+              <>
+                <p className="artist-byline">
+                  <FullStops>
+                    {[release.artistOrigin, release.artistPractice]
+                      .filter(Boolean)
+                      .join(" / ")}
+                  </FullStops>
+                </p>
+                <p>
+                  <FullStops>{release.artistBiography}</FullStops>
+                </p>
+
+                {release.artistWorks && (
+                  <>
+                    <h3>Other works</h3>
+                    <p>
+                      <FullStops>{release.artistWorks}</FullStops>
+                    </p>
+                  </>
+                )}
+              </>
+            ) : (
+              <p>
                 <FullStops>
-                  {[release.artistOrigin, release.artistPractice]
-                    .filter(Boolean)
-                    .join(" / ")}
+                  {release.revealMode === "after-close"
+                    ? "Artist and material announced after bidding closes."
+                    : release.revealMode === "at-opening"
+                      ? "Artist and material announced when bidding opens."
+                      : "Artist and material details will appear here."}
                 </FullStops>
               </p>
-              <p>
-                <FullStops>{release.artistBiography}</FullStops>
-              </p>
+            )}
+            <div className="garment-label">
+              <span className="wordmark">HEWGE</span>
+              <strong>
+                <FullStops>{release.name.toUpperCase()}</FullStops>
+              </strong>
 
-              {release.artistWorks && (
-                <>
-                  <h3>Other works</h3>
-                  <p>
-                    <FullStops>{release.artistWorks}</FullStops>
-                  </p>
-                </>
+              {release.artistName && (
+                <span>
+                  <FullStops>{release.artistName}</FullStops>
+                </span>
               )}
-            </>
-          ) : (
+
+              <small>
+                <FullStops>{"ONE OF ONE / No. "}</FullStops>
+                <FullStops>{release.number}</FullStops>
+              </small>
+            </div>
+          </div>
+        </section>
+      )}
+      {release.presentation !== "design-study" && (
+        <section className="ownership-story">
+          <span className="eyebrow">With the piece</span>
+          <h2>
+            <FullStops>{"Yours."}</FullStops>
+          </h2>
+          <div className="ownership-grid">
             <p>
-              <FullStops>
-                {release.revealMode === "after-close"
-                  ? "Artist and material announced after bidding closes."
-                  : release.revealMode === "at-opening"
-                    ? "Artist and material announced when bidding opens."
-                    : "Artist and material details will appear here."}
-              </FullStops>
+              <FullStops>{"Artist-signed certificate."}</FullStops>
+              <br />
+              <FullStops>{"Numbered ownership card."}</FullStops>
+              <br />
+              <FullStops>{"Holographic seal."}</FullStops>
+              <br />
+              <FullStops>{"One original."}</FullStops>
+            </p>
+            <p>
+              <FullStops>{"Choose to be named in the archive."}</FullStops>
+              <br />
+              <FullStops>{"Or remain unnamed."}</FullStops>
+            </p>
+          </div>
+
+          {release.certificateId && (
+            <p className="certificate-code">
+              <a href={`/registry/${release.id}`}>
+                Registered original:{" "}
+                <FullStops>{release.certificateId}</FullStops> →
+              </a>
             </p>
           )}
-          <div className="garment-label">
-            <span className="wordmark">HEWGE</span>
-            <strong>
-              <FullStops>{release.name.toUpperCase()}</FullStops>
-            </strong>
-
-            {release.artistName && (
-              <span>
-                <FullStops>{release.artistName}</FullStops>
-              </span>
-            )}
-
-            <small>
-              <FullStops>{"ONE OF ONE / No. "}</FullStops>
-              <FullStops>{release.number}</FullStops>
-            </small>
-          </div>
-        </div>
-      </section>
-      <section className="ownership-story">
-        <span className="eyebrow">With the piece</span>
-        <h2>
-          <FullStops>{"Yours."}</FullStops>
-        </h2>
-        <div className="ownership-grid">
-          <p>
-            <FullStops>{"Artist-signed certificate."}</FullStops>
-            <br />
-            <FullStops>{"Numbered ownership card."}</FullStops>
-            <br />
-            <FullStops>{"Holographic seal."}</FullStops>
-            <br />
-            <FullStops>{"One original."}</FullStops>
-          </p>
-          <p>
-            <FullStops>{"Choose to be named in the archive."}</FullStops>
-            <br />
-            <FullStops>{"Or stay an anonymous bidder."}</FullStops>
-          </p>
-        </div>
-
-        {release.certificateId && (
-          <p className="certificate-code">
-            <a href={`/registry/${release.id}`}>
-              Registered original:{" "}
-              <FullStops>{release.certificateId}</FullStops> →
-            </a>
-          </p>
-        )}
-      </section>
+        </section>
+      )}
       <section className="article-details">
         <details>
           <summary>
@@ -1158,7 +1170,6 @@ function PiecePage() {
             <FullStops>
               {release.material || "Material announced at reveal."}
             </FullStops>
-            <FullStops>{" One garment only. Artist signed."}</FullStops>
           </p>
         </details>
         <details>
@@ -1183,17 +1194,14 @@ function PiecePage() {
           <p>
             <FullStops>
               {release.deliveryDetails ||
-                "Delivery and insured destinations will be confirmed before bidding opens."}
+                "Insured shipping. Eligible destinations, delivery times, shipping costs and tax arrangements will be published before bidding opens."}
             </FullStops>{" "}
             <FullStops>
               {release.countries?.length
                 ? `This release ships to: ${release.countries.join(", ")}. Shipping ${money(release.shippingFee)}.`
-                : "Eligible destinations and shipping cost will be confirmed before bidding."}{" "}
+                : ""}{" "}
             </FullStops>
-            <FullStops>
-              {release.taxDetails ||
-                "Tax and import arrangements will be confirmed before bidding opens."}
-            </FullStops>
+            <FullStops>{release.taxDetails || ""}</FullStops>
           </p>
         </details>
       </section>
@@ -1266,8 +1274,8 @@ function Archive() {
                 <FullStops>
                   {r.status === "sold"
                     ? r.publicOwner?.anonymous
-                      ? "anonymous bidder"
-                      : r.publicOwner?.name || "anonymous bidder"
+                      ? "anonymous custodian"
+                      : r.publicOwner?.name || "anonymous custodian"
                     : r.status === "awaiting-payment"
                       ? "Payment pending"
                       : "Closed — not collected"}
@@ -1816,7 +1824,7 @@ function WonPiece({ a, reload }: { a: any; reload: () => void }) {
                 name="visibility"
                 defaultValue={a.publicOwner?.anonymous ? "anonymous" : "public"}
               >
-                <option value="anonymous">anonymous bidder</option>
+                <option value="anonymous">anonymous custodian</option>
                 <option value="public">Use my chosen name</option>
               </select>
             </label>
@@ -2549,6 +2557,20 @@ function Dashboard() {
                 required
               />
             </label>
+            <label>
+              Presentation
+              <select
+                value={draft.presentation || "finished-piece"}
+                onChange={(e) =>
+                  setDraft({ ...draft, presentation: e.target.value })
+                }
+              >
+                <option value="design-study">
+                  Design study — not ready for bidding
+                </option>
+                <option value="finished-piece">Finished piece</option>
+              </select>
+            </label>
             {[
               ["subtitle", "Short introduction"],
               ["storyHeading", "Story heading"],
@@ -3246,6 +3268,7 @@ function Privacy() {
 export function Experience() {
   const route = location.pathname;
   useEffect(() => {
+    if (route.startsWith("/pieces/")) return;
     document.title =
       route === "/sms"
         ? "Text preferences — HEWGE"

@@ -3,6 +3,7 @@ import { rehearsalService } from "./rehearsal";
 import { liveAccess } from "./live-access";
 import { withdrawalService } from "./withdrawals";
 import { contentService } from "./content";
+import { piecePageService } from "./piece-page";
 import { suppressionWrite, suppressionKey } from "./consent";
 import { auctionCards, cardKey } from "./auction-cards";
 import {
@@ -962,6 +963,21 @@ export async function handler(event: any) {
         emailEnabled: process.env.EMAIL_ENABLED === "true",
       });
     }
+    if (["GET", "HEAD"].includes(method) && path.startsWith("/web/pieces/")) {
+      const site = process.env.SITE_URL!;
+      const page = await piecePageService(get, site, async () => {
+        const shell = await fetch(`${site}/index.html`, {
+          signal: AbortSignal.timeout(5000),
+          redirect: "error",
+        });
+        if (!shell.ok) throw Error("Application shell unavailable");
+        return shell.text();
+      })(path.slice("/web/pieces/".length));
+      return method === "HEAD" ? { ...page, body: "" } : page;
+    }
+    if (method === "GET" && path === "/membership/availability") {
+      return response(200, { available: await membership.deliveryEnabled() });
+    }
     if (method === "GET" && path.startsWith("/content/")) {
       const page = await content.get(path.slice(9));
       if (!page) return response(404, { message: "Page not found." });
@@ -1667,6 +1683,10 @@ export async function handler(event: any) {
         storyHeading: clean(body.storyHeading, 150),
         description: clean(body.description, 1500),
         imageNote: clean(body.imageNote, 500),
+        presentation:
+          body.presentation === "design-study"
+            ? "design-study"
+            : "finished-piece",
         gallery: Array.isArray(body.gallery)
           ? body.gallery.slice(0, 8).map((g: any) => ({
               image: clean(g.image, 300),
@@ -1744,6 +1764,11 @@ export async function handler(event: any) {
       for (const image of item.gallery)
         await media.validateImage(image.image, id);
       if (publish) {
+        if (item.presentation === "design-study")
+          return response(400, {
+            message:
+              "Finish the piece and update its presentation before scheduling bidding.",
+          });
         if (
           process.env.CHECKOUT_ENABLED !== "true" ||
           process.env.EMAIL_ENABLED !== "true"

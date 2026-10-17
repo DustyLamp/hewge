@@ -186,6 +186,48 @@ beforeEach(() => {
   });
 });
 describe("platform access and bidding", () => {
+  it("exposes email availability without sending or requiring a member account", async () => {
+    const result = (await handler(
+      event("/membership/availability", {}, "GET"),
+    )) as any;
+    expect(result.statusCode).toBe(200);
+    expect(JSON.parse(result.body)).toEqual({ available: false });
+    expect(mock.verify).not.toHaveBeenCalled();
+    expect(
+      mock.mail.mock.calls.every(
+        ([command]) => command.constructor.name === "GetAccountCommand",
+      ),
+    ).toBe(true);
+  });
+  it("cannot schedule a design study even when payment and email gates are enabled", async () => {
+    vi.stubEnv("CHECKOUT_ENABLED", "true");
+    vi.stubEnv("EMAIL_ENABLED", "true");
+    mock.verify.mockResolvedValue({
+      sub: "owner",
+      email: "jez@hewge.design",
+      email_verified: true,
+    });
+    current = {
+      ...auction,
+      status: "unannounced",
+      opensAt: null,
+      closesAt: null,
+    };
+    const result = (await handler(
+      event("/admin/release", {
+        ...current,
+        presentation: "design-study",
+        publish: true,
+      }),
+    )) as any;
+    expect(result.statusCode).toBe(400);
+    expect(JSON.parse(result.body).message).toContain("Finish the piece");
+    expect(
+      mock.send.mock.calls.some(
+        ([command]) => command.constructor.name === "TransactWriteCommand",
+      ),
+    ).toBe(false);
+  });
   it("protects the dashboard from ordinary collectors", async () => {
     expect(
       ((await handler(event("/admin", {}, "GET"))) as any).statusCode,

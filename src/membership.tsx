@@ -6,6 +6,14 @@ import { FullStops } from "./typography";
 import { SmsPreferences } from "./sms";
 
 export function MembershipSignup({ compact = false }: { compact?: boolean }) {
+  const [availability, setAvailability] = useState<
+    "loading" | "ready" | "unavailable" | "error"
+  >("loading");
+  useEffect(() => {
+    api("/membership/availability")
+      .then((r) => setAvailability(r.available ? "ready" : "unavailable"))
+      .catch(() => setAvailability("error"));
+  }, []);
   const [busy, setBusy] = useState(false);
   const [delivery, setDelivery] = useState("");
   const [message, setMessage] = useState("");
@@ -57,6 +65,30 @@ export function MembershipSignup({ compact = false }: { compact?: boolean }) {
         >
           Use another email or resend →
         </button>
+      </div>
+    );
+  if (availability !== "ready")
+    return (
+      <div className="membership-availability" role="status">
+        <p>
+          <FullStops>
+            {availability === "loading"
+              ? "Checking membership availability…"
+              : availability === "unavailable"
+                ? "Membership opens soon."
+                : "Membership is temporarily unavailable."}
+          </FullStops>
+        </p>
+        {availability !== "loading" && (
+          <a
+            className="text-link"
+            href="https://www.instagram.com/hewge.design/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Follow Hewge on Instagram <ArrowRight size={18} />
+          </a>
+        )}
       </div>
     );
   return (

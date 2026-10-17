@@ -13,6 +13,7 @@ export type Release = {
   storyHeading?: string;
   description?: string;
   imageNote?: string;
+  presentation?: "design-study" | "finished-piece";
   gallery?: { image: string; label: string }[];
   artistName: string;
   artistOrigin: string;
@@ -168,6 +169,7 @@ export function publicRelease(
     "storyHeading",
     "description",
     "imageNote",
+    "presentation",
     "gallery",
     "artistName",
     "artistOrigin",
@@ -216,13 +218,11 @@ export function publicRelease(
       "material",
     ] as const)
       output[k] = "";
-  output.recentBids = (item.recentBids || [])
-    .slice(0, 10)
-    .map((b: any) => ({
-      amount: b.amount,
-      sequence: b.sequence,
-      receivedAt: b.receivedAt,
-    }));
+  output.recentBids = (item.recentBids || []).slice(0, 10).map((b: any) => ({
+    amount: b.amount,
+    sequence: b.sequence,
+    receivedAt: b.receivedAt,
+  }));
   output.identityRevealed = Boolean(visible);
   if (
     item.designRevealMode === "at-opening" &&

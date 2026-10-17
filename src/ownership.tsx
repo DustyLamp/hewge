@@ -217,7 +217,7 @@ export function TransferList({
                 <label>
                   In the public archive
                   <select name="visibility" defaultValue="anonymous">
-                    <option value="anonymous">anonymous bidder</option>
+                    <option value="anonymous">anonymous custodian</option>
                     <option value="public">Use my chosen name</option>
                   </select>
                 </label>
@@ -563,8 +563,8 @@ export function RegistryPage() {
           <strong>
             <FullStops>
               {a.publicOwner?.anonymous
-                ? "anonymous bidder"
-                : a.publicOwner?.name || "anonymous bidder"}
+                ? "anonymous custodian"
+                : a.publicOwner?.name || "anonymous custodian"}
             </FullStops>
           </strong>
         </p>

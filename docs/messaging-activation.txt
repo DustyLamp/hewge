@@ -2,7 +2,7 @@ HEWGE — MESSAGING ACTIVATION
 
 Operating status
 AWS account 082229154968, region eu-north-1, profile hewge.
-SES ProductionAccessEnabled=false; review status DENIED. Public membership-email delivery needs production access.
+SES ProductionAccessEnabled=false; API review status DENIED. Support case 179192181000466 is reopened for manual reconsideration and awaits AWS response. Public membership-email delivery needs production access.
 SMS account tier SANDBOX; AWS monthly text-message spend limit USD 1.
 Application flags: SMS_VERIFICATION_ENABLED=true; SMS_RELEASES_ENABLED=false; EMAIL_ENABLED=false; CHECKOUT_ENABLED=false.
 Swiss sandbox verification is available to AWS-verified destinations. Public campaigns, winner emails, bidding and checkout require their respective activation prerequisites.
@@ -13,7 +13,7 @@ aws pinpoint-sms-voice-v2 describe-account-attributes --profile hewge --region e
 Use AWS Support Center to continue the open production-access cases. Confirm provider approval in the account before enabling a service; approval alone does not activate the application.
 
 Membership and editorial scope
-The invitation is Join Hewge: verified email first, then optional preferences and separately consented SMS. Administrators choose each garment release's dates and reveal sequence; messages follow that record and supported disclosures. Contact details or social standing do not authorise messaging or change auction eligibility.
+The invitation is Join Hewge: verified email first, then optional preferences and separately consented SMS. The public form checks /membership/availability; while SES cannot deliver public verification, it shows Membership opens soon and an Instagram link without collecting addresses. The form becomes available when SES reports production access and sending enabled. This does not enable release campaigns or payments. Existing pending requests retain their documented expiry and outbox rules. Administrators choose each garment release's dates and reveal sequence; messages follow that record and supported disclosures. Contact details or social standing do not authorise messaging or change auction eligibility.
 
 Book campaigns, ordering and service messages need their own requirements before use; see docs/annual-book.md. Purchasing or receiving a book does not subscribe anyone to marketing.
 
@@ -21,7 +21,7 @@ Public business identity
 Use shared/seller.ts for the website and outbound contact details. The seller disclosure review is in docs/legal-and-card-launch.txt.
 
 Email
-Domain identity and DKIM are configured. Sender: hello@hewge.design. Public reply-to: jez@hewge.design. Include the seller's postal contact in the footer. The hewge-delivery configuration set suppresses hard bounces/complaints and publishes delivery metrics. There is no dedicated IP or imported marketing list.
+Domain identity and DKIM are configured. SES uses mail.hewge.design as its custom MAIL FROM domain, with dedicated MX/SPF records. The domain has non-enforcing DMARC (p=none); review all legitimate senders before adopting enforcement. Sender: hello@hewge.design. Public reply-to: jez@hewge.design. Include the seller's postal contact in the footer. The hewge-delivery configuration set suppresses hard bounces/complaints and publishes delivery metrics. There is no dedicated IP or imported marketing list.
 
 Membership and consent lifecycle
 Membership begins with an email-only request and a single-use confirmation. After verification, people may add sizes, country/city, bidding interest, name, Instagram and interests. Browser language/time zone are hints, never location facts. Unverified addresses are excluded from size-demand totals as well as mailings. Send verification only while the link is valid and display pending delivery accurately.

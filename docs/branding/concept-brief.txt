@@ -8,6 +8,9 @@ The small icon is the H outlined from public/fonts/ultra-latin.woff2, with the h
 Voice
 Understated and specific. Let the work, withheld details and real dates suggest what comes next. Never narrate the marketing strategy, announce suspense or hype, promise a story is worth waiting for, or tell the reader how to feel. Keep auction obligations and reveal timing explicit. Use piece and edition numbers without decorative section numbering.
 
+Public presentation
+Use still artwork, restrained navigation and clear captions. Keep the masthead and bold/italic titles prominent. State the design-study stage beside the work; avoid claims that an unfinished garment is made or signed. Unannounced pieces have no live-auction indicator or zero-bid counter. Keep the archive accessible in the footer. Public ownership labels use anonymous custodian; bidding remains a separate role.
+
 Book design
 Apply this identity to the physical design and proofing process in docs/annual-book.md.
 

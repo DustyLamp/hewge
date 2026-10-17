@@ -1,3 +1,7 @@
+import {
+  afterHoursPresentation,
+  homePresentation,
+} from "./presentation-content";
 // Explicit, idempotent migration of already-public content into the CMS.
 // Existing live records are never overwritten. No customers or launch gates change.
 import assert from "node:assert/strict";
@@ -138,11 +142,7 @@ if (!(await get(`AUCTION#${initialRelease.id}`, "HEAD"))) {
     image,
     gallery,
     subtitle: "A very good night. A very bad morning.",
-    storyHeading: "Some nights stay with you.",
-    description:
-      "A men’s shirt, made as a single unique work and signed by its artist. No second run. No identical shirt in another size.",
-    imageNote:
-      "Shown here: the approved design mockup. Final garment photography and measurements accompany the release.",
+    ...afterHoursPresentation,
     pk: `AUCTION#${initialRelease.id}`,
     sk: "HEAD",
     published: true,
@@ -191,13 +191,7 @@ if (!(await cms.get("home", "DRAFT"))) {
       action: "publish",
       data: {
         featuredReleaseId: initialRelease.id,
-        heroLabel: "First edition coming soon",
-        editionLabel: "The first edition",
-        manifestoTitle: "NO COPIES.\nNO ENCORES.",
-        manifestoText: "An original shirt.\nSigned by its artist.\nMade once.",
-        manifestoSignature: "Art, out in the world.",
-        guestTitle: "NEXT\nDROP.",
-        guestText: "Verify your email for membership and release access.",
+        ...homePresentation,
         guestImage,
         guestImageAlt: "A detail of the illustrated artwork",
       },

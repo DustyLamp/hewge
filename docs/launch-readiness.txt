@@ -19,7 +19,7 @@ Register and verify jez@hewge.design at /account, visit /dashboard and enrol an 
 
 Experience still to complete
 - Paid checkout registers the verified paying winner and uses their billing address for delivery. Direct gift delivery/recipient registration, surprise timing, declined gifts and initial-gift valuation need a defined process and terms. Use the actual gift and recipient acceptance as evidence; do not simulate a paid event to create an initial gift. Resolve the questions in docs/journey-playbook.md before offering it.
-- Separate designer/producer profiles and print-template fields, interview presentation and role-appropriate anonymous labels need application work. Credit actual contributions at their agreed reveal stages.
+- Separate designer/producer profiles and print-template fields and interview presentation need application work. Credit actual contributions at their agreed reveal stages.
 - The current artist/material reveal mode and binding-auction limits are in docs/cms-and-auction-architecture.txt. Independent sequences outside that support require disclosure review, approved terms and tested implementation.
 - Book production, ordering/fulfilment and purchase terms are separate work under docs/annual-book.md. The garment auction is not book checkout. Manage commissioning and book editorial records in private folders.
 - Behavioural messaging and book-specific purchase communications are unbuilt. Before using them, specify interested/bidder/non-winner/owner segments, cross-campaign deduplication, frequency controls and aggregate referral measurement. Proposed touchpoints are in docs/launch-playbook.txt.

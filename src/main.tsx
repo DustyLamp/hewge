@@ -7,9 +7,6 @@ import {
   X,
   Plus,
   Minus,
-  MoveUpRight,
-  Pause,
-  Play,
 } from "lucide-react";
 import { type Release } from "../shared/auction";
 import { type PageContent } from "../shared/content";
@@ -33,9 +30,7 @@ function App() {
   const [zoom, setZoom] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const [view, setView] = useState("0");
-  const [paused, setPaused] = useState(false);
   const [removeMessage, setRemoveMessage] = useState("");
-  const shirt = useRef<HTMLDivElement>(null);
   const [purchase] = useState(
     new URLSearchParams(location.search).get("checkout"),
   );
@@ -90,19 +85,6 @@ function App() {
     if (location.hash === "#privacy")
       history.replaceState(null, "", location.pathname);
   }
-  function move(e: React.PointerEvent<HTMLElement>) {
-    if (
-      paused ||
-      matchMedia("(prefers-reduced-motion: reduce)").matches ||
-      e.pointerType !== "mouse"
-    )
-      return;
-    const r = e.currentTarget.getBoundingClientRect();
-    shirt.current?.style.setProperty(
-      "--tilt",
-      `${((e.clientX - r.left) / r.width - 0.5) * 7}deg`,
-    );
-  }
   async function remove(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setRemoveMessage("Requesting confirmation…");
@@ -143,7 +125,7 @@ function App() {
     } as Record<string, string>
   )[catalog.status];
   return (
-    <div className={paused ? "site paused" : "site"}>
+    <div className="site">
       <a className="skip-link" href="#edition">
         Skip to the shirt
       </a>
@@ -153,7 +135,6 @@ function App() {
         </a>
         <nav aria-label="Main navigation">
           <a href="/latest">The latest</a>
-          <a href="/archive">Archive</a>
         </nav>
         <button className="header-cta" onClick={() => setModal("signup")}>
           Join Hewge <ArrowUpRight size={17} />
@@ -173,24 +154,19 @@ function App() {
         <section
           className="hero"
           aria-label="Hewge. One-of-a-kind artist originals."
-          onPointerMove={move}
-          onPointerLeave={() =>
-            shirt.current?.style.setProperty("--tilt", "0deg")
-          }
         >
           <div className="hero-topline">
             <span>
               <FullStops>{"Artist originals."}</FullStops>
             </span>
-            <span className="live-dot">
+            <span>
               <FullStops>{page.heroLabel}</FullStops>
             </span>
           </div>
           <div className="hero-word" aria-hidden="true">
             <Wordmark />
           </div>
-          <div className="hero-orbit" aria-hidden="true" />
-          <div className="hero-product" ref={shirt}>
+          <div className="hero-product">
             <img
               src={catalog.image}
               alt={`${catalog.name} — front view`}
@@ -210,47 +186,19 @@ function App() {
               View the piece <ArrowUpRight size={19} />
             </a>
           </div>
-          <div className="hero-right">
-            <div className="edition-seal">
-              <span>ONE</span>
-              <span className="seal-line" />
-              <span>OF ONE</span>
-            </div>
-            <span className="vertical-label">
-              <FullStops>{"Signed. Singular. Unrepeatable."}</FullStops>
-            </span>
-          </div>
           <div className="hero-bottom">
             <span>
-              <FullStops>{"Art you can wear."}</FullStops>
-              <br />
-              <em>
-                <FullStops>{"Edition of one."}</FullStops>
-              </em>
+              <FullStops>
+                {catalog.presentation === "design-study"
+                  ? "Design study · Not yet released."
+                  : "Art, out in the world."}
+              </FullStops>
             </span>
             <a href="#edition" className="explore">
               Explore the piece <ArrowDown size={19} />
             </a>
-            <button
-              className="motion-toggle"
-              onClick={() => setPaused(!paused)}
-              aria-label={paused ? "Play animation" : "Pause animation"}
-            >
-              {paused ? <Play size={13} /> : <Pause size={13} />}
-            </button>
           </div>
         </section>
-        <div className="ticker" aria-hidden="true">
-          <div>
-            {Array.from({ length: 4 }, (_, i) => (
-              <span key={i}>
-                ONE OF ONE <span className="asterisk">✳</span> NEVER REPEATED{" "}
-                <span className="asterisk">✳</span> ARTIST SIGNED{" "}
-                <span className="asterisk">✳</span>
-              </span>
-            ))}
-          </div>
-        </div>
         <section className="edition" id="edition">
           <div className="section-heading">
             <span className="eyebrow">
@@ -264,7 +212,7 @@ function App() {
             <div
               className={`product-stage ${view === "0" ? "front-view" : ""}`}
             >
-              <span className="stage-number">01 / 01</span>
+              <span className="stage-number">No. {catalog.number}</span>
               <button
                 className="product-zoom"
                 onClick={() => setZoom(activeImage.image)}
@@ -298,7 +246,11 @@ function App() {
             <div className="product-info reveal">
               <span className="eyebrow status">
                 <i />
-                <FullStops>{statusText}</FullStops>
+                <FullStops>
+                  {catalog.presentation === "design-study"
+                    ? "Design study"
+                    : statusText}
+                </FullStops>
               </span>
               <h2 className="piece-title">
                 <PieceTitle name={catalog.name} />
@@ -316,8 +268,11 @@ function App() {
                     {catalog.material || "Material at reveal"}
                   </FullStops>
                 </span>
-                <span>Artist signed</span>
-                <span>Never repeated</span>
+                {catalog.artistName && (
+                  <span>
+                    <FullStops>{catalog.artistName}</FullStops>
+                  </span>
+                )}
               </div>
               <p className="product-description">
                 <FullStops>{catalog.subtitle || "Edition of one."}</FullStops>
@@ -342,9 +297,11 @@ function App() {
               >
                 Explore the piece <ArrowUpRight size={22} />
               </a>
-              <p className="under-button">
-                <FullStops>{"One original. Highest bid wins."}</FullStops>
-              </p>
+              {catalog.imageNote && (
+                <p className="under-button">
+                  <FullStops>{catalog.imageNote}</FullStops>
+                </p>
+              )}
               <details>
                 <summary>
                   The piece <Plus size={17} />
@@ -403,9 +360,6 @@ function App() {
                       alt={`${catalog.name} — ${art.label}`}
                       loading="lazy"
                     />
-                    <span className="art-expand">
-                      <MoveUpRight size={22} />
-                    </span>
                   </div>
                   <span className="art-caption">
                     <FullStops>{art.label}</FullStops>
@@ -416,31 +370,23 @@ function App() {
             </div>
           </section>
         )}
-        <section className="manifesto" id="the-idea">
-          <div className="manifesto-top">
-            <span className="eyebrow">The Hewge way</span>
-            <span className="eyebrow">Always 1 / 1</span>
-          </div>
-          <h2 className="reveal">
-            <span className="cms-lines">
+        <section className="hewge-note" id="the-idea">
+          <span className="eyebrow">Hewge</span>
+          <div>
+            <h2>
               <FullStops>{page.manifestoTitle}</FullStops>
-            </span>
-          </h2>
-          <div className="manifesto-bottom">
-            <span className="big-star" aria-hidden="true">
-              ✳
-            </span>
+            </h2>
             <p>
-              <span className="cms-lines">
-                <FullStops>{page.manifestoText}</FullStops>
-              </span>
+              <FullStops>{page.manifestoText}</FullStops>
             </p>
-            <span className="manifesto-signature">
-              <Wordmark />
-              <small>
+            {page.manifestoSignature && (
+              <p className="eyebrow">
                 <FullStops>{page.manifestoSignature}</FullStops>
-              </small>
-            </span>
+              </p>
+            )}
+            <a className="text-link" href="mailto:jez@hewge.design">
+              Get in touch <ArrowUpRight size={17} />
+            </a>
           </div>
         </section>
         <section className="guest-list" id="first-access">
@@ -450,12 +396,6 @@ function App() {
               alt={page.guestImageAlt}
               loading="lazy"
             />
-            <span className="guest-sticker">
-              You’re
-              <br />
-              <FullStops>{"invited."}</FullStops>
-              <ArrowUpRight size={25} />
-            </span>
           </div>
           <div className="guest-content reveal">
             <span className="eyebrow">Membership</span>
@@ -493,6 +433,7 @@ function App() {
           <a href="/latest">The latest</a>
           <a href="/archive">Archive</a>
           <a href="/account">Collector access</a>
+          <a href="mailto:jez@hewge.design">Contact</a>
           <a href="/terms">Auction terms</a>
           <a href="/privacy">Privacy</a>
           <a href="/withdraw">Withdraw from contract here</a>
@@ -580,9 +521,6 @@ function App() {
               <br />
               <FullStops>{"INVITED."}</FullStops>
             </h2>
-            <p>
-              <FullStops>{"Start with your email."}</FullStops>
-            </p>
             <Signup compact />
           </div>
         )}

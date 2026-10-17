@@ -1,3 +1,4 @@
+import { afterHoursPresentation } from "./presentation-content";
 import { type Release } from "../shared/auction";
 import { TERMS_VERSION, PAYMENT_RECOVERY_HOURS } from "../shared/legal";
 // One-time migration input, never imported by the application.
@@ -11,8 +12,6 @@ export const initialRelease: Release = {
   identityRevealed: false,
   number: "001",
   image: "/images/shirt-front.webp",
-  story:
-    "An invitation. A dance floor. The morning after. A whole night unfolds across six illustrated panels: toucans dressed for trouble, hidden among tangled leaves. One story, told all the way around.",
   artistName: "",
   artistOrigin: "",
   artistPractice: "",
@@ -35,4 +34,5 @@ export const initialRelease: Release = {
   publicOwner: null,
   serverNow: Date.now(),
   termsVersion: TERMS_VERSION,
+  ...afterHoursPresentation,
 };

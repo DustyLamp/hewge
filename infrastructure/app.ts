@@ -242,13 +242,27 @@ class HewgeStack extends Stack {
       groupName: "admins",
       description: "Hewge owners — manually granted, never self assigned",
     });
+    const dnsZone = route53.HostedZone.fromHostedZoneAttributes(
+      this,
+      "DnsZone",
+      {
+        hostedZoneId: "Z08500773SUN2ORMGDEA4",
+        zoneName: domain,
+      },
+    );
     const emailIdentity = new ses.EmailIdentity(this, "BrandEmail", {
-      identity: ses.Identity.publicHostedZone(
-        route53.HostedZone.fromHostedZoneAttributes(this, "DnsZone", {
-          hostedZoneId: "Z08500773SUN2ORMGDEA4",
-          zoneName: domain,
-        }),
-      ),
+      identity: ses.Identity.publicHostedZone(dnsZone),
+      mailFromDomain: `mail.${domain}`,
+      mailFromBehaviorOnMxFailure:
+        ses.MailFromBehaviorOnMxFailure.USE_DEFAULT_VALUE,
+    });
+    // Start with non-enforcing DMARC; other legitimate mailbox senders must be
+    // inventoried before adopting a quarantine/reject policy.
+    new route53.TxtRecord(this, "Dmarc", {
+      zone: dnsZone,
+      recordName: "_dmarc",
+      values: ["v=DMARC1; p=none; adkim=r; aspf=r"],
+      ttl: Duration.minutes(5),
     });
     const emailEnabled = this.node.tryGetContext("emailEnabled") === "true";
     // Swiss dynamic sender ID; no leased phone number. Public sending stays gated.
@@ -613,6 +627,8 @@ class HewgeStack extends Stack {
       "/catalog",
       "/content/{id}",
       "/releases",
+      "/web/pieces/{slug}",
+      "/membership/availability",
       "/auction/{id}",
       "/live/{id}",
       "/bid/state/{id}",
@@ -623,7 +639,14 @@ class HewgeStack extends Stack {
       "/admin",
       "/media/{id}",
     ])
-      api.addRoutes({ path, methods: [apigw.HttpMethod.GET], integration });
+      api.addRoutes({
+        path,
+        methods:
+          path === "/web/pieces/{slug}"
+            ? [apigw.HttpMethod.GET, apigw.HttpMethod.HEAD]
+            : [apigw.HttpMethod.GET],
+        integration,
+      });
     for (const path of [
       "/security/login",
       "/security/respond",
@@ -680,7 +703,15 @@ class HewgeStack extends Stack {
       throttlingRateLimit: 1000,
       throttlingBurstLimit: 2000,
     };
-    app.customHeaders = `customHeaders:\n  - pattern: '**'\n    headers:\n      - key: X-Content-Type-Options\n        value: nosniff\n      - key: Referrer-Policy\n        value: strict-origin-when-cross-origin\n      - key: X-Frame-Options\n        value: DENY\n      - key: Strict-Transport-Security\n        value: max-age=31536000; includeSubDomains\n      - key: Permissions-Policy\n        value: camera=(), microphone=(), geolocation=()\n      - key: Content-Security-Policy\n        value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: ${api.apiEndpoint} https://${mediaBucket.bucketRegionalDomainName}; font-src 'self'; connect-src 'self' wss://${liveApi.attrDnsRealtime} ${api.apiEndpoint} https://${mediaBucket.bucketRegionalDomainName} https://cognito-idp.eu-north-1.amazonaws.com; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"\n  - pattern: '/config.json'\n    headers:\n      - key: Cache-Control\n        value: no-store\n  - pattern: '/images/**'\n    headers:\n      - key: Cache-Control\n        value: public, max-age=86400\n  - pattern: '/assets/**'\n    headers:\n      - key: Cache-Control\n        value: public, max-age=31536000, immutable\n`;
+    app.customHeaders = `customHeaders:\n  - pattern: '**'\n    headers:\n      - key: X-Content-Type-Options\n        value: nosniff\n      - key: Referrer-Policy\n        value: strict-origin-when-cross-origin\n      - key: X-Frame-Options\n        value: DENY\n      - key: Strict-Transport-Security\n        value: max-age=31536000; includeSubDomains\n      - key: Permissions-Policy\n        value: camera=(), microphone=(), geolocation=()\n      - key: Content-Security-Policy\n        value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: ${api.apiEndpoint} https://${mediaBucket.bucketRegionalDomainName}; font-src 'self'; connect-src 'self' wss://${liveApi.attrDnsRealtime} ${api.apiEndpoint} https://${mediaBucket.bucketRegionalDomainName} https://cognito-idp.eu-north-1.amazonaws.com; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"\n  - pattern: '/pieces/**'\n    headers:\n      - key: Cache-Control\n        value: no-store\n  - pattern: '/config.json'\n    headers:\n      - key: Cache-Control\n        value: no-store\n  - pattern: '/images/**'\n    headers:\n      - key: Cache-Control\n        value: public, max-age=86400\n  - pattern: '/assets/**'\n    headers:\n      - key: Cache-Control\n        value: public, max-age=31536000, immutable\n`;
+    app.customRules = [
+      {
+        source: "/pieces/<*>",
+        target: `${api.apiEndpoint}/web/pieces/<*>`,
+        status: "200",
+      },
+      ...(app.customRules as amplify.CfnApp.CustomRuleProperty[]),
+    ];
     new CfnOutput(this, "AuditTableName", { value: auditTable.tableName });
     new CfnOutput(this, "AuditBucketName", { value: auditBucket.bucketName });
     new CfnOutput(this, "MediaBucketName", { value: mediaBucket.bucketName });
