@@ -1,7 +1,5 @@
 # Hewge journey playbook
 
-17 October 2026 · Version 2
-
 The journey of a piece through the founder, designer, artist, piece producer, purchaser, custodian, repurchaser and influenced party. Each stage connects what happens, the context given to the person involved and the emotional experience. The unresolved handovers are collected at the end.
 
 The **purchaser** pays. The **custodian** receives, wears and cares for the piece. The **repurchaser** acquires it later from an existing owner. The registered ownership record needs to follow the intended relationship between them. The **piece producer** is the person or team physically making and finishing the work; one contributor may also fulfil the artist or designer role.
@@ -10,7 +8,7 @@ The instructions below begin with purpose and the desired outcome, leaving room 
 
 This is the intended experience. The decisions still open below remain open; the journeys do not imply that every service or feature is already implemented. Illustrative locations, demographics, occupations and selection ideas do not define the audience or become requirements.
 
-The [concept and administrator playbook](administrator-playbook.md) governs shared decisions and each release's reveal plan. Newer substantive founder direction takes precedence over older working wording unless it materially conflicts with an explicit commitment. Social proof includes the standing Hewge earns in society and its intended audience, especially through influential and consequential people whose judgment matters there. Purchases, gifts, real wear, recommendations and cultural recognition can all contribute; auction preference is never exchanged for influence.
+The [concept and administrator playbook](administrator-playbook.md) sets out the shared principles and each release's reveal process. Social proof includes the standing Hewge earns in society and its intended audience, especially through influential and consequential people whose judgment matters there. Purchases, gifts, real wear, recommendations and cultural recognition can all contribute; auction preference is never exchanged for influence.
 
 The piece journeys below are joined by an annual purchasable coffee-table book covering the year's pieces and how they came to be, in greater depth than the website. Its internal participant touchpoints follow the eight journeys; these maps are not book content. The book has its own purchase route to develop and does not inherit garment auction or ownership-transfer requirements.
 
@@ -129,9 +127,9 @@ The purchaser's reason for choosing the piece and the custodian's relationship w
 
 Three distinct questions need answers: **is the piece authentic, is the seller entitled to transfer it, and does its current condition match what was offered?**
 
-For subsequent gifts, the existing transfer-fee basis is the last verified sale value. Initial gift registration and handling of a piece with no verified sale value remain among the open decisions below.
+For subsequent gifts, the transfer-fee basis is the last verified sale value. Initial gift registration and handling of a piece with no verified sale value remain among the open decisions below.
 
-Hewge does not hold the resale price. The fee, acceptance and approval baseline is established in [permanent provenance](permanent-provenance.txt); the external sale and physical handover need to fit around it.
+Hewge does not hold the resale price. Follow the fee, acceptance and approval process in [permanent provenance](permanent-provenance.txt); coordinate the external sale and physical handover around it.
 
 ## The influenced party
 
@@ -181,11 +179,11 @@ What happens if making or final inspection reveals a problem that changes the ag
 
 ### The exact scope of uniqueness and authorship
 
-The garment is already one of one. What additional promises attach to its artwork, pattern or design? Can the artist use related work in another medium? What rights do collaborators have to publish process material, and what is the purchaser actually receiving beyond the physical piece? How will the producer's contribution be credited where roles overlap or specialist work is shared?
+Each garment is one of one. What additional promises attach to its artwork, pattern or design? Can the artist use related work in another medium? What rights do collaborators have to publish process material, and what is the purchaser receiving beyond the physical piece? How will the producer's contribution be credited where roles overlap or specialist work is shared?
 
 ### The boundary of mystery
 
-The policy is settled: Hewge administrators design and decide the mystery separately for each release. The open choices belong to that release's reveal record: what the audience knows, what a bidder knows when committing, what the custodian learns later and when promised reveals occur. Artist identity may be part of a later reveal where the reviewed terms and supported flow permit it. Current binding-auction checks require artist/material details at opening; changing that limit needs the corresponding review and implementation before use. Follow [the administrator playbook](administrator-playbook.md), including the response to delays or a reveal differing from the agreed description.
+Hewge administrators design and decide the mystery separately for each release. Record what the audience knows, what a bidder knows when committing, what the custodian learns later and when promised reveals occur. Artist identity may be part of a later reveal where the approved terms and supported flow permit it. Application support requires artist/material details at opening; a different plan needs disclosure review and tested implementation before use. Follow [the administrator playbook](administrator-playbook.md), including the response to delays or a reveal differing from the agreed description.
 
 ### The complete economics of the collaboration
 
@@ -193,7 +191,7 @@ Are collaborators paid fixed fees, a share of the original sale or a combination
 
 ### Resale settlement and physical handover
 
-The existing baseline is verified recipient acceptance and possession evidence, Hewge inspection of identity and entitlement, confirmed recipient-paid fee and final conditional approval. The fee is 0.5% of resale value; subsequent gifts use the last verified sale value. Hewge does not hold the garment resale price. What remains to decide is the buyer–seller payment and delivery sequence around those steps, who bears risk between them, and the recovery path if condition or entitlement checks fail. The established fee-refund procedure remains in permanent-provenance.txt.
+The transfer requires verified recipient acceptance and possession evidence, Hewge inspection of identity and entitlement, confirmed recipient-paid fee and final conditional approval. The fee is 0.5% of resale value; subsequent gifts use the last verified sale value. Hewge does not hold the garment resale price. Define the buyer–seller payment and delivery sequence around those steps, who bears risk between them, and the recovery path if condition or entitlement checks fail. Follow the fee-refund procedure in permanent-provenance.txt.
 
 ### The limits of continuing care
 
@@ -201,4 +199,4 @@ What fitting, repair, restoration and authentication support accompanies the pie
 
 ### Recognition across different people and transactions
 
-The public record may need to distinguish creator, original purchaser, giver, current custodian and former custodians. Which relationships are shown, and whose consent governs each? "Anonymous bidder" fits an auction participant; it does not accurately describe every gifted recipient or later custodian.
+The public record distinguishes creator, original purchaser, giver, current custodian and former custodians where relevant and permitted. Decide which relationships are shown and whose consent governs each. Use a role-appropriate anonymous description when a person does not opt into public identification.

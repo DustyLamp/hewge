@@ -1,6 +1,6 @@
 HEWGE — LIVE BIDDING AND PRIVATE REHEARSALS
 
-Scope alignment — 17 October 2026
+Scope
 This is the garment-auction implementation, not a book sales or collaborator-selection system. Each piece has individually chosen dates and an administrator-designed reveal plan within the current gates; one real auction is open at a time and the highest valid bid wins. Influential relationships and social proof do not confer bidding preference. See docs/administrator-playbook.md for the intended experience and known gaps. The annual book has a separate publication/purchase process still to develop.
 
 The studio's Rehearsal tab creates a five-minute private copy of a piece's
@@ -73,12 +73,12 @@ launch. Cost is usage-dependent, not guaranteed free.
 
 Publisher failures retry with partial-batch reporting and a 14-day SQS failure
 queue. Iterator lag and queued failures have CloudWatch alarms; external alarm
-notification subscriptions are not configured by this change. The browser's
+notification subscriptions are not configured. The browser's
 snapshot recovery works independently of the publisher. The durable auction
 and audit records are the recovery source, not the socket or the queue.
 DynamoDB/PITR, daily backups and protected audit archives retain their existing
 encryption and retention settings. Regional failure pauses bidding/settlement;
-there is no second-region write failover and no DSQL requirement for this design.
+there is no second-region write failover.
 
 CHECKS AND LAUNCH
 

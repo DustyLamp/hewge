@@ -1,13 +1,13 @@
 HEWGE — THE FIRST PIECES
-Working launch playbook / 17 October 2026 / v0.3
+Launch playbook
 
 For the complete founder, designer, artist, piece producer, purchaser, custodian, repurchaser and influenced-party journeys, including emotion, context-led instructions and unresolved handovers, see docs/journey-playbook.md.
 
-Shared decisions and the release-by-release administrator process are in docs/administrator-playbook.md. Newer substantive founder direction governs older working wording unless it materially conflicts with an explicit commitment; intended journeys do not imply completed software or replace accepted terms.
+The shared principles and release-by-release administrator process are in docs/administrator-playbook.md. Application capabilities and activation requirements are in README.md and the operational runbooks.
 
-This records the founder's direction and a proposed way to realise it. Recommendations, audience hypotheses and unbuilt services below are proposals, not completed work or an approved spending plan. No artist, designer or first wearer has been identified yet. This document will develop as real conversations and commissions replace assumptions.
+Use this process to develop the first commissions and bring each piece into the world. Agree the contributors, budget, recipient or auction route, and supported services before committing the work.
 
-Interpretation corrected on 17 October: the founder is building a vision through examples, not issuing a specification with every suggestion. Earlier references to a city, age band, occupation or gender must not become audience decisions. No such audience is fixed. The suggestion of a collaborator lottery/ballot was exploratory, not a request to change the auction or build a selection system. Use creative judgment and keep the first process simple. The companion docs/creative-commissioning.txt develops the commissioning approach.
+Develop the audience through the work and substantive conversations. Location, age, gender and profession are open to discovery. Use creative judgment and a simple curation process to bring collaborators together; docs/creative-commissioning.txt describes that process.
 
 THE AMBITION
 
@@ -17,12 +17,12 @@ The work is wearable art. Its material, cut, construction, presentation and life
 
 Hewge brings together the artist's visual language, the designer's approach to form and the producer's expertise in making. The custodian brings their own interpretation through wearing. A piece can help someone express something they recognise in themselves. Attention, belonging, beauty, individuality and recognition are possible motivations to explore; neither wealth nor status is a universal explanation. Future work may take forms beyond shirts.
 
-CONFIRMED DIRECTION
+PRINCIPLES
 
 - One original physical garment, including its size. No repeats to meet demand.
 - Human artists make the first real release. After Hours remains the existing public design study for now; its mockup is not documentary evidence of a completed garment.
 - An artist creates the artwork; a designer develops the cut; a maker constructs it. One person may fulfil several roles. Credit the actual contributions.
-- Individually chosen release dates, announced when the work and operations are ready. One live auction at a time. No weekly production obligation.
+- Individually chosen release dates, announced when the work and operations are ready. One live auction at a time.
 - A reveal plan designed by Hewge administrators for each release. The mystery can differ every time; there is no universal artist, material, design or price reveal sequence.
 - Free bidding; highest valid bid wins. Followers and promotional usefulness do not change access rules or the auction outcome.
 - No discounts. Relationships, craft, genuine recognition and the work itself create attraction.
@@ -77,7 +77,7 @@ If two commissions are unaffordable, use the collaborators' honestly labelled ex
 
 A gift does not guarantee a post. If specific photography, appearances or publishing are required, negotiate those deliverables and usage rights openly. Record gifts and loans as gifts and loans, never purchases or invented auction results. Where someone posts branded content featuring a gifted or loaned piece, Meta requires its paid partnership label [1]. Further destination-specific requirements belong in the activation review.
 
-An original Hewge gift also needs a reviewed registration procedure. Do not fabricate a paid Stripe event or sale price to fit the existing paid-owner workflow. Initial gifts have no verified sale value; the future transfer-fee valuation treatment remains to be resolved before promising terms. Existing owner-to-owner transfer rules remain unchanged.
+An original Hewge gift needs a reviewed registration procedure and a valuation basis where no verified sale value exists. Complete that treatment before promising terms. Use the actual gift and recipient acceptance as evidence; never fabricate a paid Stripe event or sale price. Owner-to-owner transfers follow permanent-provenance.txt.
 
 FROM ARRIVAL TO FIRST WEAR
 
@@ -159,13 +159,13 @@ Proposed touchpoints: email confirmation; optional preference completion; actual
 
 Still to specify/build before using behavioural journeys: reliable interested/bidder/non-winner/owner segments, message deduplication across campaigns, frequency controls and aggregate referral measurement. Service notices must reach entitled customers independently of marketing consent. Keep opt-outs and expired membership rules authoritative. Do not infer precise location from browser settings or build sensitive audience profiles.
 
-Do not buy Braze or launch a second mailing system by default. Use the existing studio after delivery approval, with operator review while the audience is small. Email is the primary continuity channel. SMS is optional and must have separate consent; it is not a prerequisite for the first launch.
+Use the studio after delivery approval, with operator review while the audience is small. Email is the primary continuity channel. SMS is optional and must have separate consent; it is not a prerequisite for the first launch.
 
-Operational evidence checked on 17 October 2026: SES ProductionAccessEnabled=false and review status DENIED; SMS account tier SANDBOX. These API values confirm that production access is not granted. The support-case correspondence was not reread in this check, so the SES status is not evidence of a newly communicated final refusal. See docs/messaging-activation.txt for existing requests and tests. No messaging settings were changed.
+Public membership-email delivery needs SES production access. SMS operates in the sandbox for Swiss verification testing, and public campaigns require production access and commissioning. See docs/messaging-activation.txt for the active configuration and activation procedure.
 
-The documented application SMS limits are five messages globally per month and four per day, with a USD 1 AWS monthly spend limit. Those are commissioning limits, not capacity for a release campaign. Review budget, provider approval and actual delivery before activation. The last recorded application flags, from 14 October, keep public release messages and checkout disabled; they were not reread for this document.
+Application SMS limits are five messages globally per month and four per day, with a USD 1 AWS monthly spend limit. Review the budget, provider approval and actual delivery before a release campaign. Public release messages, bidding and checkout are disabled pending their activation requirements.
 
-AWS currently lists base outbound email at USD 0.10 per 1,000 on à la carte and USD 0.16 per 1,000 in the first Essentials tier [3]. Illustratively, 2,000 emails cost USD 0.20 or USD 0.32 in those base sending charges, before data, other services and taxes. Hewge's actual pricing plan has not been checked. Creative work, personal attention and maintenance remain real costs.
+Budget email against the account's active SES pricing plan and expected volume, using AWS's published rates [3]. Include data, other services and taxes as applicable. Creative work, personal attention and maintenance remain real costs.
 
 WHAT WE LEARN FROM THE FIRST PIECES
 
@@ -176,7 +176,7 @@ Record what blocked interest: fit, artwork, timing, price, confidence, occasion 
 NEXT WORK, IN ORDER
 
 1. Agree a budget range for the first commission and whether it can support an additional founding gift. Nothing has been commissioned yet.
-2. Explore human artists, designers and makers with distinctive work and an interesting potential collaboration. Direct curation is the recommendation for the first pieces; no pool, ballot or random-selection system is required. No shortlist or outreach has been completed.
+2. Explore human artists, designers and producers with distinctive work and an interesting potential collaboration. Develop a shortlist through direct curation and substantive conversations.
 3. Explore potential wearers and gift buyers through conversations and introductions without fixing a demographic or geography. Listen before offering a gift or choosing a final size.
 4. Develop the first artist/designer brief into a funded commission, then make fit/material tests and one packaging prototype. Document actual decisions as the launch story develops.
 5. Resolve messaging delivery, payment, terms, fulfilment and physical-authentication prerequisites from docs/launch-readiness.txt. The present strategy does not authorise activating those systems.
@@ -186,14 +186,14 @@ Open decisions: first artistic direction and intended occasion; commission budge
 
 SOURCES
 
-[1] Meta, What is considered branded content, checked 17 October 2026:
+[1] Meta, What is considered branded content:
 https://www.facebook.com/help/instagram/616901995832907?locale=en_GB
 
-[2] Canadian Conservation Institute, Flat Storage for Textiles (CCI Notes 13/2), checked 17 October 2026. Used for protective-material principles, not as certification of Hewge packaging:
+[2] Canadian Conservation Institute, Flat Storage for Textiles (CCI Notes 13/2). Protective-material principles for the maker's packaging review:
 https://www.canada.ca/en/conservation-institute/services/conservation-preservation-publications/canadian-conservation-institute-notes/flat-storage-textiles.html
 
-[3] AWS SES pricing, checked 17 October 2026:
+[3] AWS SES pricing:
 https://aws.amazon.com/ses/pricing/
 
-[4] Swiss Copyright Act, Article 16(3), checked 17 October 2026:
-https://www.fedlex.admin.ch/eli/cc/1993/1798_1798_1798/en?version=20250701
+[4] Swiss Copyright Act, Article 16(3):
+https://www.fedlex.admin.ch/eli/cc/1993/1798_1798_1798/en

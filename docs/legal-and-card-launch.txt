@@ -1,11 +1,9 @@
 HEWGE — LEGAL, PRIVACY AND CARD LAUNCH REVIEW
-Policy alignment: 17 October 2026. Existing legal/technical review evidence below is from 14 October; this update does not establish new legal approval.
-
 Status
-The website has versioned terms/privacy text, a public withdrawal function, per-release card authorisation, card-only payment, immediate winning-charge code and a reviewed recovery process. This is an implementation for review, not a legal opinion or a claim that the terms are "bulletproof". Live bidding and payments remain disabled. No real Stripe account/sandbox or processor underwriting has been approved in this task. No country expansion has been activated.
+The website implements versioned terms/privacy, public withdrawal, per-release card authorisation, card-only payment, immediate winning-charge handling and payment recovery. Live bidding and payments are disabled. Activation requires seller/legal review, Stripe onboarding, real sandbox testing and approval of the intended destinations.
 
 Intended journeys and current scope
-Use docs/administrator-playbook.md for current founder decisions. Administrators design the mystery separately for every release, potentially including a later artist reveal. The current binding-auction implementation requires artist/material details by opening. A different reveal plan needs the relevant disclosure review, new terms version where required and tested application support before use; the operational gate is not a universal creative policy.
+Use docs/administrator-playbook.md for release planning. Administrators design the mystery separately for every release, potentially including a later artist reveal. Application support requires artist/material details by opening. A different reveal plan needs the relevant disclosure review, approved versioned terms and tested application support before use.
 
 The intended gift journey distinguishes payer, recipient and custodian. Current card consent uses the billing address for delivery and confirmed payment registers the paying winner. Direct gift delivery/recipient registration, surprise timing, declined gifts and initial-gift valuation require a specific supported process. Do not simulate payment or retrospectively rewrite accepted terms to make that process appear implemented. Subsequent transfers retain the recipient-paid 0.5% fee, verified acceptance, review and final approval; Hewge does not hold resale funds.
 
@@ -13,7 +11,7 @@ The annual purchasable book is a separate publication covering the year's pieces
 
 Contract and returns
 - Seller details are in shared/seller.ts. Confirm the exact legally required registered/trading name, address, contact methods and any VAT/company identifiers. EU-targeted sales may require a telephone/contact channel, EU product-safety economic operator, EU/UK privacy representative and additional local disclosures; do not invent these. Confirm whether each requirement applies before enabling that market.
-- A primary winning sale forms at closing, payment due immediately. Each final bid records the account, amount, country, terms version/hash, mandate version/hash and card attempt in the same transaction as the auction head. Downloadable static snapshots are in public/legal and copied into transactional sale/winner notices. Build rejects a changed snapshot under an existing version. Future wording changes need a new version; preserve old files.
+- A primary winning sale forms at closing, payment due immediately. Each final bid records the account, amount, country, terms version/hash, mandate version/hash and card attempt in the same transaction as the auction head. The exact accepted contract is a versioned application asset in public/legal, copied into transactional sale/winner notices. Acceptance-linked versions are immutable; amended terms require their own version before use.
 - Before opening binding bidding, complete sizing, measurements, actual material/artist details, rights/provenance, final photography, eligible countries, taxes/import treatment and insured delivery promises. Required information must be disclosed by opening under the reviewed plan; current software also requires artist/material details then. Earlier preview publication follows the administrator's reveal record and must not enable an unsupported commitment. Free-text tax disclosures are not a tax calculation engine or a VAT registration determination.
 - No voluntary change-of-mind returns or size swaps. Preserve mandatory withdrawal, defect, misdescription, non-delivery and other non-waivable remedies. Online-only auction status and one-of-one status are not automatic exceptions from consumer withdrawal. The conditional EU/EEA/UK instructions and model form must be checked for the actual target markets and languages. Counsel should review Swiss CO auction/formation/default rules and enforceability of the bid wording.
 - Under the 2026 EU online-withdrawal rules, /withdraw is linked in both footers and records a clear final confirmation without login or a reason. Name, confirmation email, contract reference and type are collected. The original timestamp and exact statement survive retries; a downloadable receipt and transactional email outbox are created. The notice is received when submitted, not when an operator later approves it. The form does not promise everyone a discretionary return right.
@@ -41,9 +39,9 @@ Privacy and permanent history
 - Set up a breach response owner/process: contain, preserve relevant evidence, assess risk and notify the FDPIC where required; GDPR authority notification normally within 72 hours where the risk threshold is met, and affected people without undue delay where required. No blanket assurance of breach-proof or bank-certified security is made.
 
 Deployment gates
-checkoutEnabled requires sellerTermsApproved=true, provenancePrivacyApproved=true and auctionCardTestsApproved=true, plus the Stripe secret and published terms URL. These flags are attestations to completed work, not substitutes for it. Public release scheduling also requires enabled transactional email. Per-release destination allowlists, mandatory details, tax and delivery disclosures remain required. Do not enable any gate using mocked tests as evidence. No flags are enabled by this change.
+checkoutEnabled requires sellerTermsApproved=true, provenancePrivacyApproved=true and auctionCardTestsApproved=true, plus the Stripe secret and published terms URL. These flags attest to completed work. Public release scheduling also requires enabled transactional email. Per-release destination allowlists, mandatory details, tax and delivery disclosures are required. Enable gates only with the relevant review and real sandbox evidence.
 
-Primary/official references checked
+Official references
 Swiss online cancellation rights:
 https://www.kmu.admin.ch/en/what-is-a-cancellation-right
 Swiss and European e-commerce disclosures:

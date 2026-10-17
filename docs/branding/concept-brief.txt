@@ -1,58 +1,27 @@
 HEWGE — BRAND LETTERING AND ICONS
-14 October 2026
 
-Current decision: retain the website's existing Ultra HEWGE wordmark. The owner
-preferred it over the new masthead proposals and confirmed this direction on
-14 October. The existing header and hero lettering are unchanged. Archivo Black
-remains the heading face; Georgia italic remains the contrasting story/title face.
+Identity
+Use the Ultra HEWGE wordmark. Archivo Black is the heading face; Georgia italic provides the contrasting story/title treatment. Match the front page and story pages. Keep public copy sparse and imagery prominent.
 
-The small icon uses the H outlined directly from public/fonts/ultra-latin.woff2,
-with the homepage hero's 1.15 vertical scale. It is the same letterform as the
-wordmark, not a new custom font. Brand teal is exactly #00FEEF; ink is #111311.
-Sentence full stops remain solid #00FEED.
+The small icon is the H outlined from public/fonts/ultra-latin.woff2, with the homepage hero's 1.15 vertical scale. Brand teal is #00FEEF; ink is #111311. Sentence full stops use solid #00FEED without a muted tint.
 
-Annual book direction — 17 October 2026
-Carry the established HEWGE lettering and editorial character into the annual purchasable coffee-table book. It covers the year's pieces and their creative making with greater depth than the website and should be an exceptionally desirable physical object. Typography, imagery, paper, binding and finish need a considered book design and physical proofs; no new logo or production specification is selected here. The book excludes internal operating/influence strategy and customer transaction journeys. See docs/administrator-playbook.md for its scope and possible future signed/complimentary custodian copies.
+Annual book
+Carry Hewge's lettering and editorial character into the annual purchasable coffee-table book. It covers the year's pieces and their creative making in greater depth than the website. Develop its typography, photography, paper, binding and finish through a considered design and physical proofs. Use the editorial scope and custodian-copy options in docs/administrator-playbook.md.
 
 Icon assets
-- public/favicon.svg: standalone path artwork, no external font dependency.
+- public/favicon.svg: standalone path artwork with no external font dependency.
 - public/favicon.png: 96px square for crawlers and browser fallback.
-- public/favicon.ico: 16/32/48px embedded PNG images for conventional fallback.
+- public/favicon.ico: 16/32/48px embedded PNG images.
 - public/apple-touch-icon.png: 180px square.
-- public/hewge-icon.png: reusable 512px square artwork.
-Regenerate PNG/ICO outputs with npm run assets:brand after changing the SVG.
-These additions do not reconfigure the native apps or change any launch gate.
+- public/hewge-icon.png: 512px square artwork.
+- docs/branding/current-identity.svg: reference sheet for the wordmark and icon.
 
-Outline provenance
-Source: Ultra Regular, copyright (c) 2010 Brian J. Bonislawsky DBA Astigmatic
-(AOETI), Apache 2.0. Keep public/fonts/Ultra-LICENSE.txt with the font and artwork.
-The H was extracted with FontTools SVGPathPen. Source bounds: (41, 0, 1892, 1473).
-The 64px canvas centres a 44px-wide glyph, scales its height by the same 1.15
-factor as the hero and leaves padding for circular search-result crops.
+Regenerate PNG/ICO outputs with npm run assets:brand after editing the SVG. Serve icons at stable URLs and check image bodies, MIME types, square dimensions and crawler access after deployment. Search-engine display depends on crawling and indexing.
 
-Superseded explorations
-The owner rejected the 1/1 mark as "boring and too literal", then rejected the
-FOLD / CUT / TRACE symbols. abstract-directions.png and masthead-direction.png
-are retained only as exploration history. Both were generated with the built-in
-image-generation tool; their prompts remain beside them. Do not apply them to
-the site. The chosen identity is the existing website lettering.
+Letterform and licence
+Source: Ultra Regular, copyright (c) 2010 Brian J. Bonislawsky DBA Astigmatic (AOETI), Apache 2.0. Keep public/fonts/Ultra-LICENSE.txt with the font and artwork. Archivo Black's SIL OFL is in public/fonts/ArchivoBlack-OFL.txt.
 
-Google favicon findings
-Before this update, the homepage supplied only /favicon.svg, a generic serif H on teal. The file
-returns HTTP 200 and image/svg+xml on both apex and www hosts. robots.txt allows
-crawling. HTTP redirects to HTTPS. No definitive Search Console diagnosis was made.
-Google's current documentation lists BMP, GIF, ICO, PNG, JPEG, PPM and TIFF as
-supported favicon formats; the old SVG-only setup lacked a listed format.
-The homepage now links the PNG, ICO, SVG and Apple assets at stable URLs.
-Verify actual image bodies, MIME types, square dimensions and accessible URLs
-after deployment. Google recrawling can
-take days to weeks, and display is not guaranteed. The old indexed title/snippet
-in the owner's screenshot is also older than the current live HTML.
+The H outline uses FontTools SVGPathPen with source bounds (41, 0, 1892, 1473). The 64px canvas centres a 44px-wide glyph, scales its height by 1.15 and leaves padding for circular search-result crops.
 
-Published 14 October 2026 through Amplify main deployment 18 (SUCCEED), account
-082229154968, eu-north-1. Production build and image/ICO structure checks passed.
-The outline reference sheet is current-identity.svg. The full site wordmark and
-typographic styles were preserved.
-
-Primary source checked 14 October 2026:
+Reference
 https://developers.google.com/search/docs/appearance/favicon-in-search

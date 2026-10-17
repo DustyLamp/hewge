@@ -1,11 +1,11 @@
 HEWGE — FROM A POINT OF VIEW TO A PIECE
-Working creative commissioning guide / 17 October 2026 / v0.2
+Creative commissioning guide
 
 The complete role journeys, context-led instructions for every stage and founder's introductory video for artists and designers are set out in docs/journey-playbook.md, alongside the emotional experience and unresolved handovers.
 
-Use docs/administrator-playbook.md for the shared concept, latest-decision rule, social proof, each release's reveal plan and the annual book. Newer substantive founder direction supersedes older working wording unless materially conflicting; an intended experience is separate from what the application supports.
+Use docs/administrator-playbook.md for the shared concept, social proof, each release's reveal plan and the annual book. Application capabilities and activation requirements are in README.md and the operational runbooks.
 
-This develops the launch vision, not a fixed production specification. It contains a draft collaborator brief and a recommended working process. No collaborator has been selected, approached or commissioned. No demographic, geography, gender, garment category beyond the current prototype, or launch sequence is settled. Examples in discussion are material for creative judgment, not automatic requirements.
+Use this guide to develop the creative intention, introduce collaborators and agree a commission. Adapt the brief to the actual work, contributors and budget. Discover the audience through the work and conversations; geography, demographics, future forms and launch sequence are open decisions.
 
 THE CREATIVE PREMISE
 
@@ -13,7 +13,7 @@ An artist has a way of seeing. A designer develops its form, and a producer real
 
 The useful creative question is: what could this piece let someone express that they have not found in anything they already own?
 
-That expression could be quiet or conspicuous, personal or social, playful or exacting. We discover it through the work and conversations with possible wearers. We do not settle it by choosing an age band or a city. Nor must every piece appeal to the same person. Hewge's continuity comes from the quality of its choices, its standard of making and the way it presents and supports each original.
+That expression could be quiet or conspicuous, personal or social, playful or exacting. Discover it through the work and conversations with possible wearers. Each piece can speak to different people. Hewge's continuity comes from the quality of its choices, its standard of making and the way it presents and supports each original.
 
 DRAFT BRIEF FOR A COLLABORATOR
 
@@ -27,7 +27,7 @@ The piece will have a name, a documented identity and a dedicated editorial stor
 
 To begin, show us work that matters to you. Tell us what you want to explore, what would make this collaboration worthwhile, and what you need from us to do it well.
 
-End of draft brief. Fill in the actual commission, fees and deliverables before using it as a project offer. It has not been sent to anyone.
+Complete the actual commission, fees and deliverables before using this brief as a project offer.
 
 CURATION AND PAIRING
 
@@ -42,7 +42,7 @@ Consider:
 
 The story can be about close observation, a material obsession, a place, a technique or a persistent question. A dramatic biography, fame and a fluent on-camera persona are not prerequisites. Let people describe their own practice. Credit a single person for multiple roles when that is what actually happened.
 
-A ballot or lottery for collaborators remains only a possible future idea. There is no selection mechanism to implement now. This is separate from the established highest-valid-bid auction. Similarly, being chosen as a gifted recipient is distinct from buying through that auction; describe each relationship accurately.
+Curate collaborators for the work they could make together. Select gifted recipients for their connection to the piece and its intended context. Auctioned pieces go to the highest valid bidder; describe each relationship accurately.
 
 WHAT COLLABORATORS SHOULD GET
 
@@ -114,19 +114,19 @@ The private cost review should include artist and designer fees; pattern and sam
 
 At the proposed opening bid, calculate what Hewge actually retains after payment fees, applicable tax and any other amounts it must pass on, together with separately charged delivery income/costs. Compare that with the fully costed commission and an agreed contribution for continuing the business. Do not count the same expense twice. Use real quotes and confirmed terms, not a projected high winning bid. This is a planning review, not a tax calculation or an automated pricing feature.
 
-If the lowest accepted price cannot support the commission, revise the scope or proposed price, or stop before committing more cost. If development is being subsidised, record that separately and explicitly. Fund agreed collaborator payments even if the piece receives no bids. A cost-covering opening bid does not guarantee a buyer. The first real price remains undecided; the existing CHF 339 prototype price has not been changed.
+If the lowest accepted price cannot support the commission, revise the scope or proposed price, or stop before committing more cost. If development is being subsidised, record that separately and explicitly. Fund agreed collaborator payments even if the piece receives no bids. A cost-covering opening bid does not guarantee a buyer. Set the first real commission's opening price through this review. After Hours is a public design study with a proposed opening bid of CHF 339.
 
 KEEP THE FIRST PROCESS SMALL
 
-The first version needs a shared brief, a private commission folder, a cost record, clear responsibilities, a few agreed reviews and a compelling finished piece. It does not need a collaborator portal, automated ranking, ballot, lottery or a large content calendar.
+Manage each commission with a shared brief, a private commission folder, a cost record, clear responsibilities and agreed reviews leading to a compelling finished piece.
 
 For each commission, record who is contributing what; the current intention and approved direction; scope and budget; review decisions; actual material/fit information; credits and website/book publication permissions; the administrator's reveal record; approved editorial assets; and launch readiness. Raw recordings, contact details and contracts stay out of the repository. Its public trail contains only approved work and accurate authorship. Keep book-cleared creative material separate from internal operating records.
 
-Current software has an artist biography and basic private cost fields. Separate designer/producer credits, linked collaborator profiles, recorded interviews, arbitrary reveal sequences and book ordering need deliberate content/flow design before being described as implemented. The working documents do not add those features or activate bidding. The commissioning and book-editorial process can be managed in private project records before building specialist software.
+The studio supports an artist biography and private cost fields. Separate designer/producer profiles, interview presentation, independent reveal sequences and book ordering require application work. Manage commissioning and book editorial records in private project folders, and use the supported studio fields for publication.
 
 The immediate creative work is to discover distinctive practices, explore possible collaborations and test the brief in conversation. Let those encounters refine who the piece could speak to. Choose the first commission when the artistic proposition, ability to realise it and economics hold together.
 
 SOURCE
 
-[1] Oral History Association, Oral History Best Practices, accessed 17 October 2026. Used for recording, consent and editorial-review principles:
+[1] Oral History Association, Oral History Best Practices. Recording, consent and editorial-review principles:
 https://oralhistory.org/best-practices/

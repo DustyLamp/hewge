@@ -1,15 +1,13 @@
 HEWGE — AUCTION LAUNCH READINESS
-Policy alignment: 17 October 2026. Implementation/deployment evidence is dated in the linked operational runbooks.
-
-Use docs/administrator-playbook.md for the shared concept, social proof, per-release reveal decisions and annual book. Newer substantive founder direction governs older working copy; implemented capabilities and activated services remain distinct.
+Use docs/administrator-playbook.md for the shared concept, social proof, per-release reveal decisions and annual book. This checklist governs activation of the implemented services.
 
 Implemented capabilities and activation limits
 This inventory is not approval to enable every feature. Bidding, payment, public messaging and NFC have the separate gates below; gift registration, the full contributor model and book checkout remain to be designed/implemented.
-- Public preview and dedicated journal page with shared typography. Piece/edition IDs remain; decorative section numbers are removed.
+- Public preview and dedicated journal page with shared typography. Use piece/edition IDs without decorative section numbering.
 - Email-first membership with single-use confirmation. Sizes, location, bidding interest and optional profile/SMS preferences come after verification. SMS preferences and phone verification are implemented for restricted sandbox testing; public release texts remain inactive.
 - Collector sign-up with email verification, private preferences and owner dashboard.
 - Owner account: jez@hewge.design, only after verified sign-up. Cognito admins group supports future authorised owners.
-- Individual garment release dates. No standing weekly or Tuesday schedule. The annual book has a separate publication rhythm.
+- Individually chosen garment release dates. The annual book has a separate publication rhythm.
 - Highest valid bid wins. No paid entry, draw, random winner or follower weighting.
 - Server-side bid validation and atomic head + bid + terms recording.
 - Artist and material visibility controlled on the server, not merely hidden in HTML. Administrators choose each release's reveal plan; the current binding-auction gate requires these details by opening and does not implement every intended sequence.
@@ -20,13 +18,13 @@ This inventory is not approval to enable every feature. Bidding, payment, public
 - See docs/legal-and-card-launch.txt for current legal, privacy, card and withdrawal activation requirements.
 
 Required before accepting a binding bid
-1. Seller identity confirmed by the owner on 13 October 2026: Lewis (Einzelfirma), Unterdorfstrasse 2, 8165 Schöfflisdorf, Switzerland. Public customer-service email: jez@hewge.design. The seller name, address and email are used in the terms/privacy disclosures and outbound email footer/reply-to; the legal-form descriptor is kept out of customer-facing copy. This confirms the contact details, not completion of legal review or SMS approval.
+1. Seller: Lewis, Unterdorfstrasse 2, 8165 Schöfflisdorf, Switzerland. Public customer service: jez@hewge.design. Use these details in terms/privacy disclosures and outbound email contact details. The legal form is Einzelfirma and is administrative information; public copy uses the seller name, address and email. Complete the relevant legal and messaging approval requirements separately.
 2. Actual artist, provenance/rights, material/composition, size, measurements and final garment images.
 3. A release-specific administrator reveal record and actual opening/closing dates, aligned with supported behaviour and approved disclosures. No fabricated countdowns. Once open, auction commitments cannot be silently rewritten.
 4. Insurable destinations, shipping charge, duties/taxes, delivery promises and product safety/label requirements for target markets. Country codes are an explicit allowlist, not an automated sanctions check.
 5. Swiss counsel review of the complete auction terms: contract formation, bid binding period, default notices/grace, cancellation and next-bidder offer, refunds/defects, applicable mandatory cross-border consumer law, privacy/controller disclosures. Mystery material/artist must be reviewed specifically: marketing suspense does not remove required product disclosures.
 6. Swiss Stripe onboarding, card activation and actual Stripe sandbox end-to-end tests, signed webhooks, asynchronous payment and expired-session recovery.
-7. SES production access (requested 13 October; API says DENIED, support requested further information; follow-up submitted 14 October; public verification delivery is blocked). Domain identity/DKIM are deployed. Verification email is queued only for the lifetime of its 48-hour link and reports pending while SES is in the sandbox. Release/winner emails remain disabled. The hewge-delivery configuration set enables bounce/complaint suppression and CloudWatch delivery metrics. The existing Cognito default email service can verify accounts with its own low daily sending quota; upgrade account email to SES after approval for larger launch volumes.
+7. SES production access for public verification delivery. Domain identity/DKIM are configured. Verification email is queued only for its 48-hour link lifetime and reports pending while SES is in the sandbox. Release/winner emails are disabled. The hewge-delivery configuration set provides bounce/complaint suppression and delivery metrics. Cognito's default email service supports account verification with a small daily quota; configure SES-backed account email for larger launch volumes. Follow docs/messaging-activation.txt.
 8. Publish approved terms with a new version in shared/legal.ts and an immutable public/legal snapshot. Set deployment flags only after all checks above are complete.
 
 Payments
@@ -35,7 +33,7 @@ The auction winner owes payment at closing; ownership is registered only after c
 Payment is due immediately and the verified winner card is attempted at closing. The separate 24-hour technical recovery period is not credit or permission to defer payment. The default minimum bid increase is CHF 10. CHF 339 remains the After Hours design-study proposal; the first real commission's opening bid is undecided pending its cost review. Shipping fee defaults to zero in a draft only and must be deliberately set before scheduling.
 
 Experience still to complete
-The intended journey distinguishes purchaser, giver and custodian; current paid checkout registers the paying winner and uses the billing address for delivery. Direct gift registration/delivery, initial-gift valuation and surprise timing need the agreed workflow before use. Creator attribution must include artist, designer and producer at their agreed reveal stages; dedicated designer/producer profiles are not yet implemented. The application's existing "anonymous bidder" label must not be treated as a universal description of every custodian. See the journey and administrator playbooks for those gaps and the already-established transfer-fee/approval baseline.
+The intended journey distinguishes purchaser, giver and custodian; paid checkout registers the paying winner and uses the billing address for delivery. Complete direct gift registration/delivery, initial-gift valuation and surprise timing before offering that workflow. Contributor profiles and role-appropriate anonymous labels require application work. Credit artist, designer and producer at their agreed reveal stages. Follow the journey and administrator playbooks for the handovers, and permanent-provenance.txt for transfer fees and approval.
 
 The annual purchasable coffee-table book covers the year's pieces and their making more deeply than the website. Production, price, print permissions and ordering/fulfilment are separate work; the garment auction is not a book checkout. Potential complimentary custodian copies and signatures by one or several artists remain uncommitted. Book content is the creative story, not the internal operating, influence or customer-transaction journeys.
 
@@ -44,9 +42,9 @@ Review failed or ambiguous outbox sends in the studio before retrying. Avoid aut
 
 Mystery assets
 Mystery is designed and decided afresh by the administrator for each release; it may include a later artist reveal if that specific flow is reviewed and supported. Use the reveal record in docs/administrator-playbook.md. Current binding-auction artist/material gates remain in force until the corresponding terms and implementation change; they are not a universal creative sequence.
-Identity fields are redacted from the public API until reveal. Files deliberately uploaded to public/images are PUBLIC: a teaser does not retract prior publication. Keep unreleased garment photography out of the public repo and bundle; use the studio’s private media uploads and server-controlled publication for future artwork. Current provided After Hours artwork has already been approved for public preview.
+Identity fields are redacted from the public API until reveal. Files in public/images are PUBLIC. Keep unreleased garment photography out of the public repo and bundle; use the studio's private media uploads and server-controlled publication. After Hours is the public design study.
 
-Primary legal references reviewed
+Legal references
 Swiss Federal Consumer Affairs Bureau, contract formation, T&C incorporation, default and defects:
 https://www.konsum.admin.ch/en/frequently-asked-questions-faq
 Swiss SECO, e-commerce obligations:

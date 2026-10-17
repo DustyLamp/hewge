@@ -2,7 +2,7 @@
 
 Brand colour: `#00FEEF`. Keep customer-facing copy sparse and imagery prominent. Every saleable garment is one of one, including each size. Never introduce a quantity selector or generic size stock that implies duplicated pieces.
 
-Keep the existing Ultra HEWGE wordmark. The owner chose the website's existing lettering over the alternate logo concepts on 14 October 2026. Small brand icons use the H outlined from Ultra, matching the homepage's vertical proportion; do not revive the rejected 1/1 or abstract symbols. See docs/branding/concept-brief.txt.
+Use the Ultra HEWGE wordmark. Small brand icons use the H outlined from Ultra, matching the homepage's vertical proportion. See docs/branding/concept-brief.txt.
 
 Sentence full stops use solid `#00FEED`, with no muted tint. Reuse the front page’s bold/italic title treatment on story pages. Membership starts with email verification and progressively asks for preferences; no discounts or retail promotion language.
 
@@ -10,7 +10,7 @@ Voice: understated and specific. Let the work, withheld details and real dates s
 
 Strategy conversations are exploratory: the founder supplies context and illustrative possibilities, not a requirement for every example. Use creative judgment, distinguish agreed principles from proposals, and do not turn examples of location, age, gender, occupation or selection mechanisms into a fixed audience or implementation task. No launch demographic or geographic audience has been chosen. See docs/creative-commissioning.txt.
 
-Use the latest substantive founder decision when working documents differ, unless it materially conflicts with an explicit commitment. Distinguish intended experience from implemented/activated capabilities; preserve historical legal snapshots and evidence. The shared concept and administrator decisions are in docs/administrator-playbook.md.
+Documentation states the current concept and operating instructions directly. Correct affected passages together; remove superseded content, obsolete references and change-history commentary. Distinguish intended experience, available capabilities and unresolved decisions. The shared concept and administrator decisions are in docs/administrator-playbook.md.
 
 Social proof means the standing Hewge earns in society and particularly its intended audience, including validation by influential and consequential people whose judgment matters there. It includes genuine wear, recommendations, gifts, loans and cultural recognition, not only paid owners or bids. Relationships never change the highest-valid-bid rules.
 
@@ -26,7 +26,7 @@ Checkout stays disabled until the owner’s Stripe account, real product sizing/
 
 # User printing preference
 
-Jez explicitly prohibits brims on prints (2026-09-26). Never enable or reintroduce brims unless Jez explicitly reverses that instruction. Use `brim_type: no_brim`, `brim_width: 0`, and zero prime-tower brim width where applicable.
+Never enable brims on prints unless Jez explicitly requests them. Use `brim_type: no_brim`, `brim_width: 0`, and zero prime-tower brim width where applicable.
 
 Garment releases have individually chosen dates, never an assumed recurring weekday. Keep unrevealed artist/material fields out of public API responses. Paid ownership transfers require verified recipient acceptance and Hewge review; a printed code alone is not proof of authenticity.
 

@@ -1,7 +1,5 @@
 # Hewge concept and administrator playbook
 
-17 October 2026 · Version 1
-
 This is the shared concept and decision process for Hewge administrators. Use it with the [eight participant journeys](journey-playbook.md), [launch playbook](launch-playbook.txt) and [commissioning guide](creative-commissioning.txt). The operational runbooks describe what the application currently supports and what must be completed before activation.
 
 ## The concept
@@ -14,26 +12,22 @@ The editorial website gives each piece its own name, story and enduring place in
 
 An annual purchasable coffee-table book brings together the year's pieces and how they came to be. It contains deeper material than the website and is conceived as an exceptionally desirable physical object in its own right. Its annual rhythm is separate from individually timed garment releases.
 
-## Which decisions govern
+## Operating principles
 
-Use the founder's latest direction and the most recent substantive decision when older working documents differ. Dates describe decisions or observations; a recently edited file does not make every claim in it a new decision. Where a newer statement materially conflicts with an explicit commitment, record the specific conflict and resolve it before relying on either version. Do not silently replace accepted contractual terms, ownership history or security requirements.
-
-Keep three things distinct: agreed direction; proposals and unresolved choices; and implemented, tested or activated capabilities. A new journey does not make its software available. Published legal snapshots, submitted provider requests, historical test evidence and rejected design prompts remain historical records. Update their surrounding guidance rather than rewriting what happened.
-
-Current shared decisions:
+Use these principles to design commissions, releases and the continuing experience of each piece. Resolve commission-specific choices before making a commitment. Application capabilities and activation requirements are described in the operational runbooks; the open handovers are in the journey playbook.
 
 - Magnitude and depth of value guide the venture; production of original garments remains very small. No geography, age, gender or profession is fixed as the audience.
 - Every garment release has its own dates and reveal plan. There is one live auction at a time; free bidding and the highest valid bid determine the winner. Influential relationships do not confer auction preference.
 - Membership starts with verified email, then optional preferences and separately consented SMS. No discounts or routine retail promotion language.
 - Artist, designer and producer receive accurate attribution, at the times agreed for that release. Purchaser, giver, custodian and repurchaser are distinct relationships even when one person fills several roles.
-- CHF 339 remains the After Hours design-study proposal. The first real commission's opening price is to be decided against its costs; there is no instruction to change the prototype price now.
+- After Hours is a public design study with a proposed opening bid of CHF 339. Set each real commission's opening price against its complete costs and agreed commercial contribution.
 - One purchasable coffee-table book is planned each year. Complimentary custodian copies and signatures by one or several artists are possible future features, not promised entitlements.
 
 ## Social proof and influence
 
 For Hewge, social proof means the standing and perceived value the work develops in society, particularly among the people a release seeks to reach. It grows when people see others value, wear, discuss, collect or recommend the work. Influential and consequential people matter because their choices and judgment can establish significance for that audience. Their relevance, credibility and effect on others matter alongside their reach.
 
-This applies the social-proof principle in Influence: people use others' behaviour to inform their own judgment, particularly under uncertainty. Credible expertise can also contribute authority. Hewge's definition includes the wider reputation that develops through those responses; it is not limited to bid counts or paid owners. See [Cialdini's principles](https://www.influenceatwork.com/7-principles-of-persuasion/).
+This applies the social-proof principle in Influence: people use others' behaviour to inform their own judgment, particularly under uncertainty. Credible expertise can also contribute authority. The wider reputation that develops through those responses is part of Hewge's value. See [Cialdini's principles](https://www.influenceatwork.com/7-principles-of-persuasion/).
 
 For each release, understand whose judgment carries weight with the people the work could speak to, why it carries weight, and how those people could encounter the work meaningfully. A respected wearer, artist, designer, cultural figure, collector, host or personal connection may each play a part. These are possibilities, not a fixed recruitment list or demographic.
 
@@ -53,7 +47,7 @@ The administrator designs the mystery anew for every piece. There is no universa
 | Publish and fulfil | What has actually happened, and what does each participant need next? | Use the agreed dates and reveal triggers. Distinguish bids, confirmed payment, delivery and registration. Follow the appropriate auction or gift procedure. |
 | Continue and learn | How is the piece being understood, worn and spoken about, and what should its history retain? | Review real responses, care needs, approved appearances and introductions. Add accurate history and prepare the year's book material. |
 
-Keep the release record in the private commission folder until a dedicated workflow exists. Record a responsible administrator, revision and approval date. The studio's existing fields are not a complete implementation of this playbook.
+Keep the release record in the private commission folder, with a responsible administrator, revision and approval date. Use the studio for the fields and controls it supports.
 
 ### The reveal record
 
@@ -65,13 +59,13 @@ For each item below, record its private authoritative information, what the publ
 | Artist, designer and producer | Whose identity, contribution and background appear at each stage; when any withheld names and full credits become public. |
 | Material, technique and making | Which details lead the story, which develop later, and which factual disclosures must accompany a binding decision. |
 | Fit, measurements and condition | The information needed to assess the actual original before bidding, and any separately agreed gift/fitting process. |
-| Price and auction | When the actual opening bid is announced; opening, closing, payment and delivery commitments. No fixed three-day price reveal or weekly release rule. |
+| Price and auction | When the actual opening bid is announced; individually chosen opening, closing, payment and delivery commitments. |
 | Story, recordings and book material | Which extracts are public now, which follow later, and which deeper material is intended for the annual book. Agree uses and timing with contributors. |
 | Recipient and continuing history | What may be shared about the purchaser, giver or custodian, by whom and with whose permission. Anonymity remains available. |
 
-Use a precise date/time or a defined event and completion deadline for promised later reveals. State any remaining withheld information and its timing clearly where a person commits. Check the website, API, images, captions, recordings and collaborators' own publications against the same plan; a withheld name in one place is ineffective if another asset exposes it. Previously public material cannot be made secret retrospectively.
+Use a precise date/time or a defined event and completion deadline for promised later reveals. State any withheld information and its timing clearly where a person commits. Check the website, API, images, captions, recordings and collaborators' own publications against the same plan. Keep unrevealed material in private storage and publish only the assets cleared for that stage.
 
-The current application has shared artist/material reveal modes and a separate design teaser setting; it does not implement arbitrary independent reveal sequences. Its binding-auction checks currently require artist/material details by opening. That is the current operational limit, not Hewge's universal creative policy. A plan outside it needs the relevant disclosure review, versioned terms and application changes before use. Do not bypass the gate or imply that a draft reveal setting is permission to accept bids. Once commitments exist, changes require the applicable correction/notice process rather than silently moving a reveal or resetting a countdown.
+Application support: artist/material share a reveal mode, design has a separate teaser setting, and binding-auction checks require artist/material details by opening. A release plan outside those capabilities requires disclosure review, approved terms and tested application support before use. Follow the applicable correction and notice process when a public commitment cannot be fulfilled; preserve genuine countdowns and accepted auction terms.
 
 ## The annual book
 
@@ -99,10 +93,10 @@ At a later stage, each custodian may receive a complimentary copy. Those copies 
 
 Before offering this, decide which custodians qualify and at what date, whether it recurs annually, how later transfers or several pieces held by one person affect allocation, and how address confirmation, delivery and cost are handled. Agree participating artists, signing arrangements and compensation where applicable. A signature in a book is a personal contribution to that edition; it does not replace the piece's signed certificate or transfer ownership.
 
-## Established ownership rules and remaining handovers
+## Ownership and handovers
 
 The current paid-auction flow registers the verified paying winner after confirmed payment and uses the entered billing address for delivery. The intended gift journey needs separate arrangements for the purchaser, recipient, surprise timing and accepted registration. Initial gift registration and a valuation basis for founding gifts with no verified sale value remain unresolved; do not simulate a payment to create ownership.
 
 For existing owner-to-owner transfers, the verified recipient accepts, physical identity and entitlement are reviewed, the recipient pays the quoted 0.5% fee, and Hewge gives final conditional approval. Resales use the declared resale value; subsequent gifts use the last verified sale value. Hewge does not hold the resale price. The remaining handover work concerns buyer–seller payment, physical delivery, condition checks, risk and recovery around that process. See [permanent provenance](permanent-provenance.txt).
 
-Use purchaser, giver, custodian and repurchaser according to the actual relationship. In intended public editorial copy, use an opted-in name or an anonymous description appropriate to the event. The application's current “anonymous bidder” label and artist-only profile fields still need adaptation for the full journey. Separate designer/producer credits, direct gifting, flexible reveal sequences and book purchases are documented requirements or open designs, not claims of completed functionality.
+Use purchaser, giver, custodian and repurchaser according to the actual relationship. Public editorial copy uses an opted-in name or an anonymous description appropriate to the event. Application work includes role-appropriate anonymous labels, separate designer/producer credits, direct gifting, independent reveal sequences and book purchases. Complete the relevant flow before offering it publicly.

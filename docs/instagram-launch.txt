@@ -1,6 +1,6 @@
 HEWGE / INSTAGRAM LAUNCH
 Account: @hewge.design
-Working copy aligned 17 October 2026. Apply the specific release's administrator-approved reveal record; the examples below are optional treatments, not a fixed sequence. See docs/administrator-playbook.md.
+Apply the specific release's administrator-approved reveal record; the examples below are optional treatments, not a fixed sequence. See docs/administrator-playbook.md.
 
 BIO
 Artist originals. One owner.
@@ -31,14 +31,13 @@ Story 2: The actual countdown sticker. Link to the dedicated piece page.
 Story 3: A second detail or a material close-up, only if approved for public view. No explanatory caption.
 Reveal: Full garment. Its name. Its size. Opening bid. Closing time. Link to the journal page.
 Close: Announce the winning bid as awaiting payment. Do not claim a paid owner yet.
-Paid: “Yours.” Share the custodian only with their recorded opt-in; otherwise leave the name out or use a role-appropriate anonymous description. “Anonymous bidder” applies to a bidder, not every recipient or custodian. Gifts/loans use their actual status, never a fabricated paid result.
+Paid: “Yours.” Share the custodian only with their recorded opt-in; otherwise leave the name out or use a role-appropriate anonymous description. Describe gifts and loans by their actual status.
 
 COMMUNITY
 Start with real behind-the-scenes material, process, clues and collector questions.
 Build social proof through genuine recognition, particularly by influential and consequential people whose judgment matters to the intended audience. Show actual work, wear, recommendations and appearances with agreed permissions and accurate relationship disclosures. Public posts do not explain the strategy. Auction access and outcomes remain independent of influence.
 No bought engagement, fake bidders, staged independent leaks or undisclosed brand accounts.
 A Reddit community can follow once there is enough real conversation to sustain it.
-No Instagram or Reddit posts have been published by this implementation.
 
 ANNUAL BOOK
 Once a year, a purchasable coffee-table book covers the year's pieces and how they came to be in greater depth than the website. Announce its real edition and availability when ready, with imagery of the approved physical work. Internal administration, influence strategy and customer transaction journeys are excluded from its content. Complimentary custodian copies, possibly signed by one or several artists, are future possibilities; do not advertise them as current benefits. No book launch date or purchase flow is ready.
