@@ -8,6 +8,8 @@ Sentence full stops use solid `#00FEED`, with no muted tint. Reuse the front pag
 
 Voice: understated and specific. Let the work, withheld details and real dates suggest what comes next. Never narrate the marketing strategy, announce suspense or hype, promise a story is worth waiting for, or tell the reader how to feel. Keep auction obligations and reveal timing explicit.
 
+Strategy conversations are exploratory: the founder supplies context and illustrative possibilities, not a requirement for every example. Use creative judgment, distinguish agreed principles from proposals, and do not turn examples of location, age, gender, occupation or selection mechanisms into a fixed audience or implementation task. No launch demographic or geographic audience has been chosen. See docs/creative-commissioning.txt.
+
 Deploy only to AWS account `082229154968`, region `eu-north-1`, using the `hewge` profile. Keep AWS organisation controls intact. Never commit secrets, customer emails, generated build archives, or runtime data.
 
 Checkout stays disabled until the owner’s Stripe account, real product sizing/artist data, seller details, and shipping/returns/tax terms are ready. See README for the launch steps and payment-offer rules.

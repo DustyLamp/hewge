@@ -1,13 +1,17 @@
 HEWGE — THE FIRST PIECES
-Working launch playbook / 17 October 2026 / v0.1
+Working launch playbook / 17 October 2026 / v0.2
 
 This records the founder's direction and a proposed way to realise it. Recommendations, audience hypotheses and unbuilt services below are proposals, not completed work or an approved spending plan. No artist, designer or first wearer has been identified yet. This document will develop as real conversations and commissions replace assumptions.
+
+Interpretation corrected on 17 October: the founder is building a vision through examples, not issuing a specification with every suggestion. Earlier references to a city, age band, occupation or gender must not become audience decisions. No such audience is fixed. The suggestion of a collaborator lottery/ballot was exploratory, not a request to change the auction or build a selection system. Use creative judgment and keep the first process simple. The companion docs/creative-commissioning.txt develops the commissioning approach.
 
 THE AMBITION
 
 Hewge is a magnitude play. Recognition can travel widely while production remains very small. Success is a piece that someone understands, chooses, wears and treasures, with enough demand to sustain the people who made it. Hundreds of garments, a large advertising budget and a constantly replenished shop are not objectives.
 
 The work is wearable art. Its material, cut, construction, presentation and life with its owner must support that description. Saying it is art cannot do the work of making it exceptional. The strongest first story is a real artist and maker bringing a particular piece into the world, followed by a real person living in it.
+
+Hewge connects three kinds of authorship: the artist's visual language, the designer's approach to form, and the owner's interpretation through wearing. A piece can help someone express something they recognise in themselves. Attention, belonging, beauty, individuality and recognition are possible motivations to explore; neither wealth nor status is a universal explanation. Future work may take forms beyond shirts.
 
 CONFIRMED DIRECTION
 
@@ -20,23 +24,23 @@ CONFIRMED DIRECTION
 - The established Ultra HEWGE wordmark and editorial website remain. Public language is brief and specific; never explain how we are building suspense.
 - An owner can remain anonymous. Wearing, posting, appearing in the archive and introducing friends are voluntary.
 
-WHO WE START WITH
+DISCOVERING WHO CONNECTS WITH THE WORK
 
-Working hypothesis: a small, connected Zürich circle, initially around ages 30–45, with discretionary income, individual taste and occasions to wear expressive work. This is a place to begin listening, not a validated market definition. Parenthood is a weak proxy for taste or willingness to buy; do not make it a requirement or a profiling field.
+Begin with motivations, aesthetic connections and lived situations. Explore what people feel is missing from what they can wear, what they already treasure and how they would make a piece their own. Geography, gender, age and profession remain open. Practical reach, price and physical fit matter for a particular commission; they do not define the whole brand in advance.
 
 Three overlapping relationships matter:
 
 The wearer/collector: feels a connection to the artwork, can afford the piece, can wear its actual measurements and has a life in which it belongs. Ask what they already treasure, what they last bought because of its maker, and where they would wear this.
 
-The introducer: a friend, DJ, host, artist, stylist, photographer or other person whose taste people trust. Their usefulness comes from a credible fit with the work, real relationships and willingness to wear it. A large following is neither necessary nor sufficient. An introducer may never bid.
+The introducer: someone whose taste other people trust and whose connection to the work is credible. Relationships and willingness to wear it matter more than a job title or follower count. An introducer may never bid.
 
 The gift buyer: recognises something of their partner or friend in the piece. They need confidence about fit, delivery, presentation and what happens if something is wrong. They may be the purchaser without being the eventual wearer or registered owner. Do not assume the recipient shares the giver's preferences.
 
-Start with approximately ten substantive conversations, including wearers, introducers and gift buyers. This is a proposed research batch, not a launch quota. Record voluntarily shared interests, objections and practical fit/price constraints privately. Do not turn guesses about wealth or personal circumstances into customer facts. Keep contacts and interview notes out of GitHub.
+Start with a small, varied set of substantive conversations across these relationships. Let patterns and surprises inform the first commission rather than recruiting only people who confirm a preset persona. Record voluntarily shared interests, objections and practical fit/price constraints privately. Do not turn guesses about wealth or personal circumstances into customer facts. Keep contacts and interview notes out of GitHub.
 
 THE FIRST COMMISSION
 
-Find the artist and intended context together. A piece for a DJ's performance must work in movement and under lights; a piece for dinners or a gallery opening can ask different things of the silhouette. The artist needs a point of view of their own, not a requirement to illustrate generic luxury.
+Find the artist's point of view, the designer's response and possible wearing contexts together. Explore movement, visibility, intimacy, comfort and the kind of expression the work makes possible. A specific wearer may inform a gifted commission; an auction's eventual owner is not known in advance. The artist needs a point of view of their own, not a requirement to illustrate generic luxury.
 
 Initial creative brief:
 - One human-authored work conceived for a body in motion. Agree where the composition sits when standing, seated, open, closed and moving.
@@ -51,11 +55,11 @@ Define uniqueness precisely. Hewge will not reproduce the garment in another siz
 
 For the first paid release, the recommendation is to introduce the real collaborators and show their work before bidding opens. Their participation helps an unknown Hewge earn trust. Later releases can vary what is revealed and when, within the actual disclosure rules. The current application requires mandatory artist/material details by binding auction opening; this playbook does not change that gate.
 
-GIFTING AS A DELIBERATE FIRST STEP
+GIFTING AND EARLY WEARERS
 
 Select a person who would want to wear the work even without a posting obligation. A friend with the right taste and a public life may be more useful than a famous stranger. Ask about their interest and fit before making a gift; sending an expensive surprise is a poor substitute for that conversation.
 
-Proposed starting route, subject to the production budget: one founding piece for a carefully chosen wearer, followed by one different piece for the first auction. Each has its own artwork, identity and permanent record. The gifted piece is a complete commission and consumes real production capacity. It is never reproduced as the auction piece.
+One possible route is a founding gift followed by a different original for auction; another is to begin directly with a paid release. No sequence is selected. Each piece has its own artwork, identity and permanent record. A gifted piece is a complete commission and consumes real production capacity. It is never reproduced as the auction piece.
 
 If two commissions are unaffordable, use the collaborators' honestly labelled existing portfolios and a carefully managed showing of the first auction piece. A styling loan needs agreed condition, insurance, return and cleaning arrangements. Disclose prior wear when offering the garment; do not promise pristine unworn condition after a night out.
 
@@ -81,7 +85,7 @@ Choose protective materials for the specific textile and decoration. Conservatio
 First touch and first wear
 This is where the promise is tested: the inside finish, weight, collar, closures, sleeve movement and how the artwork changes over a moving body. Tags, holograms and NFC hardware must not scratch, pull or distort the drape. Show the piece on a person in real light and include a short movement film. The buyer should recognise what arrives.
 
-For the initial Zürich pieces, explore an optional personal handover and maker-led fitting. This is a proposed service, not something currently available. With a fixed auction garment, only offer adjustments that the maker has approved in advance; do not imply every one-of-one piece can fit every bidder. Record approved later alterations in the provenance history without rewriting the original product identity.
+Explore personal handover and maker-led fitting where practical, or well-designed remote fit support where distance makes that preferable. These are proposed services, not currently available promises or reasons to restrict the audience to a location. With a fixed auction garment, only offer adjustments that the maker has approved in advance; do not imply every one-of-one piece can fit every bidder. Record approved later alterations in the provenance history without rewriting the original product identity.
 
 First outing
 Offer one or two specific styling suggestions from the designer. Let the owner choose the occasion and whether to be photographed. A genuinely useful question after delivery is whether they have worn it and how it felt. The relationship must not become an obligation to produce content for Hewge.
@@ -119,7 +123,7 @@ VALUE AND ECONOMICS
 
 Value may be emotional, artistic, social, practical and historical. Recognition can increase demand, but an Instagram post does not establish a new resale price. Garments age and may lose financial value. Do not describe appreciation as inherent, promise an investment return or treat an asking price as a verified sale.
 
-Before approving a gift or auction, cost the artist, design/pattern, materials, making, fitting, documentation, presentation, insurance, shipping, payment costs and proposed aftercare. Set an opening bid the business can accept, or explicitly budget the loss on an experimental first commission. CHF 339 belongs to the current design-study proposal; the economics of the actual first commission must be decided with the founder. Do not silently replace the price or assume a CHF 3,000 result.
+Before approving a gift or auction, cost the artist, design/pattern, materials, making, fitting, documentation, presentation, insurance, shipping, payment costs and proposed aftercare. The paid release should cover its fully costed work and selling costs, with a contribution that sustains Hewge. Test that at the opening bid; auction upside must not be necessary to pay agreed collaborator fees. Budget any exploratory development or gifting separately and explicitly. CHF 339 belongs to the current design-study proposal; the economics of the actual first commission must be decided with the founder. Do not silently replace the price or assume a CHF 3,000 result. See the commissioning guide for the cost review.
 
 Fund craft and fit first, then photography and presentation. Low software overhead protects that budget. Gifting is a commission expense with an uncertain return, not free distribution. A failed auction is information to examine, not a reason to invent a sale or quietly duplicate the piece.
 
@@ -148,8 +152,8 @@ Record what blocked interest: fit, artwork, timing, price, confidence, occasion 
 NEXT WORK, IN ORDER
 
 1. Agree a budget range for the first commission and whether it can support an additional founding gift. Nothing has been commissioned yet.
-2. Research a focused shortlist of human artists, garment designers and makers with relevant work and accessible Zürich connections. No shortlist or outreach has been completed.
-3. Identify potential first wearers and gift buyers, starting with the founder's actual acquaintances and their introductions. Listen before offering a gift or choosing a final size.
+2. Explore human artists, designers and makers with distinctive work and an interesting potential collaboration. Direct curation is the recommendation for the first pieces; no pool, ballot or random-selection system is required. No shortlist or outreach has been completed.
+3. Explore potential wearers and gift buyers through conversations and introductions without fixing a demographic or geography. Listen before offering a gift or choosing a final size.
 4. Develop the first artist/designer brief into a funded commission, then make fit/material tests and one packaging prototype. Document actual decisions as the launch story develops.
 5. Resolve messaging delivery, payment, terms, fulfilment and physical-authentication prerequisites from docs/launch-readiness.txt. The present strategy does not authorise activating those systems.
 6. Choose the first release date only when the finished work, a credible interested circle and the operating process are ready. Review the experience before committing to another release.

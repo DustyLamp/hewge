@@ -6,7 +6,7 @@ One original garment. One owner. Artist-led releases, each with a journal page, 
 
 The first public design study is **After Hours**, with a proposed opening bid of **CHF 339**. The editorial name/story are draft creative copy. Final artist, material, size and garment photography are still required. There is **no fixed release schedule**: the owner chooses each reveal/opening and closing, with one auction open at a time. Free bidding; highest valid bid wins. No lottery, paid entries, follower weighting or buyer's premium.
 
-The working [launch playbook](docs/launch-playbook.txt) records the first-release strategy: very small production, human artists, a first circle in Zürich, deliberate gifting, and the experience from presentation to wearing. It distinguishes the founder's direction, proposals and outstanding work; no collaborators or launch date are confirmed.
+The working [launch playbook](docs/launch-playbook.txt) records the first-release vision: very small production, human artists, meaningful ownership, gifting possibilities, and the experience from presentation to wearing. The [creative commissioning guide](docs/creative-commissioning.txt) develops collaborator curation, the brief, interviews, iteration and costs. Examples remain exploratory; no target geography, demographic, collaborators or launch date are confirmed.
 
 ## Run, verify and deploy
 
