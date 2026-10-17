@@ -1,6 +1,8 @@
 HEWGE — THE FIRST PIECES
 Working launch playbook / 17 October 2026 / v0.2
 
+For the complete founder, designer, artist, piece producer, purchaser, custodian, repurchaser and influenced-party journeys, including emotion, context-led instructions and unresolved handovers, see docs/journey-playbook.md.
+
 This records the founder's direction and a proposed way to realise it. Recommendations, audience hypotheses and unbuilt services below are proposals, not completed work or an approved spending plan. No artist, designer or first wearer has been identified yet. This document will develop as real conversations and commissions replace assumptions.
 
 Interpretation corrected on 17 October: the founder is building a vision through examples, not issuing a specification with every suggestion. Earlier references to a city, age band, occupation or gender must not become audience decisions. No such audience is fixed. The suggestion of a collaborator lottery/ballot was exploratory, not a request to change the auction or build a selection system. Use creative judgment and keep the first process simple. The companion docs/creative-commissioning.txt develops the commissioning approach.

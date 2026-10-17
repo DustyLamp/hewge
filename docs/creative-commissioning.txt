@@ -1,6 +1,8 @@
 HEWGE — FROM A POINT OF VIEW TO A PIECE
 Working creative commissioning guide / 17 October 2026 / v0.1
 
+The complete role journeys, context-led instructions for every stage and founder's introductory video for artists and designers are set out in docs/journey-playbook.md, alongside the emotional experience and unresolved handovers.
+
 This develops the launch vision, not a fixed production specification. It contains a draft collaborator brief and a recommended working process. No collaborator has been selected, approached or commissioned. No demographic, geography, gender, garment category beyond the current prototype, or launch sequence is settled. Examples in discussion are material for creative judgment, not automatic requirements.
 
 THE CREATIVE PREMISE
