@@ -15,21 +15,24 @@ Use AWS Support Center to continue the open production-access cases. Confirm pro
 Membership and editorial scope
 The invitation is Join Hewge: verified email first, then optional preferences and separately consented SMS. Administrators choose each garment release's dates and reveal sequence; messages follow that record and supported disclosures. Contact details or social standing do not authorise messaging or change auction eligibility.
 
-The annual purchasable book has a separate publication and purchase process. Define its campaign, ordering and service-message requirements before use. Complimentary copies and artist signatures for custodians are possibilities, not membership entitlements. Purchasing or receiving a book does not subscribe anyone to marketing.
+Book campaigns, ordering and service messages need their own requirements before use; see docs/annual-book.md. Purchasing or receiving a book does not subscribe anyone to marketing.
 
 Public business identity
-Lewis
-Unterdorfstrasse 2
-8165 Schöfflisdorf
-Switzerland
-Customer service: jez@hewge.design
-
-The business is an Einzelfirma; public contact details use the seller name, address and email. The website and outbound templates use shared/seller.ts as their contact source.
+Use shared/seller.ts for the website and outbound contact details. The seller disclosure review is in docs/legal-and-card-launch.txt.
 
 Email
 Domain identity and DKIM are configured. Sender: hello@hewge.design. Public reply-to: jez@hewge.design. Include the seller's postal contact in the footer. The hewge-delivery configuration set suppresses hard bounces/complaints and publishes delivery metrics. There is no dedicated IP or imported marketing list.
 
-Membership confirmation links expire after 48 hours. Send verification mail only while the link is valid and display pending delivery accurately. Unverified, expired or opted-out members are excluded from release campaigns. Account verification through Cognito's default email service has a small daily quota; configure SES-backed Cognito email for the planned audience volume.
+Membership and consent lifecycle
+Membership begins with an email-only request and a single-use confirmation. After verification, people may add sizes, country/city, bidding interest, name, Instagram and interests. Browser language/time zone are hints, never location facts. Unverified addresses are excluded from size-demand totals as well as mailings. Send verification only while the link is valid and display pending delivery accurately.
+
+The outbox claims each message before sending. Failed or ambiguous sends require inspection rather than automatic duplicate delivery. Release notifications respect consent and size interest; the latest verified membership or collector-account consent wins, including opt-outs. Release mailings require an active verified subscription. Consent is rechecked immediately before delivery. Release email TTL is 30 days. Pending membership requests and verification links expire after 48 hours; confirmed membership records expire after 180 days and expired entries are excluded from the dashboard and campaigns. Preference access uses a separate one-hour opaque session, not bidding/admin credentials. `/membership` provides fresh access links; `/privacy` requests an unsubscribe-only confirmation link. Entering someone else’s email cannot overwrite their preferences or remove their subscription. Each address is limited to four verification requests/hour and each IP to twelve; only hashes of tokens and rate-limit identifiers are stored as lookup keys. Links use URL fragments, cleared on arrival, and are consumed only by explicit confirmation. Transactional outbox text is removed after delivery; all membership outbox records expire after 48 hours.
+
+Confirmed opt-outs also write a non-expiring suppression record containing only the email-address hash and timestamp. Audience preview and the delivery worker check it with strong reads. This prevents expiry of a contact record from reviving an older account opt-in. A later explicit verified opt-in may supersede the timestamp. Account preference saves state the current explicit consent choice; account-profile deletion suppresses older release consent. These suppression records are operational preferences, not permanently locked ownership events.
+
+Transactional winner/receipt notices are independent of marketing consent. Auction/account retention and data-rights requests follow docs/legal-and-card-launch.txt; ownership/security history follows docs/permanent-provenance.txt.
+
+Account verification through Cognito's default email service has a small daily quota; configure SES-backed Cognito email for the planned audience volume.
 
 For the SES production-access case, provide the actual website, membership/privacy/terms URLs, requested message types, opt-in and opt-out flow, suppression controls, example messages and realistic volume/budget. Continue the open case in Support Center rather than creating a duplicate. Verify ProductionAccessEnabled=true, commission real delivery and review seller/controller disclosures before enabling public email. Monitor failed/ambiguous outbox records and SES reputation.
 
@@ -67,6 +70,10 @@ Activation procedure
 OTP deployment configuration:
 AWS_PROFILE=hewge npm run deploy:infra -- -c smsVerificationEnabled=true
 Retain this non-secret choice while commissioning or omit it to disable OTP requests. Public SMS requires its separate activation gate and prerequisites.
+
+Costs
+Budget email against the account’s active SES pricing plan and expected volume. Include data, other services and taxes as applicable:
+https://aws.amazon.com/ses/pricing/
 
 Provider references
 AWS End User Messaging regional endpoints:

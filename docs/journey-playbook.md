@@ -8,9 +8,7 @@ The instructions below begin with purpose and the desired outcome, leaving room 
 
 This is the intended experience. The decisions still open below remain open; the journeys do not imply that every service or feature is already implemented. Illustrative locations, demographics, occupations and selection ideas do not define the audience or become requirements.
 
-The [concept and administrator playbook](administrator-playbook.md) sets out the shared principles and each release's reveal process. Social proof includes the standing Hewge earns in society and its intended audience, especially through influential and consequential people whose judgment matters there. Purchases, gifts, real wear, recommendations and cultural recognition can all contribute; auction preference is never exchanged for influence.
-
-The piece journeys below are joined by an annual purchasable coffee-table book covering the year's pieces and how they came to be, in greater depth than the website. Its internal participant touchpoints follow the eight journeys; these maps are not book content. The book has its own purchase route to develop and does not inherit garment auction or ownership-transfer requirements.
+Use the [administrator playbook](administrator-playbook.md) for shared principles and reveal decisions, and [launch readiness](launch-readiness.txt) for implementation limits. The [annual book guide](annual-book.md#internal-participant-coordination) contains its separate participant touchpoints and editorial boundaries.
 
 ## The introductory video for artists and designers
 
@@ -98,7 +96,7 @@ The producer's contribution is part of the piece's authorship and history. Techn
 
 Winning, paying, receiving and registering ownership are separate events. Messages at each point need to reflect what has actually happened.
 
-Current paid checkout registers the paying winner and uses their billing address as delivery address. The gift handover above is the intended experience; direct recipient registration, separate gift delivery and initial-gift treatment still need the process and terms described below.
+The gift handover above is the intended experience. Check [current registration capabilities](launch-readiness.txt) and the gift decisions below before offering it.
 
 ## The custodian of the piece
 
@@ -127,9 +125,7 @@ The purchaser's reason for choosing the piece and the custodian's relationship w
 
 Three distinct questions need answers: **is the piece authentic, is the seller entitled to transfer it, and does its current condition match what was offered?**
 
-For subsequent gifts, the transfer-fee basis is the last verified sale value. Initial gift registration and handling of a piece with no verified sale value remain among the open decisions below.
-
-Hewge does not hold the resale price. Follow the fee, acceptance and approval process in [permanent provenance](permanent-provenance.txt); coordinate the external sale and physical handover around it.
+Follow the fee, acceptance and approval process in [permanent provenance](permanent-provenance.txt); coordinate the external sale and physical handover around it. Initial-gift decisions remain open below.
 
 ## The influenced party
 
@@ -143,25 +139,6 @@ Hewge does not hold the resale price. Follow the fee, acceptance and approval pr
 | Re-enter later | A later piece, collaborator or owner's story gives them another reason to return. Their role can change over time. | Return through the work or people that interest you. Your preferences and involvement can change as you discover more. | Familiarity developing into trust, attachment or participation. |
 
 This journey can feed every other journey. Someone who first arrives as an observer may later become a designer, artist, producer, purchaser or custodian.
-
-## Internal coordination for the annual book
-
-The annual purchasable book brings together the year's pieces and how they came to be, with deeper creative interviews, process and imagery than the website. Its physical ambition is an exceptionally desirable coffee-table object. The administrator playbook sets out the editorial and production sequence. The table below coordinates participation; it is not a proposed contents list and does not imply that the book or its checkout exists.
-
-The printed content excludes the founder/administrator's operating journey, influence and mystery strategy, collaborator selection/evaluation, commercial negotiations and the purchaser, custodian, repurchaser and influenced party's transaction or persuasion journeys. Account, payment, gift-registration, transfer and authentication processes stay out, as do private/off-record details. Include only cleared creative stories from the makers and the works; see the administrator playbook's full editorial boundary.
-
-| Participant | What happens | Context-led instruction | Emotional experience |
-| --- | --- | --- | --- |
-| Founder and administrators | Gather material throughout the year, develop the fuller account of every piece, clear permissions and credits, then design, proof, produce and release the purchasable edition. | Give the year's work a physical form that rewards returning to it. Preserve what a short web story cannot hold and make the object itself worthy of keeping. | Perspective, pride and the satisfaction of seeing the year's work together. |
-| Designer | Contribute the thinking, drawings, development and design decisions behind the finished piece, with agreed attribution and publication uses. | Help someone understand how the form came about and the decisions they could not infer from the final photographs alone. | Recognition of the depth of their contribution and a lasting record of it. |
-| Artist | Contribute fuller conversations and artwork/process material with agreed rights and reveal timing. They may later be invited to sign custodian copies if that programme is adopted. | Share the parts of the work's development that deserve more space. Review how your voice and contribution appear; any book signing is a separate agreement. | Being understood, pride in the record and possible personal connection through a signed copy. |
-| Piece producer | Explain the material, technical decisions, experiments and making that brought the work into physical existence. | Make the craft legible through the details that mattered in production, with clear credit for the people who did the work. | Recognition of expertise and satisfaction that the labour remains visible. |
-| Purchaser | May buy the annual book independently or as a further gift. Buying it does not require winning a garment. | Explore the year's pieces through their fuller stories. Choose the book for yourself or someone who would value that experience. | Discovery, anticipation and the pleasure of giving or acquiring a considered object. |
-| Custodian | Encounters their piece within the year's wider creative work. A permitted photograph may show the work being worn; their private ownership journey is excluded. A complimentary copy, possibly signed by one or several artists, is a future possibility. | Discover more of the making behind your piece. Any request to use an image is separate from registration, and any future custodian-copy offer will state eligibility and signing arrangements. | Attachment, belonging and seeing their piece as part of a larger creative history. |
-| Repurchaser | Can use the relevant annual edition to explore the piece's creative origins while checking current condition and ownership separately. Their acquisition journey is not printed. | Let the book deepen your understanding of the work. Use the current registry and physical review for the present transfer; the printed creative record is not proof of current ownership. | Discovery and a deeper connection to the work's making. |
-| Influenced party | Encounters the book in a home, through a creator, a social post or another introduction, and can buy it without becoming a garment custodian. | Follow the work and people that interest you through a fuller physical account. There are several ways to develop that connection. | Curiosity, desire to explore and a tangible way to participate. |
-
-Book format, production quantities, price, distribution and sales terms remain to be set. Complimentary copies for custodians and signatures by one or several artists are possibilities, not current entitlements. Eligibility, timing, artist participation and funding must be decided before either is offered. The annual book does not establish a recurring garment release schedule.
 
 ## Decisions still open at the handovers
 
@@ -183,7 +160,7 @@ Each garment is one of one. What additional promises attach to its artwork, patt
 
 ### The boundary of mystery
 
-Hewge administrators design and decide the mystery separately for each release. Record what the audience knows, what a bidder knows when committing, what the custodian learns later and when promised reveals occur. Artist identity may be part of a later reveal where the approved terms and supported flow permit it. Application support requires artist/material details at opening; a different plan needs disclosure review and tested implementation before use. Follow [the administrator playbook](administrator-playbook.md), including the response to delays or a reveal differing from the agreed description.
+For this piece, what does the audience encounter, what does a bidder need to know, and what does the custodian discover later? Resolve the sequence, promised reveal deadlines and response to delays using the [administrator’s reveal record](administrator-playbook.md#the-reveal-record), within the supported flow and approved terms.
 
 ### The complete economics of the collaboration
 
@@ -191,7 +168,7 @@ Are collaborators paid fixed fees, a share of the original sale or a combination
 
 ### Resale settlement and physical handover
 
-The transfer requires verified recipient acceptance and possession evidence, Hewge inspection of identity and entitlement, confirmed recipient-paid fee and final conditional approval. The fee is 0.5% of resale value; subsequent gifts use the last verified sale value. Hewge does not hold the garment resale price. Define the buyer–seller payment and delivery sequence around those steps, who bears risk between them, and the recovery path if condition or entitlement checks fail. Follow the fee-refund procedure in permanent-provenance.txt.
+Define the buyer–seller payment and delivery sequence around the [existing transfer process](permanent-provenance.txt), who bears risk between its steps, and the recovery path if condition or entitlement checks fail. Follow that runbook’s fee-refund procedure.
 
 ### The limits of continuing care
 

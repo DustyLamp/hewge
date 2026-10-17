@@ -1,13 +1,13 @@
 HEWGE / AUTHENTICITY & OWNERSHIP
 Scope
-This runbook describes physical-piece authentication and the current registration implementation. Use docs/administrator-playbook.md for the intended purchaser/custodian distinction and release-specific reveal plan. Authentication does not determine which creative details are published when. The annual book is a separate publication; a possible artist signature in a custodian's book is not the garment certificate or evidence of current ownership.
+This runbook owns physical-piece authentication, tag provisioning, commissioning and replacement. Use docs/permanent-provenance.txt for ownership registration, fee/refund approval and recovery of the ledger; docs/administrator-playbook.md owns publication decisions.
 
 Recommended package
 1. A permanent garment identity label with piece number/name/artist, a tamper-evident serialised holographic feature, and a concealed secure NFC tag.
 2. An artist-signed certificate carrying the same immutable piece/certificate identifier, material/technique, actual measurements, creation date, distinguishing details and photographs/reference to a preserved photographic record.
 3. A matching premium ownership card and Hewge provenance record. Keep the original artist certificate with the garment when it transfers; update the registration/card without forging or reproducing the artist's handwritten signature.
 
-Credit the actual artist, designer and producer, with roles combined where appropriate. Agree credits and reveal timing in the release record, including identification on the certificate and accompanying material. The artist signs the certificate. Dedicated designer/producer profiles and print-template fields require application work.
+Credit the actual artist, designer and producer, with roles combined where appropriate. Agree credits and reveal timing in the release record, including identification on the certificate and accompanying material. The artist signs the certificate. Check contributor and print-template limits in docs/launch-readiness.txt.
 
 There is no single universal world art authentication certificate or hologram. Authentication depends on the issuer, artist/recognised expert, supporting evidence and provenance. ICOM Object ID is internationally recognised for describing and identifying cultural objects; it is not an authenticity accreditation or proof of legal ownership. Use its nine descriptive categories plus photographs, short description and securely retained documentation. Never display an ICOM endorsement or claim certification merely for following the checklist.
 
@@ -25,12 +25,8 @@ Limits to test before manufacture
 - Record close-up photographs of seams, print alignment, signature, seal and unique garment features. Define lost certificate/tag, damaged label, theft/dispute and revocation procedures.
 - Back up/export provenance and preserve verification continuity if hosting or key infrastructure changes. Public exports must omit owner identities/evidence unless consented.
 
-Transfer implementation
-Verified current owner requests; verified intended recipient accepts and confirms physical possession; Hewge reviews the actual original/certificate and entitlement evidence; the recipient pays the quoted 0.5% fee; Hewge's final conditional approval atomically changes the registered owner and appends provenance. Resales use the declared resale price; subsequent gifts use the last verified sale value. See permanent-provenance.txt for payment/withdrawal/approval gates. Exact printed identifiers are supporting checks, not sufficient authentication. Public identification is opt-in; use anonymous descriptions appropriate to each person's role. Registry history shows dates, not private contact details. This is a registration process, not an international legal-title adjudication system, a resale checkout, or a copyright assignment.
-
-Paid-auction registration names the paying winner after confirmed payment. Direct registration of an initial gift and valuation where no verified sale exists require a defined workflow before use. See the handover decisions in docs/journey-playbook.md.
-
-The server implements encrypted SUN verification, AES-CMAC checked against published vectors, UID binding and an atomic monotonic counter check together with the piece verification hold. /verify consumes a fresh URL fragment only on an explicit button press. NFC is disabled until real hardware commissioning is complete. Successful verification identifies the registered chip, not legal title or the surrounding garment.
+Verifier implementation
+The server implements encrypted SUN verification, AES-CMAC checked against published vectors, UID binding and an atomic monotonic counter check together with the piece verification hold. /verify consumes a fresh URL fragment only on an explicit button press. NFC is disabled until real hardware commissioning is complete; do not sell a garment as NFC-authenticated before that integration and testing. Successful verification identifies the registered chip, not legal title or the surrounding garment.
 
 What to buy
 Request samples of Identiv ID-Garment-A511-NTAG424DNA (25 mm round), or the A474 variant if the sewn label needs another form factor. Specify the NTAG 424 DNA version, not an ordinary static-UID or UHF-only tag. The manufacturer describes the inlay as washable and slightly flexible. Get the actual wash/temperature/chemical specifications and test the completed attachment with the garment's care process before bulk purchase. Do not infer lifetime wash durability from a chip certificate. The supplier product page provides its sales contact; GoToTags also lists a 25 mm NTAG 424 DNA garment tag for small-quantity sourcing. Availability, configuration service and delivered Swiss price must be confirmed with the supplier.
@@ -51,7 +47,7 @@ Damage, loss and certificates
 The permanent piece identity and provenance survive tag failure. The verified owner can open a recovery case from their collection; this freezes verification/transfers. Hewge checks physical characteristics and stored photographs, the artist's record/signature, original sale evidence and registered ownership. A printed code, spare tag or unsigned certificate alone is insufficient. Keep one artist-signed paper certificate and an archived photographic copy. The certificate has a version; reissue requires a new artist signature and a permanent recovery event. Do not silently overwrite the original record. A second independently keyed chip is optional redundancy, not an extra transferable bearer title. If account access is also lost, a reviewed account recovery precedes a transfer.
 
 Blockchain
-No token/blockchain is required for this architecture. A timestamped hash or NFT cannot establish physical authenticity or repair a damaged tag on its own. Do not equate token control with legal garment ownership. Independent signed exports/checkpoints could add external evidence later without replacing physical inspection or the privacy-preserving registry. See permanent-provenance.txt for archive continuity, recovery drills, the recipient-paid 0.5% fee and the third-party custody recommendation.
+No token/blockchain is required for this architecture. A timestamped hash or NFT cannot establish physical authenticity or repair a damaged tag on its own. Do not equate token control with legal garment ownership. Independent signed exports/checkpoints could add external evidence later without replacing physical inspection or the privacy-preserving registry. See docs/permanent-provenance.txt for archive continuity and recovery drills.
 
 Primary references
 NXP NTAG 424 DNA / TagTamper product and security capabilities:

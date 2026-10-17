@@ -3,38 +3,11 @@ Launch playbook
 
 For the complete founder, designer, artist, piece producer, purchaser, custodian, repurchaser and influenced-party journeys, including emotion, context-led instructions and unresolved handovers, see docs/journey-playbook.md.
 
-The shared principles and release-by-release administrator process are in docs/administrator-playbook.md. Application capabilities and activation requirements are in README.md and the operational runbooks.
+The shared principles and release-by-release administrator process are in docs/administrator-playbook.md. Application capabilities and activation requirements are in docs/launch-readiness.txt. The annual publication has its own editorial and production process in docs/annual-book.md.
 
 Use this process to develop the first commissions and bring each piece into the world. Agree the contributors, budget, recipient or auction route, and supported services before committing the work.
 
 Develop the audience through the work and substantive conversations. Location, age, gender and profession are open to discovery. Use creative judgment and a simple curation process to bring collaborators together; docs/creative-commissioning.txt describes that process.
-
-THE AMBITION
-
-Hewge is a magnitude play. Recognition can travel widely while production remains very small. Success is a piece that someone understands, chooses, wears and treasures, with enough demand to sustain the people who made it. Hundreds of garments, a large advertising budget and a constantly replenished shop are not objectives.
-
-The work is wearable art. Its material, cut, construction, presentation and life with its owner must support that description. Saying it is art cannot do the work of making it exceptional. The strongest first story is a real artist and maker bringing a particular piece into the world, followed by a real person living in it.
-
-Hewge brings together the artist's visual language, the designer's approach to form and the producer's expertise in making. The custodian brings their own interpretation through wearing. A piece can help someone express something they recognise in themselves. Attention, belonging, beauty, individuality and recognition are possible motivations to explore; neither wealth nor status is a universal explanation. Future work may take forms beyond shirts.
-
-PRINCIPLES
-
-- One original physical garment, including its size. No repeats to meet demand.
-- Human artists make the first real release. After Hours remains the existing public design study for now; its mockup is not documentary evidence of a completed garment.
-- An artist creates the artwork; a designer develops the cut; a maker constructs it. One person may fulfil several roles. Credit the actual contributions.
-- Individually chosen release dates, announced when the work and operations are ready. One live auction at a time.
-- A reveal plan designed by Hewge administrators for each release. The mystery can differ every time; there is no universal artist, material, design or price reveal sequence.
-- Free bidding; highest valid bid wins. Followers and promotional usefulness do not change access rules or the auction outcome.
-- No discounts. Relationships, craft, genuine recognition and the work itself create attraction.
-- The established Ultra HEWGE wordmark and editorial website remain. Public language is brief and specific; never explain how we are building suspense.
-- An owner can remain anonymous. Wearing, posting, appearing in the archive and introducing friends are voluntary.
-- One purchasable coffee-table book each year, covering the year's pieces and their making in greater depth than the website. Exceptional visual and physical presentation is part of the intention. Complimentary custodian copies, potentially signed by one or several artists, remain future possibilities.
-
-SOCIAL PROOF AND INFLUENCE
-
-Social proof is the standing and perceived value Hewge develops in society, particularly among the people its work seeks to reach. Influential and consequential people can establish significance through their choices, judgment, wearing and recommendations. The effect depends on why those people matter to that audience, as well as their reach. It includes genuine gifts, loans, appearances, cultural recognition and purchases; it is not restricted to paid owners or bid activity.
-
-Understand whose response carries weight for a particular piece and what makes the connection credible. Record what their involvement actually produces: attention, introductions, conversation, desire, collaborator interest or acquisition. Keep the nature of the relationship accurate and auction rules independent of it. The administrator playbook connects this approach to Influence and gives the release-planning prompts. No fixed demographic or list of influential occupations is assumed.
 
 DISCOVERING WHO CONNECTS WITH THE WORK
 
@@ -50,22 +23,9 @@ The gift buyer: recognises something of their partner or friend in the piece. Th
 
 Start with a small, varied set of substantive conversations across these relationships. Let patterns and surprises inform the first commission rather than recruiting only people who confirm a preset persona. Record voluntarily shared interests, objections and practical fit/price constraints privately. Do not turn guesses about wealth or personal circumstances into customer facts. Keep contacts and interview notes out of GitHub.
 
-THE FIRST COMMISSION
+COMMISSION HANDOVER
 
-Find the artist's point of view, the designer's response and possible wearing contexts together. Explore movement, visibility, intimacy, comfort and the kind of expression the work makes possible. A specific wearer may inform a gifted commission; an auction's eventual owner is not known in advance. The artist needs a point of view of their own, not a requirement to illustrate generic luxury.
-
-Initial creative brief:
-- One human-authored work conceived for a body in motion. Agree where the composition sits when standing, seated, open, closed and moving.
-- A silhouette that suits the artwork and the intended wearer. Record the final garment measurements and intended ease; size letters alone are inadequate.
-- Choose fabric for its hand, drape, comfort and compatibility with the artwork. Silk, linen, hemp or Tencel are possibilities, not automatic evidence of quality.
-- Make fit and technique samples as necessary. Samples need not reproduce the final artwork or become additional saleable editions.
-- Test the actual decoration, seams and closures for the intended use, cleaning and contact with skin. Photograph the real making and the finished result honestly.
-- Describe the method accurately: hand painting, human-designed textile printing, embroidery and other techniques are different claims. Human authorship alone does not make every production step handmade.
-- Agree fees, credits, permitted photography, artwork reproduction rights, the one-of-one commitment and responsibility for care/repairs before commissioning. Makers deserve agreed payment even if an auction disappoints.
-
-Define uniqueness precisely. Hewge will not reproduce the garment in another size. Whether the artist can use related artwork in another medium is an agreement to settle, not an exclusivity claim to invent. Owning the garment does not automatically transfer copyright [4].
-
-For every release, including the first, the administrator designs the reveal sequence with the collaborators. Decide what is encountered first, which identities or material details appear later, and what must be known before a binding decision. An artist reveal after bidding is a possible creative plan, not a universal rule or an already-supported live flow. Use the reveal record in docs/administrator-playbook.md. The current application requires artist/material details by binding auction opening; a different plan needs the relevant reviewed terms and implementation before use.
+Use docs/creative-commissioning.txt for the physical brief, uniqueness/rights agreement, development and cost review. The intended wearing contexts explored here inform that brief. Complete the administrator’s reveal record before planning publication.
 
 GIFTING AND EARLY WEARERS
 
@@ -77,7 +37,7 @@ If two commissions are unaffordable, use the collaborators' honestly labelled ex
 
 A gift does not guarantee a post. If specific photography, appearances or publishing are required, negotiate those deliverables and usage rights openly. Record gifts and loans as gifts and loans, never purchases or invented auction results. Where someone posts branded content featuring a gifted or loaned piece, Meta requires its paid partnership label [1]. Further destination-specific requirements belong in the activation review.
 
-An original Hewge gift needs a reviewed registration procedure and a valuation basis where no verified sale value exists. Complete that treatment before promising terms. Use the actual gift and recipient acceptance as evidence; never fabricate a paid Stripe event or sale price. Owner-to-owner transfers follow permanent-provenance.txt.
+Resolve the initial-gift registration and valuation handovers in docs/journey-playbook.md before promising terms. Follow the application limits in docs/launch-readiness.txt and the owner-to-owner procedure in docs/permanent-provenance.txt.
 
 FROM ARRIVAL TO FIRST WEAR
 
@@ -117,7 +77,7 @@ Release milestones, arranged through that piece's administrator-approved reveal 
 1. Document the commission as it develops. Obtain consent for portraits, quotations and studio footage. Publish only approved details; keep genuinely unreleased imagery in private storage.
 2. Introduce the work through personally relevant conversations, the collaborators and the first wearer. Invite interested people to verify their email. Offer optional sizes and interests afterward.
 3. Once the finished piece and launch operations are ready, announce a real date a few days ahead. One genuine detail and a clear next action are enough. Do not reset a countdown to compensate for weak interest.
-4. Publish each planned reveal and develop the journal as agreed. Before binding bidding, supply the piece description, measurements, condition, actual opening bid, closing time, delivery, obligations and disclosures required for that release. Current software requires artist/material by opening; no unsupported later reveal can be offered without the corresponding changes. Film movement as well as photographing details.
+4. Publish each planned reveal and develop the journal as agreed. Before binding bidding, supply the piece description, measurements, condition, actual opening bid, closing time, delivery, obligations and disclosures required for that release. Check the CMS and activation gates before committing to that plan. Film movement as well as photographing details.
 5. While bidding is open, send only useful, consented release reminders. Distinguish auction service notices from marketing. Do not fabricate competing bidders, crowd sizes or rumours.
 6. At closing, distinguish the auction result from confirmed payment. Register and ship only through the approved process. Publish the owner only with permission; otherwise retain the anonymous option.
 7. After a confirmed acquisition or an approved gift, document the piece's continuing life when volunteered and cleared for publication. Describe the relationship accurately. Preserve fuller accounts for the annual book. Interested people can update preferences for a future piece; do not tell every subscriber that they lost an auction they never entered.
@@ -131,41 +91,17 @@ Candidate public language, not an approved site rewrite:
 
 "Curated without compromise" remains a possible phrase. First turn it into an internal acceptance standard: a distinctive artistic decision, credible authorship, excellent construction, successful fit, accurate presentation and a workable care plan. Publish the evidence rather than relying on the phrase.
 
-THE ANNUAL BOOK
-
-Release one purchasable coffee-table book each year. It brings together the year's pieces and how they came to be, with fuller interviews, process imagery, development and making than the website alone. It should reward a reader who already knows the online stories. The ambition is an extremely sexy physical object: compelling photography and composition, tactile materials and exceptional production, carrying Hewge's existing editorial character.
-
-Gather deeper creative material and print permissions while making each piece. Include the year's gifted originals as well as auctioned work, describe actual states accurately, and respect reveal timing and anonymity. The annual editorial account has a stated cutoff; current ownership remains in the live registry. See docs/administrator-playbook.md for the content, rights, design, proofing, production and purchase sequence.
-
-The book contains the works and their creative making, not the eight internal journey maps. Exclude founder/administrator operations, influence and mystery-planning strategy, collaborator selection/evaluation and commercial negotiations, customer transaction journeys, and account/payment/transfer/authentication processes. Private or off-record material stays out. Use specifically cleared creative material rather than the full commissioning folder; a permitted photograph of a worn piece does not authorise a custodian's private profile.
-
-People can purchase the book without owning a garment. Print quantity, format, price, distribution and fulfilment remain to be decided; book checkout is not built. Its annual rhythm does not impose a garment release schedule, and publication copies do not imply repeat garment editions.
-
-Custodians may eventually receive a complimentary copy, potentially signed by one or several artists. This is a future possibility, not a current entitlement or discount. Eligibility, timing, cost and participating artists need agreement before offering it. A book signature does not replace a garment certificate.
-
-VALUE AND ECONOMICS
-
-Value may be emotional, artistic, social, practical and historical. Recognition can increase demand, but an Instagram post does not establish a new resale price. Garments age and may lose financial value. Do not describe appreciation as inherent, promise an investment return or treat an asking price as a verified sale.
-
-Before approving a gift or auction, cost the artist, design/pattern, materials, making, fitting, documentation, presentation, insurance, shipping, payment costs and proposed aftercare. The paid release should cover its fully costed work and selling costs, with a contribution that sustains Hewge. Test that at the opening bid; auction upside must not be necessary to pay agreed collaborator fees. Budget any exploratory development or gifting separately and explicitly. CHF 339 belongs to the current design-study proposal; the economics of the actual first commission must be decided with the founder. Do not silently replace the price or assume a CHF 3,000 result. See the commissioning guide for the cost review.
-
-Fund craft and fit first, then photography and presentation. Low software overhead protects that budget. Gifting is a commission expense with an uncertain return, not free distribution. A failed auction is information to examine, not a reason to invent a sale or quietly duplicate the piece.
-
 SMALL, USEFUL COMMUNICATIONS
 
-The existing application implements verified membership, progressive preferences, a private studio, campaign drafts, audience previews, scheduling and consent-aware delivery. Public delivery remains subject to the approval and activation limits below. Current campaign segments are size and country. This is a foundation for a manually managed first release; behavioural journeys and book-specific purchase communications are not implemented.
+Use the capability inventory in docs/launch-readiness.txt and consent, delivery and budget controls in docs/messaging-activation.txt.
 
 Proposed touchpoints: email confirmation; optional preference completion; actual reveal date; opening; a relevant closing reminder; acquisition/service information; a consented follow-up about the next relevant piece. Each message needs a specific purpose. No automatic stream of repeated reminders during a quiet production period.
 
-Still to specify/build before using behavioural journeys: reliable interested/bidder/non-winner/owner segments, message deduplication across campaigns, frequency controls and aggregate referral measurement. Service notices must reach entitled customers independently of marketing consent. Keep opt-outs and expired membership rules authoritative. Do not infer precise location from browser settings or build sensitive audience profiles.
+Resolve the behavioural-messaging gaps in docs/launch-readiness.txt before using those journeys. Apply the service-message, consent and expiry rules in docs/messaging-activation.txt. Do not infer precise location from browser settings or build sensitive audience profiles.
 
 Use the studio after delivery approval, with operator review while the audience is small. Email is the primary continuity channel. SMS is optional and must have separate consent; it is not a prerequisite for the first launch.
 
-Public membership-email delivery needs SES production access. SMS operates in the sandbox for Swiss verification testing, and public campaigns require production access and commissioning. See docs/messaging-activation.txt for the active configuration and activation procedure.
-
-Application SMS limits are five messages globally per month and four per day, with a USD 1 AWS monthly spend limit. Review the budget, provider approval and actual delivery before a release campaign. Public release messages, bidding and checkout are disabled pending their activation requirements.
-
-Budget email against the account's active SES pricing plan and expected volume, using AWS's published rates [3]. Include data, other services and taxes as applicable. Creative work, personal attention and maintenance remain real costs.
+Budget actual sending against the pricing references in docs/messaging-activation.txt. Creative work, personal attention and maintenance remain real costs.
 
 WHAT WE LEARN FROM THE FIRST PIECES
 
@@ -191,9 +127,3 @@ https://www.facebook.com/help/instagram/616901995832907?locale=en_GB
 
 [2] Canadian Conservation Institute, Flat Storage for Textiles (CCI Notes 13/2). Protective-material principles for the maker's packaging review:
 https://www.canada.ca/en/conservation-institute/services/conservation-preservation-publications/canadian-conservation-institute-notes/flat-storage-textiles.html
-
-[3] AWS SES pricing:
-https://aws.amazon.com/ses/pricing/
-
-[4] Swiss Copyright Act, Article 16(3):
-https://www.fedlex.admin.ch/eli/cc/1993/1798_1798_1798/en

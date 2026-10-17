@@ -1,69 +1,47 @@
-HEWGE — AUCTION LAUNCH READINESS
-Use docs/administrator-playbook.md for the shared concept, social proof, per-release reveal decisions and annual book. This checklist governs activation of the implemented services.
+HEWGE — LAUNCH READINESS
 
-Implemented capabilities and activation limits
-This inventory is not approval to enable every feature. Bidding, payment, public messaging and NFC have the separate gates below; gift registration, the full contributor model and book checkout remain to be designed/implemented.
-- Public preview and dedicated journal page with shared typography. Use piece/edition IDs without decorative section numbering.
-- Email-first membership with single-use confirmation. Sizes, location, bidding interest and optional profile/SMS preferences come after verification. SMS preferences and phone verification are implemented for restricted sandbox testing; public release texts remain inactive.
-- Collector sign-up with email verification, private preferences and owner dashboard.
-- Owner account: jez@hewge.design, only after verified sign-up. Cognito admins group supports future authorised owners.
-- Individually chosen garment release dates. The annual book has a separate publication rhythm.
-- Highest valid bid wins. No paid entry, draw, random winner or follower weighting.
-- Server-side bid validation and atomic head + bid + terms recording.
-- Artist and material visibility controlled on the server, not merely hidden in HTML. Administrators choose each release's reveal plan; the current binding-auction gate requires these details by opening and does not implement every intended sequence.
-- Recipient-accepted, owner-reviewed transfers and a public provenance register. The NFC verifier is implemented but remains disabled pending real-tag commissioning.
-- Paid ownership defaults to anonymous. Buyer may choose a public name.
-- Card setup before bidding, immediate authorised winning charge, controlled failed-payment recovery, fresh optional next-bidder offers, certificates and insured fulfilment checklist.
-- Versioned terms/privacy, protected acceptance evidence and a public withdrawal function with timestamped receipts and private review queue.
-- See docs/legal-and-card-launch.txt for current legal, privacy, card and withdrawal activation requirements.
+This is the capability inventory and activation checklist. Use the linked topic runbooks for procedures; these gates do not imply that unbuilt experiences are available. The intended concept is in docs/administrator-playbook.md and the unresolved participant handovers are in docs/journey-playbook.md.
 
-Required before accepting a binding bid
-1. Seller: Lewis, Unterdorfstrasse 2, 8165 Schöfflisdorf, Switzerland. Public customer service: jez@hewge.design. Use these details in terms/privacy disclosures and outbound email contact details. The legal form is Einzelfirma and is administrative information; public copy uses the seller name, address and email. Complete the relevant legal and messaging approval requirements separately.
-2. Actual artist, provenance/rights, material/composition, size, measurements and final garment images.
-3. A release-specific administrator reveal record and actual opening/closing dates, aligned with supported behaviour and approved disclosures. No fabricated countdowns. Once open, auction commitments cannot be silently rewritten.
-4. Insurable destinations, shipping charge, duties/taxes, delivery promises and product safety/label requirements for target markets. Country codes are an explicit allowlist, not an automated sanctions check.
-5. Swiss counsel review of the complete auction terms: contract formation, bid binding period, default notices/grace, cancellation and next-bidder offer, refunds/defects, applicable mandatory cross-border consumer law, privacy/controller disclosures. Mystery material/artist must be reviewed specifically: marketing suspense does not remove required product disclosures.
-6. Swiss Stripe onboarding, card activation and actual Stripe sandbox end-to-end tests, signed webhooks, asynchronous payment and expired-session recovery.
-7. SES production access for public verification delivery. Domain identity/DKIM are configured. Verification email is queued only for its 48-hour link lifetime and reports pending while SES is in the sandbox. Release/winner emails are disabled. The hewge-delivery configuration set provides bounce/complaint suppression and delivery metrics. Cognito's default email service supports account verification with a small daily quota; configure SES-backed account email for larger launch volumes. Follow docs/messaging-activation.txt.
-8. Publish approved terms with a new version in shared/legal.ts and an immutable public/legal snapshot. Set deployment flags only after all checks above are complete.
+Current capabilities
+- Public landing page, email-only Join Hewge, dedicated journal pages, archive and social sharing; typography and numbering follow docs/branding/concept-brief.txt.
+- Verified membership with progressive preferences and separately consented SMS. Membership delivery, pending/expired records and current provider/application status are owned by docs/messaging-activation.txt.
+- Verified-email collector accounts with size/country preferences and optional Instagram, self-reported followers, phone and biography. Social details inform the studio, never the auction outcome.
+- Private studio at /dashboard: audience/size demand; release drafts, individually planned Swiss dates and reveal settings; artist biography and private production/artist/other costs; private images; campaign drafts, audience previews and scheduling; fulfilment; transfer/refund review; identifier recovery; secure-tag commissioning; verified audit exports. Current campaign segments are size and country.
+- CMS publication, private drafts and server-enforced reveal controls as specified in docs/cms-and-auction-architecture.txt. Page publication does not enable bidding.
+- Server-side bidding, eligibility, consent, closing-time checks and atomic records; private rehearsals and live updates follow docs/live-bidding.txt.
+- Per-release card setup and winning-charge authorisation, immediate payment attempt at closing, technical recovery and optional next-bidder offers follow docs/legal-and-card-launch.txt.
+- Paid ownership is anonymous unless the owner opts into a public name. Artist-signed certificate and congratulations-card print templates are available for paid pieces, with an insured fulfilment checklist.
+- Recipient-accepted, Hewge-reviewed ownership transfers and a public provenance register follow docs/permanent-provenance.txt. NFC verification is implemented but disabled pending real hardware commissioning under docs/authentication.txt.
+- Versioned terms/privacy and protected acceptance evidence; /withdraw provides timestamped notices, receipts and a private review queue under docs/legal-and-card-launch.txt.
 
-Payments
-The auction winner owes payment at closing; ownership is registered only after confirmed payment. A signed Stripe paid event is required. Amount, currency, offer ID and winner identity must match. No shipment before payment. If a session creation fails ambiguously, the offer stays locked until Stripe reconciliation. Do not blindly remove checkoutStartedAt or assign a new winner. All amount fields are integer CHF centimes.
-
-Payment is due immediately and the verified winner card is attempted at closing. The separate 24-hour technical recovery period is not credit or permission to defer payment. The default minimum bid increase is CHF 10. CHF 339 remains the After Hours design-study proposal; the first real commission's opening bid is undecided pending its cost review. Shipping fee defaults to zero in a draft only and must be deliberately set before scheduling.
+Owner access
+Register and verify jez@hewge.design at /account, visit /dashboard and enrol an authenticator. An authorised operator must grant additional administrators the Cognito admins group; users cannot grant it to themselves. No owner password or account is created in Git. See docs/permanent-provenance.txt for the MFA session and recovery procedure, and docs/messaging-activation.txt for Cognito email capacity.
 
 Experience still to complete
-The intended journey distinguishes purchaser, giver and custodian; paid checkout registers the paying winner and uses the billing address for delivery. Complete direct gift registration/delivery, initial-gift valuation and surprise timing before offering that workflow. Contributor profiles and role-appropriate anonymous labels require application work. Credit artist, designer and producer at their agreed reveal stages. Follow the journey and administrator playbooks for the handovers, and permanent-provenance.txt for transfer fees and approval.
+- Paid checkout registers the verified paying winner and uses their billing address for delivery. Direct gift delivery/recipient registration, surprise timing, declined gifts and initial-gift valuation need a defined process and terms. Use the actual gift and recipient acceptance as evidence; do not simulate a paid event to create an initial gift. Resolve the questions in docs/journey-playbook.md before offering it.
+- Separate designer/producer profiles and print-template fields, interview presentation and role-appropriate anonymous labels need application work. Credit actual contributions at their agreed reveal stages.
+- The current artist/material reveal mode and binding-auction limits are in docs/cms-and-auction-architecture.txt. Independent sequences outside that support require disclosure review, approved terms and tested implementation.
+- Book production, ordering/fulfilment and purchase terms are separate work under docs/annual-book.md. The garment auction is not book checkout. Manage commissioning and book editorial records in private folders.
+- Behavioural messaging and book-specific purchase communications are unbuilt. Before using them, specify interested/bidder/non-winner/owner segments, cross-campaign deduplication, frequency controls and aggregate referral measurement. Proposed touchpoints are in docs/launch-playbook.txt.
+- Personal handover, fitting and aftercare are proposed services with scope/cost decisions in the journey and launch playbooks, not currently available promises.
 
-The annual purchasable coffee-table book covers the year's pieces and their making more deeply than the website. Production, price, print permissions and ordering/fulfilment are separate work; the garment auction is not a book checkout. Potential complimentary custodian copies and signatures by one or several artists remain uncommitted. Book content is the creative story, not the internal operating, influence or customer-transaction journeys.
+Required before accepting a binding bid
+1. Complete seller/controller disclosures and the contract, privacy and permanent-ledger review in docs/legal-and-card-launch.txt with Swiss counsel, including applicable cross-border obligations. Do not present draft terms or mocked tests as legal approval.
+2. Supply actual artist, provenance/rights, material/composition, size, measurements and final garment images. Set the real commission’s opening bid through docs/creative-commissioning.txt. After Hours remains the design study defined in docs/administrator-playbook.md.
+3. Complete the administrator’s reveal record and individually chosen Swiss opening/closing dates. Align disclosures with the supported flow. No fabricated countdowns or silent rewriting of open-auction commitments.
+4. Review insurable destinations, shipping charges, duties/taxes, delivery promises and target-market safety/label requirements. Country codes are an explicit allowlist, not an automated sanctions check. Shipping defaults to zero in a draft only; deliberately set it before scheduling.
+5. Complete Swiss Stripe onboarding, card-only setup, Secrets Manager configuration, signed webhooks and every real sandbox case in docs/legal-and-card-launch.txt. Establish refund/dispute and stolen-object handling. Test the anticipated bidding load under docs/live-bidding.txt.
+6. Obtain public email production access and commission delivery under docs/messaging-activation.txt, including the expected account-verification volume. Public release scheduling requires enabled transactional email. SMS is optional for the first launch and has its own approval/testing gates.
+7. Publish approved terms via shared/legal.ts with a new immutable public/legal snapshot; retain acceptance-linked versions. Finish the review/test evidence before enabling the flags below.
 
-Email and privacy operations
-Review failed or ambiguous outbox sends in the studio before retrying. Avoid automatic resend after an ambiguous SES result. Release notifications exclude unverified/expired members and respect size preferences. The latest verified membership/account consent wins, including opt-outs. Transactional winner/receipt notices are independent of marketing consent. Unconfirmed membership requests/links expire in 48 hours, preference sessions in one hour and verified membership records in 180 days; auction/account retention must be finalised with the seller's policy. Owner can use the AWS console for account deletion requests while retaining required transaction evidence. Review SES bounce/complaint metrics and suppression lists; public SMS alerts remain disabled until real delivery testing, AWS production approval, destination requirements and the launch budget are reviewed. Restricted Swiss sandbox phone verification is deployed; see docs/messaging-activation.txt.
+Deployment gates
+checkoutEnabled requires sellerTermsApproved=true, provenancePrivacyApproved=true and auctionCardTestsApproved=true, plus the Stripe secret and published terms URL. Activate only after the requirements above:
+AWS_PROFILE=hewge npm run deploy:infra -- -c stripeSecretArn=<ARN> -c checkoutEnabled=true -c emailEnabled=true -c sellerTermsApproved=true -c provenancePrivacyApproved=true -c auctionCardTestsApproved=true -c termsUrl=https://hewge.design/terms
+Retain these non-secret deployment choices locally on later deploys; omitted flags default to disabled. Never store credentials as CDK context. Flags attest to completed prerequisites; they are not review or test evidence themselves.
 
-Mystery assets
-Mystery is designed and decided afresh by the administrator for each release; it may include a later artist reveal if that specific flow is reviewed and supported. Use the reveal record in docs/administrator-playbook.md. Current binding-auction artist/material gates remain in force until the corresponding terms and implementation change; they are not a universal creative sequence.
-Identity fields are redacted from the public API until reveal. Files in public/images are PUBLIC. Keep unreleased garment photography out of the public repo and bundle; use the studio's private media uploads and server-controlled publication. After Hours is the public design study.
+Additional activation paths
+- NFC: after real hardware commissioning and physical tests, -c nfcCommissioned=true enables public verification. Follow docs/authentication.txt.
+- Transfer-fee checkout: after the payment launch prerequisites and real fee/refund sandbox tests, -c transferPaymentsApproved=true together with checkoutEnabled=true enables it. Follow docs/permanent-provenance.txt; register the refund webhooks specified in docs/legal-and-card-launch.txt.
+- Email/SMS: follow docs/messaging-activation.txt for the current account status, consent, budgets, provider approval, commissioning and separate flags. Provider approval alone never activates the application.
 
-Legal references
-Swiss Federal Consumer Affairs Bureau, contract formation, T&C incorporation, default and defects:
-https://www.konsum.admin.ch/en/frequently-asked-questions-faq
-Swiss SECO, e-commerce obligations:
-https://www.seco.admin.ch/de/onlinehandel
-Swiss federal SME portal, Switzerland and EU online-trade requirements:
-https://www.kmu.admin.ch/de/die-gesetze-der-schweiz-und-der-eu
-Swiss FDPIC, transparent privacy notices and controller information:
-https://www.edoeb.admin.ch/de/datenschutzerklaerungen-im-internet
-Swiss Code of Obligations, authoritative consolidated source (including auction provisions):
-https://www.fedlex.admin.ch/eli/cc/27/317_321_377/en
-
-These references support a review checklist. This implementation is not a legal opinion or certification of compliance. Do not treat a generic online auction as automatically exempt from distance-sale consumer rules in every destination.
-
-Influence, honestly applied
-Reciprocity: offer meaningful access to the work and its actual creative process; agreed gifts and personal attention can contribute without creating an undisclosed obligation.
-Scarcity: one real garment; no invented timers or stock.
-Authority: credible creative expertise, recognised judgment, accurately attributed work and provenance at their agreed reveal stages; never invented credentials.
-Consistency: voluntary size preferences and saved interests; no forced marketing consent.
-Liking: the real voices and work of the collaborators and people who connect with it.
-Social proof: the standing and perceived value Hewge develops in society, particularly its intended audience, through real recognition by influential and consequential people and the wider response. Genuine wear, recommendations, introductions, gifts, loans, cultural attention and purchases all contribute when accurately described. Follower totals or paid-owner counts alone do not define it; influence does not alter auction rules.
-Unity: a shared connection to the work and its people, through following, creating, wearing, collecting or exploring the annual book.
-Source: https://www.influenceatwork.com/7-principles-of-persuasion/
+Use the explicit AWS deployment workflow in README.md. No gate is enabled merely by updating this checklist.

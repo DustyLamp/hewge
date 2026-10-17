@@ -5,8 +5,11 @@ Use the Ultra HEWGE wordmark. Archivo Black is the heading face; Georgia italic 
 
 The small icon is the H outlined from public/fonts/ultra-latin.woff2, with the homepage hero's 1.15 vertical scale. Brand teal is #00FEEF; ink is #111311. Sentence full stops use solid #00FEED without a muted tint.
 
-Annual book
-Carry Hewge's lettering and editorial character into the annual purchasable coffee-table book. It covers the year's pieces and their creative making in greater depth than the website. Develop its typography, photography, paper, binding and finish through a considered design and physical proofs. Use the editorial scope and custodian-copy options in docs/administrator-playbook.md.
+Voice
+Understated and specific. Let the work, withheld details and real dates suggest what comes next. Never narrate the marketing strategy, announce suspense or hype, promise a story is worth waiting for, or tell the reader how to feel. Keep auction obligations and reveal timing explicit. Use piece and edition numbers without decorative section numbering.
+
+Book design
+Apply this identity to the physical design and proofing process in docs/annual-book.md.
 
 Icon assets
 - public/favicon.svg: standalone path artwork with no external font dependency.
@@ -19,7 +22,7 @@ Icon assets
 Regenerate PNG/ICO outputs with npm run assets:brand after editing the SVG. Serve icons at stable URLs and check image bodies, MIME types, square dimensions and crawler access after deployment. Search-engine display depends on crawling and indexing.
 
 Letterform and licence
-Source: Ultra Regular, copyright (c) 2010 Brian J. Bonislawsky DBA Astigmatic (AOETI), Apache 2.0. Keep public/fonts/Ultra-LICENSE.txt with the font and artwork. Archivo Black's SIL OFL is in public/fonts/ArchivoBlack-OFL.txt.
+Source: Ultra Regular, copyright (c) 2010 Brian J. Bonislawsky DBA Astigmatic (AOETI), Apache 2.0. Keep public/fonts/Ultra-LICENSE.txt with the font and artwork. Archivo Black's SIL OFL is in public/fonts/ArchivoBlack-OFL.txt. Both fonts are self-hosted. These licences do not cover the Hewge artwork.
 
 The H outline uses FontTools SVGPathPen with source bounds (41, 0, 1892, 1473). The 64px canvas centres a 44px-wide glyph, scales its height by 1.15 and leaves padding for circular search-result crops.
 

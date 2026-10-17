@@ -6,22 +6,25 @@ This is the shared concept and decision process for Hewge administrators. Use it
 
 Hewge pursues magnitude: very few exceptional original works, with meaning and recognition that can reach far beyond the people who possess them. A garment is the starting medium. Each saleable garment exists once, including its size. The work's artistic expression, materials, construction, story and experience of wearing must substantiate its value.
 
+Success is a piece that someone understands, chooses, wears and treasures, with enough demand to sustain the people who made it. Hundreds of garments, a large advertising budget and a constantly replenished shop are not objectives.
+
 The founder brings together an artist's expression, a designer's approach to form and a producer's expertise in making. Roles can overlap. Collaborators receive context, a shared intention and clear commitments, with room to develop the result through their own judgment. Their actual lives, practice, experiments and decisions become the story. The introduction video opens that conversation; the commission establishes scope, compensation, responsibilities, rights and review points.
 
 The editorial website gives each piece its own name, story and enduring place in the archive. People encounter Hewge through the work, its creators, wearers, trusted introductions and wider recognition. The purchaser may acquire it for a different custodian. Presentation, first touch, fit, movement and first wear carry the intention into that person's life. Care, authentication and reviewed transfers support its continuing history.
 
-An annual purchasable coffee-table book brings together the year's pieces and how they came to be. It contains deeper material than the website and is conceived as an exceptionally desirable physical object in its own right. Its annual rhythm is separate from individually timed garment releases.
+An annual purchasable coffee-table book brings together the year's pieces and how they came to be. It contains deeper material than the website and is conceived as an exceptionally desirable physical object in its own right. Its annual rhythm is separate from individually timed garment releases. The [annual book guide](annual-book.md) owns the editorial scope, production process and possible custodian copies.
 
 ## Operating principles
 
 Use these principles to design commissions, releases and the continuing experience of each piece. Resolve commission-specific choices before making a commitment. Application capabilities and activation requirements are described in the operational runbooks; the open handovers are in the journey playbook.
 
 - Magnitude and depth of value guide the venture; production of original garments remains very small. No geography, age, gender or profession is fixed as the audience.
-- Every garment release has its own dates and reveal plan. There is one live auction at a time; free bidding and the highest valid bid determine the winner. Influential relationships do not confer auction preference.
+- Every garment release has its own dates and reveal plan. There is one live auction at a time; free bidding and the highest valid bid determine the winner, without a buyer’s premium. Influential relationships do not confer auction preference.
 - Membership starts with verified email, then optional preferences and separately consented SMS. No discounts or routine retail promotion language.
 - Artist, designer and producer receive accurate attribution, at the times agreed for that release. Purchaser, giver, custodian and repurchaser are distinct relationships even when one person fills several roles.
+- Human artists make the first real release. After Hours imagery is a presentation mockup, not documentary evidence of a completed garment; its editorial name and story are draft creative copy.
+- Public identification, wearing, posting, appearing in the archive and introducing friends are voluntary. Use purchaser, giver, custodian and repurchaser according to the actual relationship; public editorial copy uses an opted-in name or an anonymous description appropriate to the event.
 - After Hours is a public design study with a proposed opening bid of CHF 339. Set each real commission's opening price against its complete costs and agreed commercial contribution.
-- One purchasable coffee-table book is planned each year. Complimentary custodian copies and signatures by one or several artists are possible future features, not promised entitlements.
 
 ## Social proof and influence
 
@@ -31,7 +34,17 @@ This applies the social-proof principle in Influence: people use others' behavio
 
 For each release, understand whose judgment carries weight with the people the work could speak to, why it carries weight, and how those people could encounter the work meaningfully. A respected wearer, artist, designer, cultural figure, collector, host or personal connection may each play a part. These are possibilities, not a fixed recruitment list or demographic.
 
-Record the actual response: wearing, a considered recommendation, an introduction, editorial attention, a purchase or an invitation to collaborate. Keep gifts, loans, paid partnerships and purchases accurately described. Observe what recognition leads to and how people describe the work; follower totals alone do not establish influence. Public copy presents the work and real events without explaining the persuasion strategy. Auction eligibility and outcomes remain independent of promotional usefulness.
+Record the actual response: wearing, a considered recommendation, an introduction, editorial attention, a purchase or an invitation to collaborate. Keep gifts, loans, appearances, paid partnerships and purchases accurately described; social proof is not restricted to paid owners or bid activity. Observe what recognition leads to and how people describe the work; follower totals alone do not establish influence. Public copy presents the work and real events without explaining the persuasion strategy. Auction eligibility and outcomes remain independent of promotional usefulness.
+
+### Applying the seven principles
+
+- Reciprocity: offer meaningful access to the work and its actual creative process; agreed gifts and personal attention can contribute without creating an undisclosed obligation.
+- Scarcity: one real garment; no invented timers or stock.
+- Authority: credible creative expertise, recognised judgment, accurately attributed work and provenance at their agreed reveal stages; never invented credentials.
+- Consistency: voluntary size preferences and saved interests; no forced marketing consent.
+- Liking: the real voices and work of the collaborators and people who connect with it.
+- Social proof: apply the definition and release-specific judgments above.
+- Unity: a shared connection to the work and its people, through following, creating, wearing, collecting or exploring the annual book.
 
 ## Designing each release
 
@@ -65,38 +78,8 @@ For each item below, record its private authoritative information, what the publ
 
 Use a precise date/time or a defined event and completion deadline for promised later reveals. State any withheld information and its timing clearly where a person commits. Check the website, API, images, captions, recordings and collaborators' own publications against the same plan. Keep unrevealed material in private storage and publish only the assets cleared for that stage.
 
-Application support: artist/material share a reveal mode, design has a separate teaser setting, and binding-auction checks require artist/material details by opening. A release plan outside those capabilities requires disclosure review, approved terms and tested application support before use. Follow the applicable correction and notice process when a public commitment cannot be fulfilled; preserve genuine countdowns and accepted auction terms.
+Check the [CMS reveal capabilities](cms-and-auction-architecture.txt) and [launch checklist](launch-readiness.txt) against the planned sequence. A release plan outside those capabilities requires disclosure review, approved terms and tested application support before use. Follow the applicable correction and notice process when a public commitment cannot be fulfilled; preserve genuine countdowns and accepted auction terms.
 
-## The annual book
+## Related handovers
 
-One purchasable edition each year will bring together the year's pieces and how they came to be. The editorial aim is comprehensive coverage of that year's Hewge pieces, with depth beyond the website: fuller collaborator conversations, development and experiments, decisions about form and material, production details and the finished work. The book should reward someone who has already read the website as well as someone discovering Hewge through it.
-
-The founder's physical ambition is an extremely sexy coffee-table book: visually arresting, tactile, beautifully photographed, composed and produced, and desirable to keep on display and return to. Carry the established Hewge lettering and editorial character into an appropriate book design. Format, paper, binding, print method and other production choices remain to be developed through proofs; no specification is committed yet.
-
-Build its source material during each commission. Preserve high-resolution photographs, detailed creative process records, interviews, credits and approved quotations with the relevant permissions. Agree print/book reproduction rights as well as website/social uses; one does not automatically cover the other. Respect each piece's reveal plan and contributor/owner privacy. An anonymous custodian must not be identified through a book caption or image without permission. The edition records the work as of a stated editorial cutoff; it is not a live ownership record.
-
-### What belongs in the book
-
-The book tells the creative story of the works: artistic intent, the people making them, design development, material and construction decisions, approved experiments and the finished pieces. The artist, designer and producer's creative experiences can give those stories depth. A cleared photograph of a piece being worn may show its movement and presence; it does not authorise a profile of the wearer's private life.
-
-The eight journey maps are internal operating guides, not the book's contents. Exclude the founder/administrator's business and operating journey; influence, social-proof and audience-targeting strategy; mystery-planning mechanics; collaborator selection/evaluation records; fees, margins, contracts and internal negotiations; purchaser, custodian and repurchaser transaction journeys; bidding, payment, account, gift-registration and transfer processes; authentication/security procedures; and the influenced party's persuasion journey. Private or off-record collaborator and customer information stays out. An approved creative introduction from the founder can explain the work without exposing those processes.
-
-Maintain a specifically cleared selection of book material separate from the full commission folder and journey playbook. Review final copy, captions and images against this boundary as well as rights and reveal timing. Greater depth than the website means greater creative depth, not access to Hewge's internal machinery or private customer records.
-
-The administrator's annual sequence is to establish the edition's period and content cutoff, account for the year's pieces, develop the deeper creative chapters, clear credits and permissions, review the content exclusions above, design and proof the physical book, approve costs and production, and prepare its purchase and fulfilment route. Record a piece that is unavailable for full treatment and resolve the editorial treatment rather than quietly dropping it from the year's account. Gifted works are part of the year when they are Hewge originals; unsold or unfinished work must be described in its actual state. This planning sequence itself stays out of the book.
-
-The book is a publication people can buy without acquiring a garment. Its print quantity, price, sales dates, distribution, shipping and purchase terms remain to be set. It does not inherit the garment auction, one-of-one promise, ownership-transfer fee or NFC requirements. A book ordering/fulfilment flow has not been implemented, and a book purchase must not create ownership of a depicted garment.
-
-### Possible custodian copies
-
-At a later stage, each custodian may receive a complimentary copy. Those copies could be signed by one or several participating artists. Both are possibilities to develop; there is no current entitlement, guaranteed signature or discount programme.
-
-Before offering this, decide which custodians qualify and at what date, whether it recurs annually, how later transfers or several pieces held by one person affect allocation, and how address confirmation, delivery and cost are handled. Agree participating artists, signing arrangements and compensation where applicable. A signature in a book is a personal contribution to that edition; it does not replace the piece's signed certificate or transfer ownership.
-
-## Ownership and handovers
-
-The current paid-auction flow registers the verified paying winner after confirmed payment and uses the entered billing address for delivery. The intended gift journey needs separate arrangements for the purchaser, recipient, surprise timing and accepted registration. Initial gift registration and a valuation basis for founding gifts with no verified sale value remain unresolved; do not simulate a payment to create ownership.
-
-For existing owner-to-owner transfers, the verified recipient accepts, physical identity and entitlement are reviewed, the recipient pays the quoted 0.5% fee, and Hewge gives final conditional approval. Resales use the declared resale value; subsequent gifts use the last verified sale value. Hewge does not hold the resale price. The remaining handover work concerns buyer–seller payment, physical delivery, condition checks, risk and recovery around that process. See [permanent provenance](permanent-provenance.txt).
-
-Use purchaser, giver, custodian and repurchaser according to the actual relationship. Public editorial copy uses an opted-in name or an anonymous description appropriate to the event. Application work includes role-appropriate anonymous labels, separate designer/producer credits, direct gifting, independent reveal sequences and book purchases. Complete the relevant flow before offering it publicly.
+Use the [journey handover decisions](journey-playbook.md#decisions-still-open-at-the-handovers) for gifts, creative decision rights, resale settlement and continuing care; [launch readiness](launch-readiness.txt) distinguishes supported flows from intended ones. Existing owner-to-owner registration follows [permanent provenance](permanent-provenance.txt). Book planning and the boundary between creative material and private operating records belong to the [annual book guide](annual-book.md).

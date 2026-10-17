@@ -1,11 +1,14 @@
 CMS and auction authority
 
 Scope
-The current administrator process is in docs/administrator-playbook.md. Each garment's reveal plan is individually designed; the existing schema has shared artist/material modes and a separate design teaser mode, with binding-auction checks requiring artist/material by opening. Arbitrary independent sequences, separate designer/producer profiles and direct gift registration are intended extensions, not existing CMS capabilities. Keep a private release record and resolve implementation/terms gaps before publishing an unsupported flow.
+This guide owns infrastructure, content authority, publication and cost inputs. Creative release decisions belong to docs/administrator-playbook.md; activation and unsupported experiences are listed in docs/launch-readiness.txt. Bid acceptance, receipts, transport and timing are in docs/live-bidding.txt. Retention, archives and disaster recovery are in docs/permanent-provenance.txt.
 
-An annual purchasable coffee-table book covers the year's pieces and creative making in greater depth than the website. Book production, ordering and fulfilment are not implemented by the auction CMS. Its annual cadence and publication copies are separate from garment release dates and one-of-one identities. Complimentary custodian copies and artist signatures remain possibilities. Book material is specifically cleared creative content; private administration, influence strategy and customer/transaction records are excluded.
+Stack and data responsibilities
+Static React/Vite on Amplify; HTTP API Gateway; ARM Node 22 Lambda; DynamoDB on demand; Cognito identity; SES email. A minute-by-minute EventBridge worker settles auctions and drains the email outbox when enabled. AppSync Events handles live notifications. Services are managed and usage-based, without a dedicated server, VPC, NAT gateway or advertising trackers. Logs retain seven days; customer emails and tokens are not deliberately logged. Restricted SMS delivery logs have the separate contents described in docs/messaging-activation.txt.
 
-Short version
+Tables: hewge-production stores expiring subscriptions; hewge-auctions stores profiles, releases, bids, transfers, provenance and operational records; hewge-audit is the non-expiring transactional ledger. services/platform.ts is the API/worker entry; services/membership.ts handles email verification and limited preference sessions; services/ownership.ts handles the transfer lifecycle; shared/auction.ts owns public redaction and auction calculations.
+
+CMS responsibilities
 - Dashboard > Releases owns the one canonical piece name, story, photos, pricing and dates.
 - Dashboard > Pages owns the homepage and editorial pages at /pages/<slug>.
 - Text, release records and publication pointers live in DynamoDB. Images and content snapshots live in private, encrypted, versioned S3. Lambda is stateless validation and transaction code, not persistent content storage.
@@ -19,17 +22,21 @@ Release discovery uses a GSI, then strongly reads each canonical record; a newly
 Artwork and page-image URLs are checked against the published record before a short-lived S3 URL is issued. Private evidence cannot be selected as public artwork. Keep unrevealed assets private; a published asset can be copied, and an issued signed URL remains usable for its 60-second lifetime.
 Plain text is rendered as text, never executable HTML. Accepted auction terms and privacy versions remain controlled, immutable documents rather than freely mutable CMS copy. Changing contractual rules still requires a versioned application release.
 
-Worldwide bidding, order and time
-All bidders currently submit to the same Stockholm authority. Strong DynamoDB reads plus revision conditions and a transaction commit the bid, winning head, card mandate state and audit event together. The highest accepted valid amount wins. Equal or stale bids cannot replace it. Different users can reach the service from anywhere; this does not mean writes occur in every region.
-Each bid request has a persistent UUID. Retrying that UUID retrieves the same accepted receipt instead of creating another bid. The receipt is available only to that bidder and includes its amount, server UTC timestamp and increasing per-piece bid sequence. An interrupted response is not proof of rejection. /bid/receipt reconciles it.
-Bid sequence and the protected audit sequence establish order. UTC wall-clock timestamps are descriptive and enforce the configured eligibility window; the bidder's device clock is never authoritative. The browser countdown uses a server timestamp and monotonic elapsed time, but remains an estimate because network delay exists.
-The service checks the deadline again after preparing the immutable audit intent and immediately before submitting the conditional transaction. Settlement competes on the same revision, so both cannot commit against the same head. The SDK/database may take time to complete that transaction; there is no claim of a globally synchronized, zero-error physical commit timestamp. Lambda clock precision and global network fairness have not been independently certified. Intent records are not accepted bids; committed ledger events are.
-The protected audit contains pseudonymous actor references, UTC time, action, sequence, previous hash and change hash. Private operational records link authenticated accounts to actions. S3 intent and committed receipts have compliance retention and legal holds. See permanent-provenance.txt for custody and recovery limitations.
+Reveal and media boundaries
+Artist/material share draft reveal settings; design has a separate teaser mode. The current binding-auction gate requires artist/material details by opening. Design teasers can withhold name, story and main image before opening. Unpublished drafts are excluded from the public API; unrevealed artist/material fields are redacted and teaser pages omit the design spread. This schema does not implement every administrator-designed sequence; review terms and implement/test unsupported flows before promising them.
 
-Scale, cost and regional failure
-The stack is API Gateway, Lambda, DynamoDB on demand, S3 and Amplify. No always-running CMS or auction server and no CMS subscription. Usage, bandwidth, backups, security services and permanent archives still cost money. A successful bid touches multiple transactional items and protected S3 objects; one bid is not one billable write.
-One auction's winning head must serialize, so a very popular piece is a contention hotspot. Integration tests exercise correctness; measure peak concurrency, end-to-end p95/p99, conflicts, throttling, cold starts and the final-second burst before opening bidding. Test API/account limits and abuse limits against the intended audience. Capacity and running costs depend on measured demand.
-Storage is resilient across AWS Availability Zones in Stockholm. This deployment has no second regional write endpoint. A whole-region outage pauses writes rather than creating competing winners or owners. Backups are recovery tools, not automatic regional failover.
+Keep unrevealed designs in the studio’s private media library. public/images, client bundles and committed files are publication surfaces. Public image access checks the published release and reveal time; inspection evidence stays private. The homepage showcases the public After Hours design study. Original supplied images and provenance are in assets/; optimised WebP presentation assets are in public/images/. See assets/PROVENANCE.md for the presentation mockup’s limits and docs/branding/concept-brief.txt for fonts/licences.
+
+Costs and capacity
+There is no CMS subscription or always-running auction server. A successful bid touches multiple transactional items and protected S3 objects; one bid is not one billable write. Use the load-testing and quota criteria in docs/live-bidding.txt and storage/custody costs in docs/permanent-provenance.txt. The single regional authority pauses writes during regional failure; backups are recovery tools, not automatic regional failover.
+
+Avoid a VPC, NAT, dedicated database instances and multi-region write infrastructure at this scale.
+
+Budget card costs against the account’s active Stripe Switzerland pricing, card mix, currency conversion and enabled services:
+https://stripe.com/en-ch/pricing
+Budget hosting against measured asset sizes and Amplify pricing. Local builds avoid Amplify build minutes:
+https://aws.amazon.com/amplify/pricing/
+Include API/database use, bandwidth, backups, security services, authentication, messaging, monitoring, DNS and domain renewal. Running costs are usage-based; there is no hard spending cap or email budget alert. Email/SMS pricing and application send ceilings are in docs/messaging-activation.txt.
 
 AWS references
 https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html

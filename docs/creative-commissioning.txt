@@ -3,17 +3,19 @@ Creative commissioning guide
 
 The complete role journeys, context-led instructions for every stage and founder's introductory video for artists and designers are set out in docs/journey-playbook.md, alongside the emotional experience and unresolved handovers.
 
-Use docs/administrator-playbook.md for the shared concept, social proof, each release's reveal plan and the annual book. Application capabilities and activation requirements are in README.md and the operational runbooks.
+Use docs/administrator-playbook.md for the shared concept and release decisions, docs/annual-book.md for print editorial scope and participant coordination, and docs/launch-readiness.txt for application limits and activation requirements.
 
 Use this guide to develop the creative intention, introduce collaborators and agree a commission. Adapt the brief to the actual work, contributors and budget. Discover the audience through the work and conversations; geography, demographics, future forms and launch sequence are open decisions.
 
 THE CREATIVE PREMISE
 
+The work is wearable art. Its material, cut, construction, presentation and life with its owner must support that description. Saying it is art cannot do the work of making it exceptional. The first story comes from a real artist and maker bringing a particular piece into the world, followed by a real person living in it. Future work may take forms beyond shirts.
+
 An artist has a way of seeing. A designer develops its form, and a producer realises the work through materials and making. A custodian recognises something of themselves in it and brings their own meaning through wearing it. Hewge finds the connection, commissions the work and makes its authorship legible at the agreed reveal stages.
 
 The useful creative question is: what could this piece let someone express that they have not found in anything they already own?
 
-That expression could be quiet or conspicuous, personal or social, playful or exacting. Discover it through the work and conversations with possible wearers. Each piece can speak to different people. Hewge's continuity comes from the quality of its choices, its standard of making and the way it presents and supports each original.
+That expression could be quiet or conspicuous, personal or social, playful or exacting. Attention, belonging, beauty, individuality and recognition are possible motivations to explore; neither wealth nor status is a universal explanation. Discover it through the work and conversations with possible wearers. Each piece can speak to different people. Hewge's continuity comes from the quality of its choices, its standard of making and the way it presents and supports each original.
 
 DRAFT BRIEF FOR A COLLABORATOR
 
@@ -28,6 +30,21 @@ The piece will have a name, a documented identity and a dedicated editorial stor
 To begin, show us work that matters to you. Tell us what you want to explore, what would make this collaboration worthwhile, and what you need from us to do it well.
 
 Complete the actual commission, fees and deliverables before using this brief as a project offer.
+
+THE PHYSICAL BRIEF
+
+Find the artist's point of view, the designer's response and possible wearing contexts together. Explore movement, visibility, intimacy, comfort and the kind of expression the work makes possible. A specific wearer may inform a gifted commission; an auction's eventual owner is not known in advance. The artist needs a point of view of their own, not a requirement to illustrate generic luxury.
+
+Initial creative brief:
+- One human-authored work conceived for a body in motion. Agree where the composition sits when standing, seated, open, closed and moving.
+- A silhouette that suits the artwork and the intended wearer. Record the final garment measurements and intended ease; size letters alone are inadequate.
+- Choose fabric for its hand, drape, comfort and compatibility with the artwork. Silk, linen, hemp or Tencel are possibilities, not automatic evidence of quality.
+- Make fit and technique samples as necessary. Samples need not reproduce the final artwork or become additional saleable editions.
+- Test the actual decoration, seams and closures for the intended use, cleaning and contact with skin. Photograph the real making and the finished result honestly.
+- Describe the method accurately: hand painting, human-designed textile printing, embroidery and other techniques are different claims. Human authorship alone does not make every production step handmade.
+- Agree fees, credits, permitted photography, artwork reproduction rights, the one-of-one commitment and responsibility for care/repairs before commissioning. Makers deserve agreed payment even if an auction disappoints.
+
+Define uniqueness precisely. Hewge will not reproduce the garment in another size. Whether the artist can use related artwork in another medium is an agreement to settle, not an exclusivity claim to invent. Owning the garment does not automatically transfer copyright [2].
 
 CURATION AND PAIRING
 
@@ -50,7 +67,7 @@ Make the opportunity substantive: agreed compensation; the chance to realise a s
 
 Artist, designer and producer should receive clear credit at the stages agreed in the release's reveal record. A deliberately later identity reveal must still lead to accurate attribution. The custodian should be able to identify the contributions once revealed. Interest in a collaborator's other work should have somewhere useful to go, with their permission. A well-documented case study and agreed book treatment give them a substantial record for future opportunities. Later career developments can become part of the piece's history when real and relevant.
 
-Hewge seeks recognition that matters within the work's intended audience. Influential and consequential people's choices, wearing, recommendations and attention can contribute to that social proof and to discovery of the collaborators. No specific audience is fixed, and recognition or career outcomes are not guaranteed compensation for commissioned work.
+The recognition described in docs/administrator-playbook.md can also bring discovery of collaborators. Recognition and career outcomes are not guaranteed compensation for commissioned work.
 
 Hewge supplies curation, editorial work, production coordination, presentation and the route to an owner. Social participation and image-use permissions are agreed specifically; they are not unlimited obligations attached to a commission. Paid work should stand on its own even if the release gets little attention.
 
@@ -96,17 +113,11 @@ Give the work different depths of entry, arranged to suit the release. A first e
 
 The eventual conversational story should be easy to remember: who made it, what they explored together, and a detail the wearer connects with. We are not writing a sales script for the owner. They should be free to say what it means to them. If the story only works after memorising a long explanation, refine the presentation.
 
-Connect each claim to something observable: a process image, a maker's explanation, the construction, the composition in motion or a detail in the finished work. Hewge administrators design the mystery separately for every release, including identities and material details that may appear later. Record the sequence, disclosure obligations and contributor publication timing before release. The current application requires artist/material by binding auction opening; plans beyond that need the corresponding review and implementation before use. See docs/administrator-playbook.md.
-
-THE BOOK MATERIAL
-
-The annual book covers the year's pieces and how they came to be, with greater depth than the website and an exceptionally desirable physical presentation. Gather high-resolution imagery, fuller interviews, samples and development records during the commission, with explicit print rights, credits and agreed reveal timing. Deeper content means richer creative understanding, not publishing the internal journey playbook.
-
-Include approved artistic and making decisions. Exclude internal administration and influence strategy, collaborator selection/evaluation records, fees and contracts, customer/transaction journeys and authentication/security procedures. Private or off-record material stays private; only specifically cleared excerpts enter the book. These are editorial boundaries even when a raw recording contains both kinds of material.
-
-Complimentary copies for custodians, potentially signed by one or several artists, are possible future features. Participation, compensation where applicable and logistics for signing need separate agreement. Neither complimentary copies nor signatures are current obligations of the commission.
+Connect each claim to something observable: a process image, a maker's explanation, the construction, the composition in motion or a detail in the finished work. Follow the reveal record in docs/administrator-playbook.md and gather the book material and print permissions specified in docs/annual-book.md. Samples can help document development. A raw recording may mix publishable creative material with private matters; clear excerpts rather than publishing the whole record.
 
 THE COST REVIEW
+
+Value may be emotional, artistic, social, practical and historical. Recognition can increase demand, but an Instagram post does not establish a new resale price. Garments age and may lose financial value. Do not describe appreciation as inherent, promise an investment return or treat an asking price as a verified sale.
 
 A successful piece must both deserve its price and support the people who made it. Establish costs during development, before the final work and public opening bid are committed.
 
@@ -114,7 +125,11 @@ The private cost review should include artist and designer fees; pattern and sam
 
 At the proposed opening bid, calculate what Hewge actually retains after payment fees, applicable tax and any other amounts it must pass on, together with separately charged delivery income/costs. Compare that with the fully costed commission and an agreed contribution for continuing the business. Do not count the same expense twice. Use real quotes and confirmed terms, not a projected high winning bid. This is a planning review, not a tax calculation or an automated pricing feature.
 
-If the lowest accepted price cannot support the commission, revise the scope or proposed price, or stop before committing more cost. If development is being subsidised, record that separately and explicitly. Fund agreed collaborator payments even if the piece receives no bids. A cost-covering opening bid does not guarantee a buyer. Set the first real commission's opening price through this review. After Hours is a public design study with a proposed opening bid of CHF 339.
+If the lowest accepted price cannot support the commission, revise the scope or proposed price, or stop before committing more cost. If development is being subsidised, record that separately and explicitly. Fund agreed collaborator payments even if the piece receives no bids. A cost-covering opening bid does not guarantee a buyer. Set the first real commission's opening price with the founder through this review; the After Hours design-study proposal is recorded in docs/administrator-playbook.md.
+
+Fund craft and fit first, then photography and presentation. Low software overhead protects that budget. Gifting is a commission expense with an uncertain return, not free distribution. A failed auction is information to examine, not a reason to invent a sale or quietly duplicate the piece.
+
+Do not silently replace the proposed price or assume a CHF 3,000 auction result. Budget exploratory development or gifting separately and explicitly.
 
 KEEP THE FIRST PROCESS SMALL
 
@@ -122,11 +137,14 @@ Manage each commission with a shared brief, a private commission folder, a cost 
 
 For each commission, record who is contributing what; the current intention and approved direction; scope and budget; review decisions; actual material/fit information; credits and website/book publication permissions; the administrator's reveal record; approved editorial assets; and launch readiness. Raw recordings, contact details and contracts stay out of the repository. Its public trail contains only approved work and accurate authorship. Keep book-cleared creative material separate from internal operating records.
 
-The studio supports an artist biography and private cost fields. Separate designer/producer profiles, interview presentation, independent reveal sequences and book ordering require application work. Manage commissioning and book editorial records in private project folders, and use the supported studio fields for publication.
+Manage commissioning and book editorial records in private project folders; use the supported studio fields for publication. Check the capability inventory in docs/launch-readiness.txt before promising a feature.
 
 The immediate creative work is to discover distinctive practices, explore possible collaborations and test the brief in conversation. Let those encounters refine who the piece could speak to. Choose the first commission when the artistic proposition, ability to realise it and economics hold together.
 
-SOURCE
+SOURCES
 
 [1] Oral History Association, Oral History Best Practices. Recording, consent and editorial-review principles:
 https://oralhistory.org/best-practices/
+
+[2] Swiss Copyright Act, Article 16(3):
+https://www.fedlex.admin.ch/eli/cc/1993/1798_1798_1798/en

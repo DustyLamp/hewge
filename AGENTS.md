@@ -12,17 +12,13 @@ Strategy conversations are exploratory: the founder supplies context and illustr
 
 Documentation states the current concept and operating instructions directly. Correct affected passages together; remove superseded content, obsolete references and change-history commentary. Distinguish intended experience, available capabilities and unresolved decisions. The shared concept and administrator decisions are in docs/administrator-playbook.md.
 
-Social proof means the standing Hewge earns in society and particularly its intended audience, including validation by influential and consequential people whose judgment matters there. It includes genuine wear, recommendations, gifts, loans and cultural recognition, not only paid owners or bids. Relationships never change the highest-valid-bid rules.
+Use docs/administrator-playbook.md for social proof and each release’s mystery/reveal decisions. Use docs/annual-book.md for publication scope, excluded internal journeys and uncommitted custodian-copy options. Do not turn proposals into entitlements or creative plans into unsupported application capabilities.
 
-Administrators design the mystery and reveal sequence separately for every release, including possible later artist reveals. Document it before publication; current disclosure/checkout gates remain in force until the relevant reviewed terms and implementation support that plan.
-
-An annual purchasable coffee-table book covers the year's pieces and how they came to be, with deeper material than the website and exceptional physical presentation. Its annual rhythm does not set garment release dates. Complimentary custodian copies, potentially signed by one or several artists, are future possibilities, not entitlements. Book editions do not inherit garment one-of-one or auction rules.
-
-Book content is the cleared creative story of the pieces and their makers, not the internal journey maps. Exclude administrator/business operations, influence and mystery strategy, collaborator evaluation/negotiations, private customer and transaction journeys, and account/payment/transfer/authentication procedures. Keep book-approved material separate from private commission records.
+Documentation has one owning guide per topic, listed in README.md. Put substantive rules and procedures there; reference them from other guides. Preserve distinct participant context, emotional journeys, unresolved decisions and task-critical safeguards when consolidating.
 
 Deploy only to AWS account `082229154968`, region `eu-north-1`, using the `hewge` profile. Keep AWS organisation controls intact. Never commit secrets, customer emails, generated build archives, or runtime data.
 
-Checkout stays disabled until the owner’s Stripe account, real product sizing/artist data, seller details, and shipping/returns/tax terms are ready. See README for the launch steps and payment-offer rules.
+Checkout stays disabled until the owner’s Stripe account, real product sizing/artist data, seller details, and shipping/returns/tax terms are ready. See docs/launch-readiness.txt for activation and docs/legal-and-card-launch.txt for payment-offer rules.
 
 # User printing preference
 

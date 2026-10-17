@@ -1,7 +1,9 @@
 HEWGE — LIVE BIDDING AND PRIVATE REHEARSALS
 
 Scope
-This is the garment-auction implementation, not a book sales or collaborator-selection system. Each piece has individually chosen dates and an administrator-designed reveal plan within the current gates; one real auction is open at a time and the highest valid bid wins. Influential relationships and social proof do not confer bidding preference. See docs/administrator-playbook.md for the intended experience and known gaps. The annual book has a separate publication/purchase process still to develop.
+This runbook owns garment bid acceptance, receipts, live transport, timing and private rehearsal. Release policy is in docs/administrator-playbook.md; activation is governed by docs/launch-readiness.txt.
+
+PRIVATE REHEARSAL
 
 The studio's Rehearsal tab creates a five-minute private copy of a piece's
 presentation. Sign in with the studio authenticator, select After Hours and
@@ -19,12 +21,12 @@ AUTHORITY AND TRANSPORT
 HTTPS bid commands go to Lambda in Stockholm. DynamoDB strongly reads the
 auction. Conditional transaction writes require the expected revision, an open
 status and server-evaluated opening/closing time. The bid receipt, auction head,
-bidder state and audit event are committed atomically. The shared bid engine is
+bidder/card mandate state and audit event are committed atomically. The shared bid engine is
 used by both real bids and simulations; real bids additionally require the live
 launch gate, verified account/card, size/country eligibility and versioned terms.
-The seller cannot bid on a real piece.
+The seller cannot bid on a real piece. The highest accepted valid amount wins; equal or stale bids cannot replace it. The default minimum bid increment is CHF 10. Worldwide access still submits to this single regional authority.
 
-The browser keeps a stable request ID until an uncertain bid is reconciled. A
+Each request has a persistent UUID. /bid/receipt returns only that bidder’s receipt: amount, server UTC timestamp and increasing per-piece sequence. The browser keeps that request ID until an uncertain bid is reconciled. A
 repeated matching request returns its original receipt. An event, spinner or
 button press is never an accepted bid. Concurrent bids do not silently become a
 higher bid: a stale submission is rejected and the collector must review again.
@@ -51,12 +53,12 @@ and server timestamps. Personal highest-bid status requires account authenticati
 TIME, CAPACITY AND FAILURES
 
 One Stockholm write authority orders each piece by transaction revision and bid
-sequence, not client clocks or event arrival time. Display countdowns use server
+sequence, with the protected audit sequence recording order, not client clocks or event arrival time. Display countdowns use server
 UTC plus monotonic elapsed time. A device clock cannot extend an auction.
 The audit writer rechecks the deadline after writing its locked intent and before
 submitting the transaction. DynamoDB has no built-in commit-time wall-clock
 predicate: this is server validation immediately before submission, not a promise
-of zero clock error or exact physical commit at a millisecond boundary. There is
+of zero clock error or exact physical commit at a millisecond boundary. Network delay makes countdowns estimates. Settlement competes on the same revision; both operations cannot commit against the same head. SDK/database completion takes time, and Lambda clock precision/global network fairness have not been independently certified. Prepared intents are not accepted bids; committed ledger events are. There is
 no automatic last-second extension. The existing minute worker settles the
 highest accepted bid; clients may show closed before settlement completes.
 
@@ -67,8 +69,8 @@ account/service quotas. Application mutation rate limits remain in place.
 Managed fan-out scales independently of bid acceptance. Snapshot reads still
 scale with viewers and events, and a popular single piece serializes writes to
 one head/audit chain. This deployment has NOT been certified for millions of
-simultaneous bidders. Load-test the anticipated audience, monitor throttling and
-latency, and raise quotas or add a versioned public snapshot cache before a large
+simultaneous bidders. Load-test peak concurrency for the anticipated audience, monitor throttling and
+latency (end-to-end p95/p99, conflicts, cold starts and final-second bursts), test API/account and abuse limits, and raise quotas or add a versioned public snapshot cache before a large
 launch. Cost is usage-dependent, not guaranteed free.
 
 Publisher failures retry with partial-batch reporting and a 14-day SQS failure
@@ -76,9 +78,7 @@ queue. Iterator lag and queued failures have CloudWatch alarms; external alarm
 notification subscriptions are not configured. The browser's
 snapshot recovery works independently of the publisher. The durable auction
 and audit records are the recovery source, not the socket or the queue.
-DynamoDB/PITR, daily backups and protected audit archives retain their existing
-encryption and retention settings. Regional failure pauses bidding/settlement;
-there is no second-region write failover.
+Follow docs/permanent-provenance.txt for protected receipts, account links, backup settings and regional recovery. Regional failure pauses bidding/settlement; there is no second-region write failover.
 
 CHECKS AND LAUNCH
 
@@ -89,7 +89,4 @@ concurrency, replay and public launch isolation using a disposable synthetic
 identity. Its operational fixtures are removed; protected synthetic audit events
 remain. The rehearsal is not evidence that live card charging is ready.
 
-Checkout remains disabled until the existing README payment, artist, sizing,
-seller, shipping, returns, tax, privacy and sandbox launch requirements are met.
-Pushes run CI. The current Amplify branch uses an explicit deploy command; a git
-push by itself does not publish the site.
+Follow docs/launch-readiness.txt before activating real bidding or payment. CI and the explicit deployment workflow are described in README.md.
