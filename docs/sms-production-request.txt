@@ -1,7 +1,7 @@
 HEWGE — SMS PRODUCTION ACCESS REQUEST
 Submitted 14 October 2026 at 13:46 UTC through AWS Support Center.
 AWS case: 179198560800689
-Confirmed case status: Work in progress. Production approval is pending.
+Case status recorded at submission: Work in progress. Production approval was pending.
 Case link: https://console.aws.amazon.com/support/home#/case/?displayId=179198560800689&language=en
 
 Submitted under Service limit increase > AWS End User Messaging SMS (Pinpoint),
@@ -13,6 +13,8 @@ the required quota region and description both explicitly identify eu-north-1.
 AWS generated the case title "Quota Increase: AWS End User Messaging SMS (Pinpoint)".
 This requests production access only; the monthly SMS spend limit remains USD 1.
 No new SMS was sent, and no campaign, payment or spending gate was changed.
+
+Historical submission record: retain the use-case text below as submitted. The 17 October account check still reported SANDBOX; it did not reread the support case. Current concept, messaging scope and activation guidance are in docs/administrator-playbook.md and docs/messaging-activation.txt. This request did not include a book campaign or approve any production messaging.
 
 Submitted use-case description
 

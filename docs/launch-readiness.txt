@@ -1,15 +1,18 @@
 HEWGE — AUCTION LAUNCH READINESS
-14 October 2026
+Policy alignment: 17 October 2026. Implementation/deployment evidence is dated in the linked operational runbooks.
 
-Implemented and safe to use now
+Use docs/administrator-playbook.md for the shared concept, social proof, per-release reveal decisions and annual book. Newer substantive founder direction governs older working copy; implemented capabilities and activated services remain distinct.
+
+Implemented capabilities and activation limits
+This inventory is not approval to enable every feature. Bidding, payment, public messaging and NFC have the separate gates below; gift registration, the full contributor model and book checkout remain to be designed/implemented.
 - Public preview and dedicated journal page with shared typography. Piece/edition IDs remain; decorative section numbers are removed.
 - Email-first membership with single-use confirmation. Sizes, location, bidding interest and optional profile/SMS preferences come after verification. SMS preferences and phone verification are implemented for restricted sandbox testing; public release texts remain inactive.
 - Collector sign-up with email verification, private preferences and owner dashboard.
 - Owner account: jez@hewge.design, only after verified sign-up. Cognito admins group supports future authorised owners.
-- Individual release dates. No standing weekly or Tuesday schedule.
+- Individual garment release dates. No standing weekly or Tuesday schedule. The annual book has a separate publication rhythm.
 - Highest valid bid wins. No paid entry, draw, random winner or follower weighting.
 - Server-side bid validation and atomic head + bid + terms recording.
-- Artist and material visibility controlled on the server, not merely hidden in HTML.
+- Artist and material visibility controlled on the server, not merely hidden in HTML. Administrators choose each release's reveal plan; the current binding-auction gate requires these details by opening and does not implement every intended sequence.
 - Recipient-accepted, owner-reviewed transfers and a public provenance register. The NFC verifier is implemented but remains disabled pending real-tag commissioning.
 - Paid ownership defaults to anonymous. Buyer may choose a public name.
 - Card setup before bidding, immediate authorised winning charge, controlled failed-payment recovery, fresh optional next-bidder offers, certificates and insured fulfilment checklist.
@@ -19,7 +22,7 @@ Implemented and safe to use now
 Required before accepting a binding bid
 1. Seller identity confirmed by the owner on 13 October 2026: Lewis (Einzelfirma), Unterdorfstrasse 2, 8165 Schöfflisdorf, Switzerland. Public customer-service email: jez@hewge.design. The seller name, address and email are used in the terms/privacy disclosures and outbound email footer/reply-to; the legal-form descriptor is kept out of customer-facing copy. This confirms the contact details, not completion of legal review or SMS approval.
 2. Actual artist, provenance/rights, material/composition, size, measurements and final garment images.
-3. Specific opening and closing dates. No fabricated countdowns. Once open, auction data cannot be rewritten.
+3. A release-specific administrator reveal record and actual opening/closing dates, aligned with supported behaviour and approved disclosures. No fabricated countdowns. Once open, auction commitments cannot be silently rewritten.
 4. Insurable destinations, shipping charge, duties/taxes, delivery promises and product safety/label requirements for target markets. Country codes are an explicit allowlist, not an automated sanctions check.
 5. Swiss counsel review of the complete auction terms: contract formation, bid binding period, default notices/grace, cancellation and next-bidder offer, refunds/defects, applicable mandatory cross-border consumer law, privacy/controller disclosures. Mystery material/artist must be reviewed specifically: marketing suspense does not remove required product disclosures.
 6. Swiss Stripe onboarding, card activation and actual Stripe sandbox end-to-end tests, signed webhooks, asynchronous payment and expired-session recovery.
@@ -29,12 +32,18 @@ Required before accepting a binding bid
 Payments
 The auction winner owes payment at closing; ownership is registered only after confirmed payment. A signed Stripe paid event is required. Amount, currency, offer ID and winner identity must match. No shipment before payment. If a session creation fails ambiguously, the offer stays locked until Stripe reconciliation. Do not blindly remove checkoutStartedAt or assign a new winner. All amount fields are integer CHF centimes.
 
-Payment is due immediately and the verified winner card is attempted at closing. The separate 24-hour technical recovery period is not credit or permission to defer payment. The default minimum bid increase is CHF 10. The first opening bid is CHF 339. Shipping fee defaults to zero in a draft only and must be deliberately set before scheduling.
+Payment is due immediately and the verified winner card is attempted at closing. The separate 24-hour technical recovery period is not credit or permission to defer payment. The default minimum bid increase is CHF 10. CHF 339 remains the After Hours design-study proposal; the first real commission's opening bid is undecided pending its cost review. Shipping fee defaults to zero in a draft only and must be deliberately set before scheduling.
+
+Experience still to complete
+The intended journey distinguishes purchaser, giver and custodian; current paid checkout registers the paying winner and uses the billing address for delivery. Direct gift registration/delivery, initial-gift valuation and surprise timing need the agreed workflow before use. Creator attribution must include artist, designer and producer at their agreed reveal stages; dedicated designer/producer profiles are not yet implemented. The application's existing "anonymous bidder" label must not be treated as a universal description of every custodian. See the journey and administrator playbooks for those gaps and the already-established transfer-fee/approval baseline.
+
+The annual purchasable coffee-table book covers the year's pieces and their making more deeply than the website. Production, price, print permissions and ordering/fulfilment are separate work; the garment auction is not a book checkout. Potential complimentary custodian copies and signatures by one or several artists remain uncommitted. Book content is the creative story, not the internal operating, influence or customer-transaction journeys.
 
 Email and privacy operations
 Review failed or ambiguous outbox sends in the studio before retrying. Avoid automatic resend after an ambiguous SES result. Release notifications exclude unverified/expired members and respect size preferences. The latest verified membership/account consent wins, including opt-outs. Transactional winner/receipt notices are independent of marketing consent. Unconfirmed membership requests/links expire in 48 hours, preference sessions in one hour and verified membership records in 180 days; auction/account retention must be finalised with the seller's policy. Owner can use the AWS console for account deletion requests while retaining required transaction evidence. Review SES bounce/complaint metrics and suppression lists; public SMS alerts remain disabled until real delivery testing, AWS production approval, destination requirements and the launch budget are reviewed. Restricted Swiss sandbox phone verification is deployed; see docs/messaging-activation.txt.
 
 Mystery assets
+Mystery is designed and decided afresh by the administrator for each release; it may include a later artist reveal if that specific flow is reviewed and supported. Use the reveal record in docs/administrator-playbook.md. Current binding-auction artist/material gates remain in force until the corresponding terms and implementation change; they are not a universal creative sequence.
 Identity fields are redacted from the public API until reveal. Files deliberately uploaded to public/images are PUBLIC: a teaser does not retract prior publication. Keep unreleased garment photography out of the public repo and bundle; use the studio’s private media uploads and server-controlled publication for future artwork. Current provided After Hours artwork has already been approved for public preview.
 
 Primary legal references reviewed
@@ -52,11 +61,11 @@ https://www.fedlex.admin.ch/eli/cc/27/317_321_377/en
 These references support a review checklist. This implementation is not a legal opinion or certification of compliance. Do not treat a generic online auction as automatically exempt from distance-sale consumer rules in every destination.
 
 Influence, honestly applied
-Reciprocity: share the actual artist process and story.
+Reciprocity: offer meaningful access to the work and its actual creative process; agreed gifts and personal attention can contribute without creating an undisclosed obligation.
 Scarcity: one real garment; no invented timers or stock.
-Authority: artist identity, signature and provenance after reveal; never invented awards.
+Authority: credible creative expertise, recognised judgment, accurately attributed work and provenance at their agreed reveal stages; never invented credentials.
 Consistency: voluntary size preferences and saved interests; no forced marketing consent.
-Liking: the artist's real voice and work.
-Social proof: actual accepted bids and paid owners only.
-Unity: an open collector community, not fake independent hype.
+Liking: the real voices and work of the collaborators and people who connect with it.
+Social proof: the standing and perceived value Hewge develops in society, particularly its intended audience, through real recognition by influential and consequential people and the wider response. Genuine wear, recommendations, introductions, gifts, loans, cultural attention and purchases all contribute when accurately described. Follower totals or paid-owner counts alone do not define it; influence does not alter auction rules.
+Unity: a shared connection to the work and its people, through following, creating, wearing, collecting or exploring the annual book.
 Source: https://www.influenceatwork.com/7-principles-of-persuasion/

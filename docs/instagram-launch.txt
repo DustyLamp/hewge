@@ -1,15 +1,16 @@
 HEWGE / INSTAGRAM LAUNCH
 Account: @hewge.design
+Working copy aligned 17 October 2026. Apply the specific release's administrator-approved reveal record; the examples below are optional treatments, not a fixed sequence. See docs/administrator-playbook.md.
 
 BIO
 Artist originals. One owner.
-Get the next drop ↓
+Join Hewge ↓
 https://hewge.design/#first-access
 
 POST 01 — BRAND
 Visual: HEWGE wordmark. Black on #00FEEF. Space. No decoration.
 On-image: ORIGINAL ARTIST. ONE OWNER.
-Caption: HEWGE. Get the next drop. Link in bio.
+Caption: HEWGE. Join us. Link in bio.
 Note: A campaign line, not a permanent brand tagline.
 
 POST 02 — THE CLUE
@@ -19,23 +20,28 @@ Caption: Look closer.
 
 POST 03 — THE INVITATION
 Visual: A numbered edition marker, with a small artwork detail.
-On-image: GET THE NEXT DROP.
-Caption: Release emails. Link in bio.
+On-image: JOIN HEWGE.
+Caption: Join us. Link in bio.
+Destination: email-first membership with verification, then optional preferences.
 
 FIRST ANNOUNCEMENT
-Publish only after a real reveal time is set.
+Publish only after actual dates and this piece's reveal plan are set. Artist, material, design, story and price can have different intended moments; publish only what this step permits and state any later reveal commitment clearly. Current software/auction disclosure limits still apply.
 Story 1: An artwork detail. The piece number only.
 Story 2: The actual countdown sticker. Link to the dedicated piece page.
 Story 3: A second detail or a material close-up, only if approved for public view. No explanatory caption.
 Reveal: Full garment. Its name. Its size. Opening bid. Closing time. Link to the journal page.
 Close: Announce the winning bid as awaiting payment. Do not claim a paid owner yet.
-Paid: “Yours.” Share the owner only with their recorded opt-in; otherwise “anonymous bidder.”
+Paid: “Yours.” Share the custodian only with their recorded opt-in; otherwise leave the name out or use a role-appropriate anonymous description. “Anonymous bidder” applies to a bidder, not every recipient or custodian. Gifts/loans use their actual status, never a fabricated paid result.
 
 COMMUNITY
 Start with real behind-the-scenes material, process, clues and collector questions.
+Build social proof through genuine recognition, particularly by influential and consequential people whose judgment matters to the intended audience. Show actual work, wear, recommendations and appearances with agreed permissions and accurate relationship disclosures. Public posts do not explain the strategy. Auction access and outcomes remain independent of influence.
 No bought engagement, fake bidders, staged independent leaks or undisclosed brand accounts.
 A Reddit community can follow once there is enough real conversation to sustain it.
 No Instagram or Reddit posts have been published by this implementation.
+
+ANNUAL BOOK
+Once a year, a purchasable coffee-table book covers the year's pieces and how they came to be in greater depth than the website. Announce its real edition and availability when ready, with imagery of the approved physical work. Internal administration, influence strategy and customer transaction journeys are excluded from its content. Complimentary custodian copies, possibly signed by one or several artists, are future possibilities; do not advertise them as current benefits. No book launch date or purchase flow is ready.
 
 VOICE
 Let the images, omissions and actual dates carry the interest.

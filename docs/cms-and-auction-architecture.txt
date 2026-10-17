@@ -1,5 +1,10 @@
 CMS and auction authority — 14 October 2026
 
+Concept alignment — 17 October 2026
+The current administrator process is in docs/administrator-playbook.md. Each garment's reveal plan is individually designed; the existing schema has shared artist/material modes and a separate design teaser mode, with binding-auction checks requiring artist/material by opening. Arbitrary independent sequences, separate designer/producer profiles and direct gift registration are intended extensions, not existing CMS capabilities. Keep a private release record and resolve implementation/terms gaps before publishing an unsupported flow.
+
+An annual purchasable coffee-table book covers the year's pieces and creative making in greater depth than the website. Book production, ordering and fulfilment are not implemented by the auction CMS. Its annual cadence and publication copies are separate from garment release dates and one-of-one identities. Complimentary custodian copies and artist signatures remain possibilities. Book material is specifically cleared creative content; private administration, influence strategy and customer/transaction records are excluded.
+
 Short version
 - Dashboard > Releases owns the one canonical piece name, story, photos, pricing and dates.
 - Dashboard > Pages owns the homepage and editorial pages at /pages/<slug>.

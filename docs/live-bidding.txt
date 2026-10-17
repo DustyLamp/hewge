@@ -1,5 +1,8 @@
 HEWGE — LIVE BIDDING AND PRIVATE REHEARSALS
 
+Scope alignment — 17 October 2026
+This is the garment-auction implementation, not a book sales or collaborator-selection system. Each piece has individually chosen dates and an administrator-designed reveal plan within the current gates; one real auction is open at a time and the highest valid bid wins. Influential relationships and social proof do not confer bidding preference. See docs/administrator-playbook.md for the intended experience and known gaps. The annual book has a separate publication/purchase process still to develop.
+
 The studio's Rehearsal tab creates a five-minute private copy of a piece's
 presentation. Sign in with the studio authenticator, select After Hours and
 start a session. Place a simulated bid, simulate another collector, then close

@@ -1,5 +1,10 @@
 HEWGE / PERMANENT PROVENANCE & RECOVERY
-14 October 2026
+Technical evidence: 14 October 2026. Journey alignment: 17 October 2026.
+
+Scope
+Use docs/administrator-playbook.md for current concept and participant definitions. The purchaser can differ from the custodian; current paid-auction registration names the paying winner. Direct initial-gift registration remains to be designed. This runbook's recipient acceptance, review, fee and approval sequence is the established owner-to-owner transfer baseline, not an undecided part of the new journey.
+
+The annual book documents creative work as of an editorial cutoff. It is not the live ownership register and does not contain customer transaction journeys, transfer procedures, private review evidence or security records. Possible complimentary/signed custodian copies have no effect on registered garment ownership or transfer fees.
 
 Retention policy
 Ownership and security history has no automatic expiry. The dedicated hewge-audit table has no TTL. Each event has an immutable ID, per-entity sequence, previous-event hash, actor pseudonym, action, selected non-contact details, and a hash of the exact business mutations. Approved owner changes include previous/new account pseudonyms, certificate/version, declared value and agreed fee policy. Names, contact details, private inspection narrative, credentials and tag keys are kept out of these events.
@@ -33,6 +38,8 @@ After enrolment, disabling Cognito MFA does not permit password-only studio re-e
 
 Transfer fee and money custody
 The recipient pays 50 basis points (0.5%), rounded to a CHF cent, on the declared resale price. Gifts use the last verified sale value. CHF 1,000 means CHF 5. The quote/policy is fixed at request creation and accepted by the intended verified recipient. Hewge inspects physical identity and entitlement first; card checkout collects only the verification/transfer fee. Signed Stripe webhooks, with matched amount/currency/recipient/attempt, record payment. Hewge's final conditional approval alone changes the owner. Fees below Stripe's CHF 0.50 minimum are blocked for reviewed alternative payment; the system never silently raises the agreed fee.
+
+The gift basis above applies to subsequent transfers with an existing verified sale value. A founding gift with no sale value and an initial purchase-as-gift require separately agreed registration/fee treatment before use. Do not fabricate a sale value or a paid event. Buyer–seller payment, physical delivery and failed-condition-check arrangements around the established transfer sequence remain handover decisions; they do not change the existing fee or make Hewge the custodian of resale funds.
 
 Expired checkout sessions allow a new attempt only after Stripe confirms expiry. Ambiguous requests retry the same idempotency key; old uncertainty beyond its safe window requires manual reconciliation. Paid transfers cannot simply be cancelled. The studio records a full-fee refund request and blocks approval before contacting Stripe; refund.updated/refund.created webhooks reconcile pending outcomes. Only after success can the request be cancelled. Approved transfers, partial refunds, disputes and a failed/ambiguous refund need operator review, not automatic ownership reversal.
 

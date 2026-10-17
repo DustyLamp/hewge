@@ -11,6 +11,9 @@ with the homepage hero's 1.15 vertical scale. It is the same letterform as the
 wordmark, not a new custom font. Brand teal is exactly #00FEEF; ink is #111311.
 Sentence full stops remain solid #00FEED.
 
+Annual book direction — 17 October 2026
+Carry the established HEWGE lettering and editorial character into the annual purchasable coffee-table book. It covers the year's pieces and their creative making with greater depth than the website and should be an exceptionally desirable physical object. Typography, imagery, paper, binding and finish need a considered book design and physical proofs; no new logo or production specification is selected here. The book excludes internal operating/influence strategy and customer transaction journeys. See docs/administrator-playbook.md for its scope and possible future signed/complimentary custodian copies.
+
 Icon assets
 - public/favicon.svg: standalone path artwork, no external font dependency.
 - public/favicon.png: 96px square for crawlers and browser fallback.

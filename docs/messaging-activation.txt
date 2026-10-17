@@ -1,5 +1,13 @@
 HEWGE — MESSAGING ACTIVATION
-14 October 2026
+Deployment/test record: 14 October 2026. Latest recorded account check and concept alignment: 17 October 2026.
+
+Latest recorded account observation
+The account check recorded in docs/launch-playbook.txt on 17 October found SES ProductionAccessEnabled=false with review status DENIED, and SMS account tier SANDBOX. That check did not reread support correspondence or deployment flags. The submission and test histories below remain dated evidence; production access has not been established by that record. Do not treat this documentation alignment as a new provider check or approval.
+
+Membership and editorial scope
+The invitation is Join Hewge: verified email first, then optional preferences and separately consented SMS. Administrators choose each garment release's dates and reveal sequence; messages follow that record and current supported disclosures. Social proof can include genuine recognition by influential and consequential people, but their contact details or status do not authorise messaging or change auction eligibility.
+
+The annual purchasable book covers the year's pieces and creative making more deeply than the website; its annual cadence does not create weekly/monthly garment alerts. Book campaigns, ordering and service messages are not an implemented extension of the garment flow. Review their purpose and the applicable preference/consent wording before use. Possible complimentary copies and artist signatures for custodians are not current membership benefits. Purchasing or receiving a book must not silently subscribe anyone to marketing.
 
 Public business identity
 Lewis

@@ -1,10 +1,15 @@
 HEWGE / AUTHENTICITY & OWNERSHIP
-14 October 2026
+Technical guidance: 14 October 2026. Journey/credit alignment: 17 October 2026.
+
+Scope
+This runbook describes physical-piece authentication and the current registration implementation. Use docs/administrator-playbook.md for the intended purchaser/custodian distinction and release-specific reveal plan. Authentication does not determine which creative details are published when. The annual book is a separate publication; a possible artist signature in a custodian's book is not the garment certificate or evidence of current ownership.
 
 Recommended package
 1. A permanent garment identity label with piece number/name/artist, a tamper-evident serialised holographic feature, and a concealed secure NFC tag.
 2. An artist-signed certificate carrying the same immutable piece/certificate identifier, material/technique, actual measurements, creation date, distinguishing details and photographs/reference to a preserved photographic record.
 3. A matching premium ownership card and Hewge provenance record. Keep the original artist certificate with the garment when it transfers; update the registration/card without forging or reproducing the artist's handwritten signature.
+
+The full attribution plan includes the actual artist, designer and producer, with roles combined where appropriate. Agree their credits and reveal timing in the release record, including how the final certificate and accompanying material identify them. Existing artist fields/templates do not yet implement the full contributor model; do not substitute a designer or producer for the artist-signature requirement without an explicit revised policy.
 
 There is no single universal world art authentication certificate or hologram. Authentication depends on the issuer, artist/recognised expert, supporting evidence and provenance. ICOM Object ID is internationally recognised for describing and identifying cultural objects; it is not an authenticity accreditation or proof of legal ownership. Use its nine descriptive categories plus photographs, short description and securely retained documentation. Never display an ICOM endorsement or claim certification merely for following the checklist.
 
@@ -23,7 +28,9 @@ Limits to test before manufacture
 - Back up/export provenance and preserve verification continuity if hosting or key infrastructure changes. Public exports must omit owner identities/evidence unless consented.
 
 Transfer implementation
-Verified current owner requests; verified intended recipient accepts and confirms physical possession; Hewge reviews the actual original/certificate and entitlement evidence; an atomic transaction changes the registered owner and appends provenance. Exact printed identifiers are supporting checks, not sufficient authentication. Public ownership remains opt-in, defaulting to 'anonymous bidder'. Registry history shows dates, not private contact details. This is a registration process, not an international legal-title adjudication system, a resale checkout, or a copyright assignment.
+Verified current owner requests; verified intended recipient accepts and confirms physical possession; Hewge reviews the actual original/certificate and entitlement evidence; the recipient pays the quoted 0.5% fee; Hewge's final conditional approval atomically changes the registered owner and appends provenance. Resales use the declared resale price; subsequent gifts use the last verified sale value. See permanent-provenance.txt for payment/withdrawal/approval gates. Exact printed identifiers are supporting checks, not sufficient authentication. Public identification remains opt-in. The current UI's default 'anonymous bidder' is an implementation label; intended editorial wording must distinguish anonymous custodians, recipients and bidders. Registry history shows dates, not private contact details. This is a registration process, not an international legal-title adjudication system, a resale checkout, or a copyright assignment.
+
+Current initial registration follows a confirmed paid auction and names the paying winner. Direct registration of an initial gift and valuation where no verified sale exists remain separate design decisions. The eight-role journey describes the intended experience, not an already-implemented gift path.
 
 The server now implements encrypted SUN verification, AES-CMAC checked against published vectors, UID binding and an atomic monotonic counter check together with the piece verification hold. /verify consumes a fresh URL fragment only on an explicit button press. NFC remains disabled until real hardware commissioning is complete. Successful verification identifies the registered chip, not legal title or the surrounding garment.
 
